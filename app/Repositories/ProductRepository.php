@@ -13,7 +13,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     public function all(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Product::with(['category', 'brand', 'images' => function ($q) {
+        $query = Product::with(['category', 'images' => function ($q) {
             $q->orderBy('sort_order');
         }]);
 
@@ -21,9 +21,7 @@ class ProductRepository implements ProductRepositoryInterface
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (isset($filters['brand_id']) && $filters['brand_id'] !== '') {
-            $query->where('brand_id', $filters['brand_id']);
-        }
+
 
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
@@ -78,7 +76,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     public function find(int $id): ?Product
     {
-        return Product::with(['category', 'brand', 'variants', 'images', 'tags'])->find($id);
+        return Product::with(['category', 'variants', 'images', 'tags'])->find($id);
     }
 
     /**
@@ -86,7 +84,7 @@ class ProductRepository implements ProductRepositoryInterface
      */
     public function findBySlug(string $slug): ?Product
     {
-        return Product::with(['category', 'brand', 'variants', 'images', 'tags'])->where('slug', $slug)->first();
+        return Product::with(['category', 'variants', 'images', 'tags'])->where('slug', $slug)->first();
     }
 
     /**

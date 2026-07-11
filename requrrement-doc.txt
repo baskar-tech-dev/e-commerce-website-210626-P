@@ -1,0 +1,6 @@
+Incldue space screen of logo - add at intial open the page.
+inital page ask for - ask to subcrbe for offer.
+whatsapp button always visible at bottom right corner, should navigate to whatsapp chat. make it large
+- occasion section :  remove more white space - reduce scroll time 
+While Purchase order placed and payment completed - ask a rating section.
+

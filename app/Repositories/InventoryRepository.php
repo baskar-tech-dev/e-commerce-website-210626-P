@@ -13,7 +13,7 @@ class InventoryRepository implements InventoryRepositoryInterface
      */
     public function allVariants(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = ProductVariant::with(['product.category', 'product.brand']);
+        $query = ProductVariant::with(['product.category']);
 
         if (isset($filters['category_id']) && $filters['category_id'] !== '') {
             $query->whereHas('product', function ($q) use ($filters) {
@@ -89,6 +89,6 @@ class InventoryRepository implements InventoryRepositoryInterface
      */
     public function findVariant(int $variantId): ?ProductVariant
     {
-        return ProductVariant::with(['product.category', 'product.brand'])->find($variantId);
+        return ProductVariant::with(['product.category'])->find($variantId);
     }
 }

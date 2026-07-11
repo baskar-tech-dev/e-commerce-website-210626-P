@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+use App\Models\Traits\Auditable;
+
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
         'uuid',
         'category_id',
-        'brand_id',
         'name',
         'slug',
         'short_description',
@@ -84,13 +85,6 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Get the brand that owns the product.
-     */
-    public function brand(): BelongsTo
-    {
-        return $this->belongsTo(Brand::class);
-    }
 
     /**
      * Get the variants for the product.

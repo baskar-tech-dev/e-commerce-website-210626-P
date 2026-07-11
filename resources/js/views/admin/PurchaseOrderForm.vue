@@ -26,7 +26,7 @@
       <div class="glass-panel" style="padding: 2rem;">
         
         <!-- PO Header Info -->
-        <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; color: #fff;">
+        <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; color: #1e293b;">
           Purchase Order Summary
           <span v-if="form.po_number" style="color: var(--color-text-secondary); float: right; font-size: 0.95rem; font-family: monospace;">
             {{ form.po_number }}
@@ -82,7 +82,7 @@
         <div style="margin-top: 2rem; border-top: 1px solid var(--color-border); padding-top: 1.5rem;">
           
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 style="color: #fff; font-size: 1.15rem; margin: 0;">Ordered Items</h3>
+            <h3 style="color: #1e293b; font-size: 1.15rem; margin: 0;">Ordered Items</h3>
             
             <button 
               v-if="isCreateOrDraft && !isReceiveMode"
@@ -131,7 +131,7 @@
                       {{ v.sku }} ({{ v.product?.name }} - {{ v.size || 'No Size' }} {{ v.color || '' }})
                     </option>
                   </select>
-                  <span v-else style="color: #fff; font-weight: 500;">
+                  <span v-else style="color: #1e293b; font-weight: 500;">
                     {{ item.variant?.sku || 'Variant ID: ' + item.product_variant_id }}
                     <span style="display: block; font-size: 0.8rem; color: var(--color-text-secondary); font-weight: normal;">
                       {{ item.variant?.product?.name }}
@@ -163,7 +163,7 @@
                   />
                   <span v-else>₹{{ parseFloat(item.unit_cost).toFixed(2) }}</span>
                 </td>
-                <td style="text-align: right; font-weight: 600; color: #fff;">
+                <td style="text-align: right; font-weight: 600; color: #1e293b;">
                   ₹{{ getLineTotal(item).toFixed(2) }}
                 </td>
                 <td v-if="isCreateOrDraft" style="text-align: right;">
@@ -176,7 +176,7 @@
               <!-- Receive Items Rows -->
               <tr v-if="isReceiveMode" v-for="item in receiveItems" :key="item.id">
                 <td>
-                  <span style="color: #fff; font-weight: 500;">
+                  <span style="color: #1e293b; font-weight: 500;">
                     {{ item.variant?.sku }}
                   </span>
                   <span style="display: block; font-size: 0.8rem; color: var(--color-text-secondary);">
@@ -194,7 +194,7 @@
                     style="text-align: right; width: 100px; display: inline-block;" 
                   />
                 </td>
-                <td style="text-align: right; font-weight: 600; color: #fff;">
+                <td style="text-align: right; font-weight: 600; color: #1e293b;">
                   {{ item.quantity_received + (item.qty_now || 0) }}
                 </td>
               </tr>

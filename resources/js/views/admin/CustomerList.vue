@@ -51,7 +51,53 @@
 
   <!-- Customers List Grid -->
   <div v-else class="glass-panel" style="overflow: hidden;">
-    <table class="data-table">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="customer in customers" :key="customer.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(255, 255, 255, 0.15); overflow: hidden; flex-shrink: 0;">
+              <img v-if="customer.avatar" :src="customer.avatar" style="width: 100%; height: 100%; object-fit: cover;" alt="" />
+              <span v-else>👤</span>
+            </div>
+            <div>
+              <div class="mdc-title">{{ customer.name }}</div>
+              <div class="mdc-date">Joined: {{ formatDate(customer.created_at) }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">{{ customer.email }}</span>
+            <span class="mdc-email">Phone: {{ customer.phone || 'No phone' }}</span>
+          </div>
+          <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+            <span>Orders: <strong>{{ customer.total_orders }}</strong></span>
+            <span>Spent: <strong style="color: #1e293b;">₹{{ parseFloat(customer.total_spent).toFixed(2) }}</strong></span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges">
+            <span :class="['badge', customer.is_active ? 'badge--success' : 'badge--danger']">
+              {{ customer.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <router-link :to="{ name: 'admin.customers.show', params: { id: customer.id } }" class="btn btn--secondary btn--sm">View Profile</router-link>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="customers.length === 0" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+        No customers found matching the criteria.
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table">
       <thead>
         <tr>
           <th>Customer</th>
@@ -72,18 +118,18 @@
                 <span v-else>👤</span>
               </div>
               <div>
-                <div style="font-weight: 600; color: #fff;">{{ customer.name }}</div>
+                <div style="font-weight: 600; color: #1e293b;">{{ customer.name }}</div>
                 <div style="font-size: 0.8rem; color: var(--color-text-muted);">ID: {{ customer.id }}</div>
               </div>
             </div>
           </td>
           <td>
-            <div style="color: #fff; font-size: 0.9rem;">{{ customer.email }}</div>
+            <div style="color: #1e293b; font-size: 0.9rem;">{{ customer.email }}</div>
             <div v-if="customer.phone" style="font-size: 0.8rem; color: var(--color-text-muted);">{{ customer.phone }}</div>
             <div v-else style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic;">No phone</div>
           </td>
           <td>{{ customer.total_orders }}</td>
-          <td style="font-weight: 500; color: #fff;">₹{{ parseFloat(customer.total_spent).toFixed(2) }}</td>
+          <td style="font-weight: 500; color: #1e293b;">₹{{ parseFloat(customer.total_spent).toFixed(2) }}</td>
           <td>
             <span :class="['badge', customer.is_active ? 'badge--success' : 'badge--danger']">
               {{ customer.is_active ? 'Active' : 'Inactive' }}

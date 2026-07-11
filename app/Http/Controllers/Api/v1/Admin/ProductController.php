@@ -27,7 +27,6 @@ class ProductController extends Controller
         try {
             $filters = $request->only([
                 'category_id',
-                'brand_id',
                 'is_active',
                 'search',
                 'min_price',
@@ -66,7 +65,6 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
             'name' => 'required|string|max:300',
             'slug' => 'nullable|string|max:350',
             'short_description' => 'nullable|string|max:500',
@@ -121,6 +119,14 @@ class ProductController extends Controller
             'images.*.sort_order' => 'nullable|integer',
             'images.*.is_primary' => 'nullable|boolean',
             'images.*.variant_sku' => 'nullable|string|max:100',
+            'images.*.temp_path' => 'nullable|array',
+            'images.*.temp_path.original' => 'nullable|string',
+            'images.*.temp_path.webp' => 'nullable|string',
+            'images.*.temp_path.thumb' => 'nullable|string',
+            'images.*.temp_path.hash' => 'nullable|string',
+            'images.*.temp_path.width' => 'nullable|integer',
+            'images.*.temp_path.height' => 'nullable|integer',
+            'images.*.temp_path.file_size' => 'nullable|integer',
         ]);
 
         try {
@@ -181,7 +187,6 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'sometimes|required|exists:categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
             'name' => 'sometimes|required|string|max:300',
             'slug' => 'nullable|string|max:350',
             'short_description' => 'nullable|string|max:500',
@@ -238,6 +243,14 @@ class ProductController extends Controller
             'images.*.sort_order' => 'nullable|integer',
             'images.*.is_primary' => 'nullable|boolean',
             'images.*.variant_sku' => 'nullable|string|max:100',
+            'images.*.temp_path' => 'nullable|array',
+            'images.*.temp_path.original' => 'nullable|string',
+            'images.*.temp_path.webp' => 'nullable|string',
+            'images.*.temp_path.thumb' => 'nullable|string',
+            'images.*.temp_path.hash' => 'nullable|string',
+            'images.*.temp_path.width' => 'nullable|integer',
+            'images.*.temp_path.height' => 'nullable|integer',
+            'images.*.temp_path.file_size' => 'nullable|integer',
         ]);
 
         try {
@@ -268,9 +281,6 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(int $id): JsonResponse
     {
         try {
@@ -290,6 +300,15 @@ class ProductController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('ProductController@destroy failed: ' . $e->getMessage());
+            
+            if ($e->getCode() === 409) {
+                return response()->json([
+                    'success' => false,
+                    'error_code' => 'PRODUCT_USED',
+                    'message' => $e->getMessage()
+                ], 409);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete product',

@@ -34,15 +34,6 @@
         </select>
       </div>
 
-      <div class="form-group" style="margin-bottom: 0;">
-        <label class="form-label">Brand</label>
-        <select v-model="filters.brand_id" class="form-input" @change="applyFilters">
-          <option value="">All Brands</option>
-          <option v-for="b in brands" :key="b.id" :value="b.id">
-            {{ b.name }}
-          </option>
-        </select>
-      </div>
 
       <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Status</label>
@@ -79,12 +70,64 @@
 
   <!-- Products List -->
   <div v-if="!productStore.loading" class="glass-panel" style="overflow: hidden;">
-    <table class="data-table">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="prod in products" :key="prod.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <img v-if="getPrimaryImage(prod)" :src="getPrimaryImage(prod)" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" />
+              <span v-else style="font-weight: 700; color: var(--color-text-muted);">🛍️</span>
+            </div>
+            <div>
+              <div class="mdc-title">{{ prod.name }}</div>
+              <div class="mdc-date">₹{{ parseFloat(prod.selling_price).toFixed(2) }} (MRP: ₹{{ parseFloat(prod.mrp).toFixed(2) }})</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">{{ prod.category?.name || 'Uncategorized' }}</span>
+            <span class="mdc-email">Slug: {{ prod.slug }}</span>
+          </div>
+          
+          <div class="mdc-totals" style="margin-top: 0.5rem;">
+            <div v-if="prod.variants && prod.variants.length > 0" style="display: flex; flex-wrap: wrap; gap: 4px;">
+              <span v-for="v in prod.variants" :key="v.id" class="badge" :class="v.stock_quantity <= v.low_stock_threshold ? 'badge--danger' : 'badge--secondary'" style="font-size: 0.65rem; padding: 1px 4px;">
+                {{ v.size || '' }}{{ v.color ? '-' + v.color : '' }} ({{ v.stock_quantity }})
+              </span>
+            </div>
+            <span v-else style="color: var(--color-danger); font-size: 0.8rem;">⚠️ No Variants</span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges" style="flex-direction: row; flex-wrap: wrap;">
+            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--danger']">{{ prod.is_active ? 'Active' : 'Inactive' }}</span>
+            <span v-if="prod.is_featured" class="badge badge--success">Featured</span>
+            <span v-if="prod.is_bestseller" class="badge badge--warning">Bestseller</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">Activate</button>
+            <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">Edit</router-link>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="products.length === 0" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+        No products found matching filters.
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table">
       <thead>
         <tr>
           <th>Product</th>
           <th>Slug & Info</th>
-          <th>Category / Brand</th>
+          <th>Category</th>
           <th>Base Price (MRP)</th>
           <th>Variants (Stock)</th>
           <th>Status</th>
@@ -101,7 +144,7 @@
                 <span v-else style="font-weight: 700; color: var(--color-text-muted);">🛍️</span>
               </div>
               <div>
-                <div style="font-weight: 600; color: #fff; font-size: 0.95rem;">{{ prod.name }}</div>
+                <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">{{ prod.name }}</div>
                 <div style="font-size: 0.8rem; color: var(--color-text-muted);">UUID: {{ prod.uuid.substring(0, 8) }}...</div>
               </div>
             </div>
@@ -116,10 +159,9 @@
           </td>
           <td>
             <div style="color: var(--color-text-primary); font-size: 0.9rem;">{{ prod.category?.name || '—' }}</div>
-            <div style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: 0.15rem;">{{ prod.brand?.name || '—' }}</div>
           </td>
           <td>
-            <div style="font-weight: 600; color: #fff;">₹{{ parseFloat(prod.selling_price).toFixed(2) }}</div>
+            <div style="font-weight: 600; color: #1e293b;">₹{{ parseFloat(prod.selling_price).toFixed(2) }}</div>
             <div style="text-decoration: line-through; font-size: 0.8rem; color: var(--color-text-muted);">₹{{ parseFloat(prod.mrp).toFixed(2) }}</div>
           </td>
           <td>
@@ -148,6 +190,9 @@
           </td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 0.5rem;">
+              <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">
+                🟢 Activate
+              </button>
               <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm" style="text-decoration: none;">
                 ✏️ Edit
               </router-link>
@@ -194,18 +239,15 @@
 import { ref, onMounted, computed } from 'vue';
 import { useProductStore } from '../../stores/product';
 import { useCategoryStore } from '../../stores/category';
-import { useBrandStore } from '../../stores/brand';
 
 const productStore = useProductStore();
 const categoryStore = useCategoryStore();
-const brandStore = useBrandStore();
 
 const errorMsg = ref(null);
 
 const filters = ref({
   search: '',
   category_id: '',
-  brand_id: '',
   is_active: '',
   sort_by: 'created_at_desc',
   page: 1,
@@ -214,7 +256,6 @@ const filters = ref({
 const products = computed(() => productStore.products);
 const pagination = computed(() => productStore.pagination);
 const categories = computed(() => categoryStore.categories);
-const brands = computed(() => brandStore.brands);
 
 // Debouncing search inputs
 let searchTimeout = null;
@@ -242,20 +283,40 @@ function getPrimaryImage(product) {
 }
 
 async function deleteProduct(id) {
-  if (confirm('Are you sure you want to delete this product? This will soft-delete associated variants.')) {
+  if (confirm('are you sure to Delete ?')) {
     errorMsg.value = null;
     try {
       await productStore.deleteProduct(id);
       applyFilters();
     } catch (err) {
-      errorMsg.value = err.message || 'Failed to delete product';
+      if (err.error_code === 'PRODUCT_USED') {
+        if (confirm(err.message || 'This product is used in orders. Would you like to deactivate it instead?')) {
+          try {
+            await productStore.updateProduct(id, { is_active: false });
+            applyFilters();
+          } catch (updateErr) {
+            errorMsg.value = updateErr.message || 'Failed to deactivate product';
+          }
+        }
+      } else {
+        errorMsg.value = err.message || 'Failed to delete product';
+      }
     }
+  }
+}
+
+async function activateProduct(id) {
+  errorMsg.value = null;
+  try {
+    await productStore.updateProduct(id, { is_active: true });
+    applyFilters();
+  } catch (err) {
+    errorMsg.value = err.message || 'Failed to activate product';
   }
 }
 
 onMounted(() => {
   categoryStore.fetchCategories();
-  brandStore.fetchBrands();
   applyFilters();
 });
 </script>

@@ -25,6 +25,21 @@ export const useCategoryStore = defineStore('category', {
       }
     },
 
+    async fetchPublicCategories() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await axios.get('/api/storefront/categories');
+        if (response.data.success) {
+          this.categories = response.data.data;
+        }
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to fetch public categories';
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async fetchCategoryTree() {
       this.loading = true;
       this.error = null;

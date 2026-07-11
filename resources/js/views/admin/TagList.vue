@@ -21,7 +21,42 @@
 
   <!-- Tags Table -->
   <div class="glass-panel" style="overflow: hidden; margin-top: 1rem;">
-    <table class="data-table">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="tag in tags" :key="tag.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div>
+              <div class="mdc-title">{{ tag.name }}</div>
+              <div class="mdc-date">{{ tag.slug }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">Created: {{ formatDate(tag.created_at) }}</span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges">
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn--secondary btn--sm" @click="openEditModal(tag)">Edit</button>
+            <button class="btn btn--danger btn--sm" @click="deleteTag(tag.id)">Delete</button>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="tags.length === 0 && !tagStore.loading" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+        No tags found. Click "Add Tag" to create one.
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table">
       <thead>
         <tr>
           <th>Name</th>
@@ -32,7 +67,7 @@
       </thead>
       <tbody>
         <tr v-for="tag in tags" :key="tag.id">
-          <td style="font-weight: 500; color: #fff;">{{ tag.name }}</td>
+          <td style="font-weight: 500; color: #1e293b;">{{ tag.name }}</td>
           <td><code>{{ tag.slug }}</code></td>
           <td>{{ formatDate(tag.created_at) }}</td>
           <td style="text-align: right;">

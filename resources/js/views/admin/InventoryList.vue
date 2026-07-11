@@ -69,7 +69,52 @@
 
     <!-- Variants Table -->
     <div class="glass-panel" style="overflow: hidden;">
-      <table class="data-table">
+      
+      <!-- Mobile Cards View -->
+      <div class="mobile-data-list">
+        <div class="mobile-data-card" v-for="v in variants" :key="v.id">
+          <div class="mdc-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div>
+                <div class="mdc-title">{{ v.product?.name }}</div>
+                <div class="mdc-date">{{ v.sku }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mdc-body">
+            <div class="mdc-customer">
+              <span class="mdc-name">{{ v.product?.category?.name }}</span>
+              <span class="mdc-email">
+                <span v-if="v.size" class="badge badge--secondary" style="font-size: 0.75rem; margin-right: 4px;">Size: {{ v.size }}</span>
+                <span v-if="v.color" class="badge badge--secondary" style="font-size: 0.75rem;">Color: {{ v.color }}</span>
+              </span>
+            </div>
+            <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+              <span>Stock: <strong>{{ v.stock_quantity }}</strong> (Res: {{ v.reserved_quantity }})</span>
+              <span>Low: <strong>{{ v.low_stock_threshold }}</strong></span>
+            </div>
+          </div>
+          
+          <div class="mdc-footer">
+            <div class="mdc-badges">
+              <span :class="['badge', getStockStatusClass(v)]">
+                {{ getStockStatusLabel(v) }}
+              </span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn--primary btn--sm" @click="openAdjustModal(v)">⚙️ Adjust</button>
+            </div>
+          </div>
+        </div>
+        
+        <div v-if="variants.length === 0 && !inventoryStore.loading" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+          No variant stock records found.
+        </div>
+      </div>
+
+      <!-- Desktop Table View -->
+      <table class="data-table desktop-data-table">
         <thead>
           <tr>
             <th>Product Name</th>
@@ -85,7 +130,7 @@
         <tbody>
           <tr v-for="v in variants" :key="v.id">
             <td>
-              <div style="font-weight: 600; color: #fff;">{{ v.product?.name }}</div>
+              <div style="font-weight: 600; color: #1e293b;">{{ v.product?.name }}</div>
               <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ v.product?.category?.name }}</div>
             </td>
             <td><code>{{ v.sku }}</code></td>
@@ -93,7 +138,7 @@
               <span v-if="v.size" class="badge badge--secondary" style="font-size: 0.75rem; margin-right: 4px;">Size: {{ v.size }}</span>
               <span v-if="v.color" class="badge badge--secondary" style="font-size: 0.75rem;">Color: {{ v.color }}</span>
             </td>
-            <td style="text-align: right; font-weight: 700; color: #fff;">
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">
               {{ v.stock_quantity }}
             </td>
             <td style="text-align: right; color: var(--color-text-secondary);">
@@ -198,7 +243,7 @@
               {{ formatDate(log.created_at) }}
             </td>
             <td>
-              <div style="font-weight: 500; color: #fff;">{{ log.variant?.sku }}</div>
+              <div style="font-weight: 500; color: #1e293b;">{{ log.variant?.sku }}</div>
               <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ log.variant?.product?.name }}</div>
             </td>
             <td>
@@ -211,9 +256,9 @@
                 {{ log.direction }}
               </span>
             </td>
-            <td style="text-align: right; font-weight: 600; color: #fff;">{{ log.quantity }}</td>
+            <td style="text-align: right; font-weight: 600; color: #1e293b;">{{ log.quantity }}</td>
             <td style="text-align: right; color: var(--color-text-muted);">{{ log.stock_before }}</td>
-            <td style="text-align: right; font-weight: 500; color: #fff;">{{ log.stock_after }}</td>
+            <td style="text-align: right; font-weight: 500; color: #1e293b;">{{ log.stock_after }}</td>
             <td style="font-size: 0.8rem; color: var(--color-text-secondary);">
               {{ log.reference_type ? log.reference_type.split('\\').pop() + ' #' + log.reference_id : '—' }}
             </td>
@@ -257,7 +302,7 @@
         <div class="modal-body">
           <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
             <div style="font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">PRODUCT SKU</div>
-            <div style="font-weight: bold; color: #fff; font-size: 1rem;">{{ selectedVariant?.sku }}</div>
+            <div style="font-weight: bold; color: #1e293b; font-size: 1rem;">{{ selectedVariant?.sku }}</div>
             <div style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.25rem;">{{ selectedVariant?.product?.name }}</div>
             <div style="font-size: 0.85rem; color: var(--color-text-primary); margin-top: 0.5rem;">
               Current Stock Level: <strong>{{ selectedVariant?.stock_quantity }}</strong> units

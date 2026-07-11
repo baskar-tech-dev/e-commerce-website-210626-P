@@ -21,9 +21,62 @@
 
   <!-- Categories Table -->
   <div class="glass-panel" style="overflow: hidden; margin-top: 1rem;">
-    <table class="data-table">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="category in categories" :key="category.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <img v-if="category.image" :src="category.image" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--color-border);" />
+            <div v-else style="width: 40px; height: 50px; border-radius: 4px; border: 1px dashed var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: 1.25rem;">
+              🖼️
+            </div>
+            <div>
+              <div class="mdc-title">{{ category.name }}</div>
+              <div class="mdc-date">{{ category.slug }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">
+              Parent: 
+              <span v-if="category.parent_id" style="color: #1e293b; font-weight: 600;">{{ getParentName(category.parent_id) }}</span>
+              <span v-else style="color: var(--color-text-muted);">— Root</span>
+            </span>
+          </div>
+          <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+            <span>Sort Order: <strong>{{ category.sort_order }}</strong></span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges">
+            <span :class="['badge', category.is_active ? 'badge--success' : 'badge--danger']">
+              {{ category.is_active ? 'Active' : 'Inactive' }}
+            </span>
+            <span :class="['badge', category.is_featured ? 'badge--success' : 'badge--danger']">
+              {{ category.is_featured ? 'Featured' : 'Standard' }}
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn--secondary btn--sm" @click="openEditModal(category)">Edit</button>
+            <button class="btn btn--danger btn--sm" @click="deleteCategory(category.id)">Delete</button>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="categories.length === 0 && !categoryStore.loading" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+        No categories found.
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table">
       <thead>
         <tr>
+          <th>Image</th>
           <th>Name</th>
           <th>Slug</th>
           <th>Parent</th>
@@ -35,10 +88,16 @@
       </thead>
       <tbody>
         <tr v-for="category in categories" :key="category.id">
-          <td style="font-weight: 500; color: #fff;">{{ category.name }}</td>
+          <td>
+            <img v-if="category.image" :src="category.image" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--color-border);" />
+            <div v-else style="width: 40px; height: 50px; border-radius: 4px; border: 1px dashed var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: 1.25rem;">
+              🖼️
+            </div>
+          </td>
+          <td style="font-weight: 500; color: #1e293b;">{{ category.name }}</td>
           <td><code>{{ category.slug }}</code></td>
           <td>
-            <span v-if="category.parent_id" class="badge" style="background: rgba(255,255,255,0.05); color: #fff;">
+            <span v-if="category.parent_id" class="badge" style="background: rgba(255,255,255,0.05); color: #1e293b;">
               {{ getParentName(category.parent_id) }}
             </span>
             <span v-else style="color: var(--color-text-muted); font-size: 0.85rem;">— Root</span>
@@ -66,7 +125,7 @@
           </td>
         </tr>
         <tr v-if="categories.length === 0 && !categoryStore.loading">
-          <td colspan="7" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
+          <td colspan="8" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
             No categories found. Click "Add Category" to create one.
           </td>
         </tr>
@@ -76,21 +135,44 @@
 
   <!-- Create/Edit Modal -->
   <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-    <div class="modal-container">
+    <div class="modal-container" style="max-height: 85vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3 class="modal-title">{{ isEdit ? 'Edit Category' : 'Create Category' }}</h3>
         <button class="modal-close" @click="closeModal">&times;</button>
       </div>
-      <form @submit.prevent="saveCategory">
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">Category Name</label>
-            <input type="text" v-model="form.name" required class="form-input" placeholder="e.g., Men's Apparel" />
+      <form @submit.prevent="saveCategory" style="display: flex; flex-direction: column; overflow: hidden; flex-grow: 1;">
+        <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding: var(--spacing-md) var(--spacing-lg);">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Category Name</label>
+              <input type="text" v-model="form.name" required class="form-input" placeholder="e.g., Men's Apparel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Slug (Optional)</label>
+              <input type="text" v-model="form.slug" class="form-input" placeholder="e.g., mens-apparel" />
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Slug (Optional)</label>
-            <input type="text" v-model="form.slug" class="form-input" placeholder="e.g., mens-apparel" />
+            <label class="form-label">Category Image</label>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div v-if="form.image" style="position: relative; width: 80px; height: 100px; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0;">
+                <img :src="form.image" style="width: 100%; height: 100%; object-fit: cover;" />
+                <button type="button" @click="removeImage" style="position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.8); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px;">&times;</button>
+              </div>
+              <div v-else style="width: 80px; height: 100px; border-radius: 8px; border: 2px dashed var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: 1.5rem; flex-shrink: 0;">
+                🖼️
+              </div>
+              <div style="flex: 1;">
+                <input type="file" accept="image/*" @change="handleImageUpload" style="display: none;" ref="fileInput" />
+                <button type="button" class="btn btn--secondary" @click="$refs.fileInput.click()" :disabled="imageUploading">
+                  {{ imageUploading ? 'Uploading...' : (form.image ? 'Change Image' : 'Upload Image') }}
+                </button>
+                <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">
+                  Recommended ratio: 4:5 (e.g. 400x500px).
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -125,7 +207,7 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="flex-shrink: 0;">
           <button type="button" class="btn btn--secondary" @click="closeModal" :disabled="submitting">
             Cancel
           </button>
@@ -141,6 +223,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useCategoryStore } from '../../stores/category';
+import axios from 'axios';
 
 const categoryStore = useCategoryStore();
 const showModal = ref(false);
@@ -148,12 +231,14 @@ const isEdit = ref(false);
 const submitting = ref(false);
 const errorMsg = ref(null);
 const currentId = ref(null);
+const imageUploading = ref(false);
 
 const form = ref({
   parent_id: null,
   name: '',
   slug: '',
   description: '',
+  image: '',
   sort_order: 0,
   is_active: true,
   is_featured: false,
@@ -184,6 +269,7 @@ function openCreateModal() {
     name: '',
     slug: '',
     description: '',
+    image: '',
     sort_order: 0,
     is_active: true,
     is_featured: false,
@@ -200,6 +286,7 @@ function openEditModal(category) {
     name: category.name,
     slug: category.slug,
     description: category.description,
+    image: category.image || '',
     sort_order: category.sort_order,
     is_active: category.is_active,
     is_featured: category.is_featured,
@@ -238,5 +325,35 @@ async function deleteCategory(id) {
       errorMsg.value = err.message || 'Failed to delete category';
     }
   }
+}
+
+async function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  imageUploading.value = true;
+  try {
+    const res = await axios.post('/api/admin/media/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    if (res.data.success) {
+      form.value.image = res.data.data.url;
+    } else {
+      alert('Upload failed: ' + res.data.message);
+    }
+  } catch (err) {
+    alert('Upload error: ' + (err.response?.data?.message || err.message));
+  } finally {
+    imageUploading.value = false;
+  }
+}
+
+function removeImage() {
+  form.value.image = '';
 }
 </script>

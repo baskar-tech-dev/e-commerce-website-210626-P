@@ -36,10 +36,10 @@
       ⚠️ {{ errorMsg }}
     </div>
 
-    <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch;">
+    <div class="grid-2 responsive-grid-1-1" style="gap: 1.5rem; margin-bottom: 1.5rem; align-items: stretch;">
       <!-- Column 1: Customer Profile Details -->
       <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column;">
-        <h2 style="color: #fff; font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+        <h2 style="color: #1e293b; font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
           Account Details
         </h2>
 
@@ -51,27 +51,27 @@
               <span v-else>👤</span>
             </div>
             <div>
-              <div style="font-size: 1.15rem; font-weight: 600; color: #fff;">{{ customer.name }}</div>
+              <div style="font-size: 1.15rem; font-weight: 600; color: #1e293b;">{{ customer.name }}</div>
               <div style="font-size: 0.85rem; color: var(--color-text-muted);">Joined: {{ formatDate(customer.created_at) }}</div>
             </div>
           </div>
 
-          <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
+          <div class="grid-2 responsive-grid-1-1" style="gap: 1rem; margin-bottom: 0.5rem;">
             <div>
               <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block;">Email</span>
-              <span style="color: #fff; font-size: 0.95rem;">{{ customer.email }}</span>
+              <span style="color: #1e293b; font-size: 0.95rem;">{{ customer.email }}</span>
             </div>
             <div>
               <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block;">Phone</span>
-              <span style="color: #fff; font-size: 0.95rem;">{{ customer.phone || 'Not provided' }}</span>
+              <span style="color: #1e293b; font-size: 0.95rem;">{{ customer.phone || 'Not provided' }}</span>
             </div>
             <div>
               <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block;">Date of Birth</span>
-              <span style="color: #fff; font-size: 0.95rem;">{{ formatDate(customer.profile?.date_of_birth) || 'Not provided' }}</span>
+              <span style="color: #1e293b; font-size: 0.95rem;">{{ formatDate(customer.profile?.date_of_birth) || 'Not provided' }}</span>
             </div>
             <div>
               <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block;">Gender</span>
-              <span style="color: #fff; font-size: 0.95rem;">{{ customer.profile?.gender || 'Not specified' }}</span>
+              <span style="color: #1e293b; font-size: 0.95rem;">{{ customer.profile?.gender || 'Not specified' }}</span>
             </div>
           </div>
 
@@ -93,7 +93,7 @@
 
         <!-- Edit Profile Form -->
         <form v-else @submit.prevent="saveProfile" style="display: flex; flex-direction: column; gap: 1rem; flex: 1;">
-          <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
             <div class="form-group">
               <label class="form-label">First Name</label>
               <input type="text" v-model="profileForm.first_name" required class="form-input" />
@@ -109,7 +109,7 @@
             <input type="text" v-model="profileForm.phone" class="form-input" placeholder="e.g. +91 9988776655" />
           </div>
 
-          <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
             <div class="form-group">
               <label class="form-label">Date of Birth</label>
               <input type="date" v-model="profileForm.date_of_birth" class="form-input" />
@@ -150,25 +150,25 @@
 
       <!-- Column 2: Account Stats & Notes -->
       <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column;">
-        <h2 style="color: #fff; font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+        <h2 style="color: #1e293b; font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
           Account Notes & Summary
         </h2>
 
         <!-- Stats Boxes -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div class="responsive-grid-1-1" style="gap: 1rem; margin-bottom: 1.25rem;">
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 1rem; text-align: center;">
             <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 0.25rem;">Total Orders</span>
-            <span style="font-size: 1.5rem; font-weight: 700; color: #fff;">{{ customer.profile?.total_orders || 0 }}</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">{{ customer.profile?.total_orders || 0 }}</span>
           </div>
           <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 1rem; text-align: center;">
             <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 0.25rem;">Total Spent</span>
-            <span style="font-size: 1.5rem; font-weight: 700; color: #fff;">₹{{ parseFloat(customer.profile?.total_spent || 0).toFixed(2) }}</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">₹{{ parseFloat(customer.profile?.total_spent || 0).toFixed(2) }}</span>
           </div>
         </div>
 
         <!-- Notes Editor -->
         <div style="display: flex; flex-direction: column; flex: 1;">
-          <label class="form-label" style="font-weight: 600; color: #fff; margin-bottom: 0.5rem;">Administrative Notes</label>
+          <label class="form-label" style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">Administrative Notes</label>
           <textarea 
             v-model="notes" 
             class="form-textarea" 
@@ -185,7 +185,7 @@
     <!-- Address Book & Order History Tabs -->
     <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
-        <h2 style="color: #fff; font-size: 1.25rem; margin: 0;">
+        <h2 style="color: #1e293b; font-size: 1.25rem; margin: 0;">
           🏠 Address Book ({{ customer.addresses?.length || 0 }}/5)
         </h2>
         <button class="btn btn--primary btn--sm" @click="openAddAddressModal" :disabled="customer.addresses?.length >= 5">
@@ -208,12 +208,12 @@
             <span v-if="address.is_default_shipping" class="badge badge--success" style="font-size: 0.75rem;">
               Default Shipping
             </span>
-            <span v-if="address.is_default_billing" class="badge" style="background: rgba(255,255,255,0.15); color: #fff; font-size: 0.75rem;">
+            <span v-if="address.is_default_billing" class="badge" style="background: rgba(255,255,255,0.15); color: #1e293b; font-size: 0.75rem;">
               Default Billing
             </span>
           </div>
 
-          <div style="font-weight: 600; color: #fff; font-size: 0.95rem;">
+          <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">
             {{ address.first_name }} {{ address.last_name }}
           </div>
           <div style="font-size: 0.85rem; color: var(--color-text-muted);">
@@ -244,7 +244,7 @@
 
     <!-- Orders History Integration Notice -->
     <div class="glass-panel" style="padding: 1.5rem;">
-      <h2 style="color: #fff; font-size: 1.25rem; margin-top: 0; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+      <h2 style="color: #1e293b; font-size: 1.25rem; margin-top: 0; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
         🛍️ Order History
       </h2>
       <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.08); color: var(--color-text-muted);">
@@ -261,7 +261,7 @@
         </div>
         <form @submit.prevent="saveAddress">
           <div class="modal-body">
-            <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">First Name</label>
                 <input type="text" v-model="addressForm.first_name" required class="form-input" />
@@ -272,7 +272,7 @@
               </div>
             </div>
 
-            <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">Label (e.g. Home, Office)</label>
                 <input type="text" v-model="addressForm.label" class="form-input" placeholder="Home" />
@@ -293,7 +293,7 @@
               <input type="text" v-model="addressForm.address_line_2" class="form-input" />
             </div>
 
-            <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">City</label>
                 <input type="text" v-model="addressForm.city" required class="form-input" />
@@ -304,7 +304,7 @@
               </div>
             </div>
 
-            <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="grid-2 responsive-grid-1-1" style="gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">PIN / Postal Code</label>
                 <input type="text" v-model="addressForm.postal_code" required class="form-input" />

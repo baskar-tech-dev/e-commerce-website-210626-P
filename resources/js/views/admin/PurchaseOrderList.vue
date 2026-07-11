@@ -54,7 +54,70 @@
 
   <!-- PO Table -->
   <div class="glass-panel" style="overflow: hidden;">
-    <table class="data-table">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="po in purchaseOrders" :key="po.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div>
+              <div class="mdc-title">{{ po.po_number }}</div>
+              <div class="mdc-date">{{ formatDate(po.created_at) }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">{{ po.supplier_name }}</span>
+            <span class="mdc-email">Contact: {{ po.supplier_contact || 'No Contact' }}</span>
+          </div>
+          <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+            <span>By: <strong>{{ po.creator?.name || 'Operator' }}</strong></span>
+            <span>Total: <strong style="color: #1e293b;">₹{{ parseFloat(po.total_amount).toFixed(2) }}</strong></span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges">
+            <span :class="['badge', getPOStatusClass(po.status)]">
+              {{ getPOStatusLabel(po.status) }}
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <router-link 
+              v-if="po.status === 'draft'"
+              :to="`/admin/purchase-orders/${po.id}/edit`" 
+              class="btn btn--secondary btn--sm"
+            >
+              Edit
+            </router-link>
+            <router-link 
+              v-else
+              :to="`/admin/purchase-orders/${po.id}/edit`" 
+              class="btn btn--secondary btn--sm"
+            >
+              View
+            </router-link>
+
+            <router-link 
+              v-if="po.status === 'ordered' || po.status === 'partial'"
+              :to="`/admin/purchase-orders/${po.id}/receive`" 
+              class="btn btn--primary btn--sm"
+            >
+              Receive
+            </router-link>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="purchaseOrders.length === 0" style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+        No Purchase Orders found.
+      </div>
+    </div>
+
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table">
       <thead>
         <tr>
           <th>PO Number</th>
@@ -68,14 +131,14 @@
       </thead>
       <tbody>
         <tr v-for="po in purchaseOrders" :key="po.id">
-          <td><strong style="color: #fff;">{{ po.po_number }}</strong></td>
+          <td><strong style="color: #1e293b;">{{ po.po_number }}</strong></td>
           <td>
             <div>{{ po.supplier_name }}</div>
             <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ po.supplier_contact || 'No Contact' }}</div>
           </td>
           <td>{{ po.creator?.name || 'Operator' }}</td>
           <td style="font-size: 0.85rem; color: var(--color-text-secondary);">{{ formatDate(po.created_at) }}</td>
-          <td style="font-weight: 600; color: #fff;">₹{{ parseFloat(po.total_amount).toFixed(2) }}</td>
+          <td style="font-weight: 600; color: #1e293b;">₹{{ parseFloat(po.total_amount).toFixed(2) }}</td>
           <td>
             <span :class="['badge', getPOStatusClass(po.status)]">
               {{ getPOStatusLabel(po.status) }}

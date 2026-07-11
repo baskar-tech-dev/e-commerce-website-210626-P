@@ -132,4 +132,122 @@ class InventoryService
             ]);
         });
     }
+
+    /**
+     * Reserve stock for a product variant (moves stock_quantity to reserved_quantity).
+     */
+    public function reserveStock(int $variantId, int $quantity, int $orderId, ?int $userId = null): void
+    {
+        if ($quantity <= 0) {
+            throw new Exception("Reservation quantity must be greater than zero.");
+        }
+
+        DB::transaction(function () use ($variantId, $quantity, $orderId, $userId) {
+            $variant = ProductVariant::lockForUpdate()->find($variantId);
+            if (!$variant) {
+                throw new Exception("Product variant with ID {$variantId} not found.");
+            }
+
+            $stockBefore = $variant->stock_quantity;
+            if ($stockBefore < $quantity) {
+                throw new Exception("Operation failed: Insufficient stock to reserve for SKU '{$variant->sku}'. Current: {$stockBefore}, Requested: {$quantity}.");
+            }
+
+            $variant->stock_quantity = $stockBefore - $quantity;
+            $variant->reserved_quantity += $quantity;
+            $variant->save();
+
+            // Record entry in ledger history
+            InventoryLedger::create([
+                'product_variant_id' => $variantId,
+                'type' => 'RESERVE',
+                'direction' => 'OUT',
+                'quantity' => $quantity,
+                'reference_type' => 'Order',
+                'reference_id' => $orderId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $variant->stock_quantity,
+                'notes' => "Stock reserved for order ID #{$orderId}",
+                'created_by' => $userId,
+            ]);
+        });
+    }
+
+    /**
+     * Commit reserved stock (reduces reserved_quantity without changing stock_quantity).
+     */
+    public function commitReservedStock(int $variantId, int $quantity, int $orderId, ?int $userId = null): void
+    {
+        if ($quantity <= 0) {
+            throw new Exception("Commit quantity must be greater than zero.");
+        }
+
+        DB::transaction(function () use ($variantId, $quantity, $orderId, $userId) {
+            $variant = ProductVariant::lockForUpdate()->find($variantId);
+            if (!$variant) {
+                throw new Exception("Product variant with ID {$variantId} not found.");
+            }
+
+            if ($variant->reserved_quantity < $quantity) {
+                throw new Exception("Operation failed: Insufficient reserved stock to commit for SKU '{$variant->sku}'. Reserved: {$variant->reserved_quantity}, Requested: {$quantity}.");
+            }
+
+            $variant->reserved_quantity -= $quantity;
+            $variant->save();
+
+            // Record entry in ledger history
+            InventoryLedger::create([
+                'product_variant_id' => $variantId,
+                'type' => 'SALE',
+                'direction' => 'OUT',
+                'quantity' => $quantity,
+                'reference_type' => 'Order',
+                'reference_id' => $orderId,
+                'stock_before' => $variant->stock_quantity + $quantity,
+                'stock_after' => $variant->stock_quantity,
+                'notes' => "Reserved stock committed/sold for order ID #{$orderId}",
+                'created_by' => $userId,
+            ]);
+        });
+    }
+
+    /**
+     * Release reserved stock (moves reserved_quantity back to stock_quantity).
+     */
+    public function releaseReservedStock(int $variantId, int $quantity, int $orderId, ?int $userId = null): void
+    {
+        if ($quantity <= 0) {
+            throw new Exception("Release quantity must be greater than zero.");
+        }
+
+        DB::transaction(function () use ($variantId, $quantity, $orderId, $userId) {
+            $variant = ProductVariant::lockForUpdate()->find($variantId);
+            if (!$variant) {
+                throw new Exception("Product variant with ID {$variantId} not found.");
+            }
+
+            if ($variant->reserved_quantity < $quantity) {
+                throw new Exception("Operation failed: Insufficient reserved stock to release for SKU '{$variant->sku}'. Reserved: {$variant->reserved_quantity}, Requested: {$quantity}.");
+            }
+
+            $stockBefore = $variant->stock_quantity;
+            $variant->reserved_quantity -= $quantity;
+            $variant->stock_quantity = $stockBefore + $quantity;
+            $variant->save();
+
+            // Record entry in ledger history
+            InventoryLedger::create([
+                'product_variant_id' => $variantId,
+                'type' => 'RELEASE',
+                'direction' => 'IN',
+                'quantity' => $quantity,
+                'reference_type' => 'Order',
+                'reference_id' => $orderId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $variant->stock_quantity,
+                'notes' => "Reserved stock released for order ID #{$orderId}",
+                'created_by' => $userId,
+            ]);
+        });
+    }
 }

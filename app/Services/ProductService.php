@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -79,15 +80,15 @@ class ProductService
             // Create images
             if (isset($data['images']) && is_array($data['images'])) {
                 foreach ($data['images'] as $imageData) {
-                    // Check if image is for a specific variant (by sku)
+                    $variantId = null;
                     if (isset($imageData['variant_sku']) && isset($skuToVariantId[$imageData['variant_sku']])) {
-                        $imageData['variant_id'] = $skuToVariantId[$imageData['variant_sku']];
+                        $variantId = $skuToVariantId[$imageData['variant_sku']];
                     }
-                    $product->images()->create($imageData);
+                    $this->processUploadedTempImage($product, $imageData, $variantId);
                 }
             }
 
-            return $product->load(['category', 'brand', 'variants', 'images', 'tags']);
+            return $product->load(['category', 'variants', 'images', 'tags']);
         });
     }
 
@@ -152,33 +153,138 @@ class ProductService
                 $incomingImageIds = [];
                 foreach ($data['images'] as $imageData) {
                     // Resolve variant_id from sku if passed
+                    $variantId = null;
                     if (isset($imageData['variant_sku']) && isset($skuToVariantId[$imageData['variant_sku']])) {
-                        $imageData['variant_id'] = $skuToVariantId[$imageData['variant_sku']];
+                        $variantId = $skuToVariantId[$imageData['variant_sku']];
                     }
 
                     if (isset($imageData['id'])) {
                         $image = $product->images()->find($imageData['id']);
                         if ($image) {
-                            $image->update($imageData);
+                            $image->update([
+                                'variant_id' => $variantId,
+                                'color_group' => $imageData['color_group'] ?? $image->color_group,
+                                'url' => $imageData['url'],
+                                'thumbnail_url' => $imageData['thumbnail_url'] ?? $image->thumbnail_url,
+                                'alt_text' => $imageData['alt_text'] ?? $image->alt_text,
+                                'sort_order' => $imageData['sort_order'] ?? $image->sort_order,
+                                'is_primary' => $imageData['is_primary'] ?? $image->is_primary,
+                            ]);
                             $incomingImageIds[] = $image->id;
                         }
                     } else {
-                        $newImage = $product->images()->create($imageData);
+                        $newImage = $this->processUploadedTempImage($product, $imageData, $variantId);
                         $incomingImageIds[] = $newImage->id;
                     }
                 }
-                $product->images()->whereNotIn('id', $incomingImageIds)->delete();
+                // Delete physical files of images that are removed
+                $removedImages = $product->images()->whereNotIn('id', $incomingImageIds)->get();
+                foreach ($removedImages as $removedImg) {
+                    $this->deletePhysicalFiles($removedImg->url);
+                    $this->deletePhysicalFiles($removedImg->thumbnail_url);
+                    $removedImg->delete();
+                }
             }
 
-            return $product->load(['category', 'brand', 'variants', 'images', 'tags']);
+            return $product->load(['category', 'variants', 'images', 'tags']);
         });
     }
 
     /**
-     * Delete product.
+     * Process temp uploaded images.
      */
+    protected function processUploadedTempImage($product, array $imageData, ?int $variantId = null)
+    {
+        if (isset($imageData['temp_path']) && is_array($imageData['temp_path'])) {
+            $temp = $imageData['temp_path'];
+
+            // Move original
+            $origName = basename($temp['original']);
+            $newOrig = "products/{$product->id}/original/{$origName}";
+            if (Storage::disk('public')->exists($temp['original'])) {
+                Storage::disk('public')->move($temp['original'], $newOrig);
+            }
+
+            // Move webp
+            $webpName = basename($temp['webp']);
+            $newWebp = "products/{$product->id}/webp/{$webpName}";
+            if (Storage::disk('public')->exists($temp['webp'])) {
+                Storage::disk('public')->move($temp['webp'], $newWebp);
+            }
+
+            // Move thumbnail
+            $thumbName = basename($temp['thumb']);
+            $newThumb = "products/{$product->id}/thumbnails/{$thumbName}";
+            if (Storage::disk('public')->exists($temp['thumb'])) {
+                Storage::disk('public')->move($temp['thumb'], $newThumb);
+            }
+
+            $url = '/storage/' . $newWebp;
+            $thumbnailUrl = '/storage/' . $newThumb;
+
+            $imgRecord = $product->images()->create([
+                'variant_id' => $variantId,
+                'color_group' => $imageData['color_group'] ?? null,
+                'url' => $url,
+                'thumbnail_url' => $thumbnailUrl,
+                'alt_text' => $imageData['alt_text'] ?? 'Product image',
+                'sort_order' => $imageData['sort_order'] ?? 0,
+                'is_primary' => $imageData['is_primary'] ?? false,
+            ]);
+
+            // Create metadata
+            \App\Models\ImageMetadata::create([
+                'product_image_id' => $imgRecord->id,
+                'width' => $temp['width'] ?? 0,
+                'height' => $temp['height'] ?? 0,
+                'file_size' => $temp['file_size'] ?? 0,
+                'format' => 'webp',
+                'hash' => $temp['hash'] ?? '',
+                'uploaded_by' => auth()->user()?->id,
+            ]);
+
+            return $imgRecord;
+        }
+
+        // Otherwise it is a simple image record
+        $imgRecord = $product->images()->create([
+            'variant_id' => $variantId,
+            'color_group' => $imageData['color_group'] ?? null,
+            'url' => $imageData['url'],
+            'thumbnail_url' => $imageData['thumbnail_url'] ?? null,
+            'alt_text' => $imageData['alt_text'] ?? null,
+            'sort_order' => $imageData['sort_order'] ?? 0,
+            'is_primary' => $imageData['is_primary'] ?? false,
+        ]);
+
+        return $imgRecord;
+    }
+
+    /**
+     * Delete files from local storage by URL.
+     */
+    protected function deletePhysicalFiles(?string $url): void
+    {
+        if (empty($url)) return;
+        $path = preg_replace('/^\/?storage\//', '', parse_url($url, PHP_URL_PATH));
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
     public function deleteProduct(int $id): bool
     {
+        // Check if used in sales orders
+        $isUsedInOrders = \App\Models\OrderItem::where('product_id', $id)->exists();
+        
+        $variantIds = \App\Models\ProductVariant::where('product_id', $id)->pluck('id');
+        $isVariantUsedInOrders = \App\Models\OrderItem::whereIn('product_variant_id', $variantIds)->exists();
+        $isVariantUsedInPurchase = \App\Models\PurchaseOrderItem::whereIn('product_variant_id', $variantIds)->exists();
+        
+        if ($isUsedInOrders || $isVariantUsedInOrders || $isVariantUsedInPurchase) {
+            throw new \Exception("This product has been used in orders or purchase logs. Would you like to deactivate it instead?", 409);
+        }
+
         return DB::transaction(function () use ($id) {
             $product = $this->productRepository->find($id);
             if ($product) {

@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,7 +27,6 @@ class ProductFactory extends Factory
 
         return [
             'category_id' => Category::factory(),
-            'brand_id' => Brand::factory(),
             'name' => $name,
             'slug' => Str::slug($name),
             'short_description' => $this->faker->paragraph(1),

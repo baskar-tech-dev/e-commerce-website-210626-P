@@ -18,11 +18,7 @@ return new class extends Migration
             $table->foreignId('category_id')
                 ->constrained('categories')
                 ->onDelete('restrict');
-            $table->foreignId('brand_id')
-                ->nullable()
-                ->constrained('brands')
-                ->nullOnDelete();
-            
+
             $table->string('name', 300);
             $table->string('slug', 350)->unique();
             $table->string('short_description', 500)->nullable();
@@ -59,7 +55,6 @@ return new class extends Migration
 
             // Composite indexes
             $table->index(['category_id', 'is_active'], 'idx_products_category');
-            $table->index(['brand_id', 'is_active'], 'idx_products_brand');
             $table->index(['is_active', 'deleted_at'], 'idx_products_active');
             $table->index(['is_featured', 'is_active'], 'idx_products_featured');
             $table->index(['is_new_arrival', 'is_active', 'created_at'], 'idx_products_new');

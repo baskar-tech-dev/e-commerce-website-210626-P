@@ -13,6 +13,7 @@ class ProductImage extends Model
     protected $fillable = [
         'product_id',
         'variant_id',
+        'color_group',
         'url',
         'thumbnail_url',
         'alt_text',
@@ -24,6 +25,24 @@ class ProductImage extends Model
         'is_primary' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    protected $appends = ['image_path'];
+
+    /**
+     * Get the image_path attribute alias for frontend compatibility.
+     */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->url;
+    }
+
+    /**
+     * Get the metadata for the image.
+     */
+    public function metadata(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ImageMetadata::class, 'product_image_id');
+    }
 
     /**
      * Get the product that owns this image.

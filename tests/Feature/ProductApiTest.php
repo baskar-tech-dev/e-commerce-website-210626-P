@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -17,11 +16,8 @@ class ProductApiTest extends TestCase
     public function test_can_list_products_with_filters(): void
     {
         $category = Category::factory()->create();
-        $brand = Brand::factory()->create();
-
         $product1 = Product::factory()->create([
             'category_id' => $category->id,
-            'brand_id' => $brand->id,
             'name' => 'Blue Denim Jacket',
             'is_active' => true,
             'selling_price' => 1500.00
@@ -29,7 +25,6 @@ class ProductApiTest extends TestCase
 
         $product2 = Product::factory()->create([
             'category_id' => Category::factory()->create()->id,
-            'brand_id' => Brand::factory()->create()->id,
             'name' => 'Red Dress',
             'is_active' => false,
             'selling_price' => 2500.00
@@ -58,12 +53,9 @@ class ProductApiTest extends TestCase
     public function test_can_create_product_with_variants_images_and_tags(): void
     {
         $category = Category::factory()->create();
-        $brand = Brand::factory()->create();
         $tag = Tag::factory()->create();
-
         $payload = [
             'category_id' => $category->id,
-            'brand_id' => $brand->id,
             'name' => 'Fancy Shirt',
             'mrp' => 1000.00,
             'selling_price' => 800.00,
