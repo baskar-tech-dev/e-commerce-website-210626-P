@@ -1,5 +1,27 @@
 <template>
   <div class="storefront-layout">
+    <!-- Brand Splash Screen Overlay -->
+    <Transition name="splash-fade">
+      <div v-if="showSplash" class="brand-splash-screen">
+        <div class="splash-content">
+          <div class="splash-logo-container">
+            <img :src="'/asset/profile/logo.png'" alt="Maya Sree Fashion Logo" class="splash-logo-img">
+          </div>
+          <div class="splash-text-container">
+            <span class="splash-brand-name">MAYA SREE</span>
+            <span class="splash-brand-sub">SOUTH INDIAN FASHION</span>
+          </div>
+          <div class="splash-divider"></div>
+          <p class="splash-tagline">A Mother's Dream • A Fashion Legacy</p>
+          <div class="splash-loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Top Announcement Bar -->
     <div class="storefront-announcement">
       <span>🚚 Free Shipping Above ₹999</span>
@@ -230,17 +252,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { Search, User, Heart, ShoppingBag, MessageCircle, ChevronDown, Home, Store } from 'lucide-vue-next';
 
 const router = useRouter();
+const route = useRoute();
+
 const cartCount = ref(0);
 const wishlistCount = ref(0);
 const mobileDrawerOpen = ref(false);
 const searchQuery = ref('');
 const categories = ref([]);
+
+const showSplash = ref(false);
+const isInitialLoad = ref(true);
+
+const triggerSplash = (duration) => {
+  showSplash.value = true;
+  setTimeout(() => {
+    showSplash.value = false;
+  }, duration);
+};
+
+// Watch route changes
+watch(
+  () => route.path,
+  (newPath) => {
+    // When opening a product detail view, trigger the splash screen as transition loader
+    if (newPath && newPath.includes('/products/')) {
+      triggerSplash(1000);
+    }
+  }
+);
 
 const getCartCount = () => {
   try {
@@ -290,6 +335,10 @@ const handleContextMenu = (e) => {
 };
 
 onMounted(() => {
+  if (isInitialLoad.value) {
+    triggerSplash(1500); // 1.5s splash on initial load
+    isInitialLoad.value = false;
+  }
   getCartCount();
   getWishlistCount();
   fetchCategories();
@@ -922,5 +971,156 @@ onUnmounted(() => {
     padding-right: 8px;
     color: var(--color-text-secondary);
   }
+}
+
+/* Premium Brand Splash Screen */
+.brand-splash-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--color-primary); /* Deep Maroon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  max-width: 400px;
+  animation: splashScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.splash-logo-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: var(--spacing-xs);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-secondary); /* Zari Gold border */
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  animation: logoPulse 2s infinite ease-in-out;
+}
+
+.splash-logo-img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+}
+
+.splash-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.splash-brand-name {
+  font-family: var(--font-family-heading);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4px;
+  line-height: 1.1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.splash-brand-sub {
+  font-family: var(--font-family-base);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-secondary); /* Zari Gold */
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.splash-divider {
+  width: 60px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
+  margin: var(--spacing-md) 0;
+}
+
+.splash-tagline {
+  font-family: var(--font-family-base);
+  font-size: 0.85rem;
+  color: rgba(255, 252, 247, 0.8);
+  font-style: italic;
+  letter-spacing: 1px;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.splash-loader-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--spacing-xs);
+}
+
+.splash-loader-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-secondary);
+  animation: splashDotPulse 1.2s infinite ease-in-out both;
+}
+
+.splash-loader-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.splash-loader-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* Animations */
+@keyframes splashScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3); /* Zari Gold glow */
+  }
+}
+
+@keyframes splashDotPulse {
+  0%, 80%, 100% { 
+    transform: scale(0.6);
+    opacity: 0.3;
+  } 
+  40% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Vue Transition styling */
+.splash-fade-enter-active,
+.splash-fade-leave-active {
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.splash-fade-enter-from,
+.splash-fade-leave-to {
+  opacity: 0;
 }
 </style>

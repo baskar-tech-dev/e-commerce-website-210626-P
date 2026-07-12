@@ -3313,7 +3313,22 @@ onUnmounted(() => {
   }
 
   .occasion-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .occasion-name {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+
+  .btn-explore {
+    font-size: 0.65rem;
+  }
+
+  .occasion-overlay {
+    padding: 12px 6px;
   }
 
   .values-grid {
