@@ -17,7 +17,7 @@
 
     <!-- Content Container -->
     <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px; font-family: 'Poppins', sans-serif; color: #2d2d2d; line-height: 1.8;">
-      <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 32px;">
+      <div class="policy-layout-grid">
         
         <!-- Sidebar Navigation (Desktop Only) -->
         <aside style="font-size: 0.88rem; position: sticky; top: 100px; align-self: start;" class="desktop-only">
@@ -142,3 +142,24 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.policy-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .policy-layout-grid {
+    grid-template-columns: 1fr 3fr;
+  }
+  .desktop-only {
+    display: block;
+  }
+}
+</style>

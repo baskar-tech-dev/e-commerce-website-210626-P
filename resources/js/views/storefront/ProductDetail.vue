@@ -91,77 +91,21 @@
             {{ product.description || 'No product description available.' }}
           </p>
 
-          <!-- Variant Selectors (Attributes: Size, Color) -->
-          <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
-            <div class="card-header-title" style="font-size: 0.95rem; border-bottom: none; padding-bottom: 0;">Configure Style</div>
-            
-            <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
-              <label class="form-label" style="font-size: 0.8rem; margin: 0;">Available Variants *</label>
-              <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
-                <button 
-                  v-for="v in product.variants" 
-                  :key="v.id"
-                  type="button"
-                  class="btn btn--sm"
-                  :class="selectedVariant?.id === v.id ? 'btn--primary' : 'btn--secondary'"
-                  style="border-radius: 6px; padding: 0.5rem 1rem;"
-                  @click="selectVariant(v)"
-                >
-                  <span style="text-transform: uppercase; font-weight: bold;">
-                    Size: {{ v.size || 'OS' }} <span v-if="v.color">| {{ v.color }}</span>
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Stock status indicator -->
-            <div v-if="selectedVariant" style="font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 0.25rem;">
-              <span v-if="selectedVariant.stock_quantity > 5" style="color: var(--color-success);">
-                🟢 In Stock ({{ selectedVariant.stock_quantity }} units available)
-              </span>
-              <span v-else-if="selectedVariant.stock_quantity > 0" style="color: var(--color-warning);">
-                🟡 Low Stock! Only {{ selectedVariant.stock_quantity }} units left!
-              </span>
-              <span v-else style="color: var(--color-danger);">
-                🔴 Out of Stock!
-              </span>
-            </div>
-          </div>
-
-          <!-- Add to Cart counter actions -->
-          <div style="display: flex; gap: var(--spacing-md); align-items: center;">
-            <!-- Counter -->
-            <div class="glass-panel" style="display: flex; align-items: center; border-radius: 8px; overflow: hidden; padding: 0;">
-              <button 
-                type="button" 
-                class="btn btn--secondary" 
-                style="padding: 0.6rem var(--spacing-md); border-radius: 0; background: none; border: none; font-size: 1rem; color: var(--color-text-primary);"
-                @click="qty > 1 ? qty-- : null"
-                :disabled="!selectedVariant"
-              >
-                −
-              </button>
-              <span style="font-weight: bold; width: 40px; text-align: center; color: var(--color-text-primary); font-size: 1.1rem;">{{ qty }}</span>
-              <button 
-                type="button" 
-                class="btn btn--secondary" 
-                style="padding: 0.6rem var(--spacing-md); border-radius: 0; background: none; border: none; font-size: 1rem; color: var(--color-text-primary);"
-                @click="qty < selectedVariant.stock_quantity ? qty++ : null"
-                :disabled="!selectedVariant || qty >= selectedVariant.stock_quantity"
-              >
-                +
-              </button>
-            </div>
-
-            <button 
-              class="btn btn--primary" 
-              style="flex: 1; padding: 0.75rem; font-size: 1.05rem; font-weight: bold; border-radius: 8px;"
-              :disabled="!selectedVariant || selectedVariant.stock_quantity === 0"
-              @click="addToCart"
-            >
-              🛒 Add to Cart
-            </button>
-          </div>
+          <!-- Reusable Product Variant Selection System (Color, Size, Summary, Quantity, Add to Cart) -->
+          <ProductVariantSelector 
+            v-if="product"
+            :product="product"
+            v-model:selected-color="selectedColor"
+            v-model:selected-size="selectedSize"
+            v-model:qty="qty"
+            :selected-variant="selectedVariant"
+            :available-colors="availableColors"
+            :available-sizes="availableSizes"
+            :is-size-disabled="isSizeDisabled"
+            :add-to-cart-error="addToCartError"
+            @open-size-guide="triggerSizeGuide"
+            @add-to-cart="addToCart"
+          />
         </div>
       </div>
 
@@ -218,25 +162,183 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
 
 const route = useRoute();
 const router = useRouter();
 const emit = defineEmits(['update-cart-count']);
 
+const triggerSizeGuide = () => {
+  alert("Our design team is preparing the size guide table. Please contact us on WhatsApp support for direct fit advice!");
+};
+
 const product = ref(null);
 const relatedProducts = ref([]);
 const loading = ref(true);
 const activeImagePath = ref('');
-const selectedVariant = ref(null);
+const selectedColor = ref('');
+const selectedSize = ref('');
 const qty = ref(1);
 
-const selectVariant = (v) => {
-  selectedVariant.value = v;
+const isSizeDisabledForColor = (size, color) => {
+  if (!product.value?.variants) return true;
+  const v = product.value.variants.find(v => 
+    v.color?.toLowerCase() === color.toLowerCase() && 
+    (v.size || 'OS') === size
+  );
+  return !v || v.stock_quantity <= 0;
+};
+
+const isSizeDisabled = (size) => {
+  if (!product.value?.variants) return true;
+  if (availableColors.value.length === 0) {
+    const v = product.value.variants.find(v => (v.size || 'OS') === size);
+    return !v || v.stock_quantity <= 0;
+  }
+  if (selectedColor.value) {
+    return isSizeDisabledForColor(size, selectedColor.value);
+  }
+  return !product.value.variants.some(v => (v.size || 'OS') === size && v.stock_quantity > 0);
+};
+
+const availableColors = computed(() => {
+  if (!product.value?.variants) return [];
+  const colors = [];
+  const seen = new Set();
+  product.value.variants.forEach(v => {
+    if (v.color) {
+      const normalized = v.color.trim();
+      if (!seen.has(normalized.toLowerCase())) {
+        seen.add(normalized.toLowerCase());
+        colors.push(normalized);
+      }
+    }
+  });
+  return colors;
+});
+
+const availableSizes = computed(() => {
+  if (!product.value?.variants) return [];
+  const sizes = [];
+  const seen = new Set();
+  product.value.variants.forEach(v => {
+    const sizeName = v.size || 'OS';
+    if (!seen.has(sizeName)) {
+      seen.add(sizeName);
+      sizes.push(sizeName);
+    }
+  });
+  return sizes;
+});
+
+const selectedVariant = computed(() => {
+  if (!product.value?.variants) return null;
+  if (availableColors.value.length === 0) {
+    return product.value.variants.find(v => (v.size || 'OS') === selectedSize.value) || null;
+  }
+  return product.value.variants.find(v => 
+    v.color?.toLowerCase() === selectedColor.value?.toLowerCase() && 
+    (v.size || 'OS') === selectedSize.value
+  ) || null;
+});
+
+const addToCartError = computed(() => {
+  if (availableColors.value.length > 0 && !selectedColor.value) {
+    return "Please select a color";
+  }
+  if (availableSizes.value.length > 0 && !selectedSize.value) {
+    return "Please select a size";
+  }
+  if (!selectedVariant.value || selectedVariant.value.stock_quantity <= 0) {
+    return "Out of Stock";
+  }
+  return "";
+});
+
+const updateActiveImage = () => {
+  if (!product.value?.images) return;
+  
+  // 1. Try to find image matching the selected variant
+  if (selectedVariant.value) {
+    const matchImg = product.value.images.find(img => 
+      img.variant_id && img.variant_id === selectedVariant.value.id
+    );
+    if (matchImg) {
+      activeImagePath.value = matchImg.image_path;
+      return;
+    }
+  }
+
+  // 2. Try to find image matching the selected color_group
+  if (selectedColor.value) {
+    const matchImg = product.value.images.find(img => 
+      img.color_group?.toLowerCase() === selectedColor.value.toLowerCase()
+    );
+    if (matchImg) {
+      activeImagePath.value = matchImg.image_path;
+      return;
+    }
+  }
+};
+
+watch(selectedColor, (newColor) => {
+  if (newColor) {
+    // Auto-select first available size for this color if current size is invalid/disabled for the color
+    if (selectedSize.value && isSizeDisabledForColor(selectedSize.value, newColor)) {
+      const firstAvailableSize = availableSizes.value.find(size => !isSizeDisabledForColor(size, newColor));
+      if (firstAvailableSize) {
+        selectedSize.value = firstAvailableSize;
+      } else {
+        selectedSize.value = '';
+      }
+    }
+    qty.value = 1;
+    updateActiveImage();
+  }
+});
+
+watch(selectedSize, () => {
   qty.value = 1;
+  updateActiveImage();
+});
+
+const getColorHex = (colorName) => {
+  if (!colorName) return '#ccc';
+  const name = colorName.trim().toLowerCase();
+  const map = {
+    'mustard yellow': '#e1ad01',
+    'mustard': '#e1ad01',
+    'deep maroon': '#5B163A',
+    'maroon': '#800000',
+    'zari gold': '#d4af37',
+    'gold': '#d4af37',
+    'warm white': '#fffcf7',
+    'cream': '#f8f5f1',
+    'dark charcoal': '#2d2d2d',
+    'charcoal': '#36454F',
+    'black': '#000000',
+    'white': '#ffffff',
+    'red': '#b91c1c',
+    'blue': '#1d4ed8',
+    'navy': '#1e3a8a',
+    'green': '#15803d',
+    'olive': '#556b2f',
+    'pink': '#db2777',
+    'yellow': '#facc15',
+    'orange': '#f97316',
+    'purple': '#7e22ce',
+    'grey': '#6b7280',
+    'gray': '#6b7280',
+    'beige': '#f5f5dc',
+    'mustard gold': '#e1ad01',
+    'plum': '#4d002b',
+    'wine': '#722f37',
+  };
+  return map[name] || name;
 };
 
 const hasDiscount = computed(() => {
@@ -263,7 +365,9 @@ const fetchDetails = async (id) => {
       
       // Auto select first variant if available
       if (product.value.variants && product.value.variants.length) {
-        selectedVariant.value = product.value.variants[0];
+        const firstVariant = product.value.variants[0];
+        selectedColor.value = firstVariant.color || '';
+        selectedSize.value = firstVariant.size || 'OS';
       }
     }
   } catch (err) {
@@ -560,5 +664,52 @@ onMounted(() => {
 
 .next-btn {
   right: 12px;
+}
+/* Product Variant Redesign Styles */
+.variant-selection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Generous 24px spacing between sections */
+  background-color: #FFFDF9; /* Cream background */
+  border: 1px solid #E6DED5; /* Border */
+  border-radius: 16px;
+  padding: 24px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.boutique-add-to-cart-btn {
+  flex: 1;
+  height: 56px; /* 56px height */
+  border-radius: 14px; /* 14px radius */
+  background-color: #5B163A; /* Maroon */
+  color: #ffffff;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(91, 22, 58, 0.12);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.boutique-add-to-cart-btn:hover:not(:disabled) {
+  background-color: #4a0e2e;
+  transform: translateY(-2px); /* Slight lift */
+  box-shadow: 0 8px 20px rgba(91, 22, 58, 0.2); /* Soft shadow */
+}
+
+.boutique-add-to-cart-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.boutique-add-to-cart-btn:disabled {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 </style>
