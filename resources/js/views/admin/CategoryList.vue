@@ -331,6 +331,11 @@ async function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  if (file.size > 10 * 1024 * 1024) {
+    alert('File size exceeds maximum limit of 10MB. Please select a smaller image or compress it before uploading.');
+    return;
+  }
+
   const formData = new FormData();
   formData.append('file', file);
 
@@ -347,7 +352,11 @@ async function handleImageUpload(event) {
       alert('Upload failed: ' + res.data.message);
     }
   } catch (err) {
-    alert('Upload error: ' + (err.response?.data?.message || err.message));
+    if (err.response?.status === 413) {
+      alert('Upload error (413 Payload Too Large): The image exceeds server upload limits. Please choose a smaller image or increase upload limits on your web server.');
+    } else {
+      alert('Upload error: ' + (err.response?.data?.message || err.message));
+    }
   } finally {
     imageUploading.value = false;
   }
