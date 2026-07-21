@@ -718,14 +718,6 @@ const toggleSection = (section) => {
   openSections.value[section] = !openSections.value[section];
 };
 
-// Mock Filters State (for size/color/fabric UI, non-API)
-const mockFilters = ref({
-  size: '',
-  color: '',
-  fabric: [],
-  inStockOnly: false,
-});
-
 const toggleMockSize = (size) => {
   mockFilters.value.size = mockFilters.value.size === size ? '' : size;
 };
