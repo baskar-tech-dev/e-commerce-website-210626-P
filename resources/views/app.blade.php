@@ -16,8 +16,9 @@
     <!-- <link rel="favicon" href="{{ asset('/profile/logo.png') }}"> -->
     <link rel="shortcut icon" href="/asset/profile/logo.png" type="image/x-icon">
 
-    <!-- Preload Logo for instant Splash Screen display -->
+    <!-- Preload Logo and Silk Texture for instant Splash Screen display -->
     <link rel="preload" href="/asset/profile/logo.png" as="image">
+    <link rel="preload" href="/asset/profile/white_silk_bg.png" as="image">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

@@ -90,9 +90,31 @@
             </form>
           </div>
 
-          <!-- Step 2: Payment Toggles -->
+          <!-- Step 2: Shipping Method -->
           <div class="glass-panel" style="padding: var(--spacing-lg);">
-            <div class="card-header-title" style="margin-bottom: var(--spacing-md); border: none; padding-bottom: 0;">2. Payment Method</div>
+            <div class="card-header-title" style="margin-bottom: var(--spacing-md); border: none; padding-bottom: 0;">2. Shipping Method</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600;">
+                  <input type="radio" value="standard" v-model="form.shipping_method" style="accent-color: #4a0e2e;" />
+                  🚛 Standard Express Delivery (3-5 Business Days)
+                </div>
+                <span style="font-weight: 700; color: #16a34a;">{{ shipping === 0 ? 'FREE' : '₹100' }}</span>
+              </label>
+
+              <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600;">
+                  <input type="radio" value="express" v-model="form.shipping_method" style="accent-color: #4a0e2e;" />
+                  ⚡ Air Priority Express (1-2 Days Guaranteed)
+                </div>
+                <span style="font-weight: 700; color: #4a0e2e;">+ ₹150</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Step 3: Payment Toggles -->
+          <div class="glass-panel" style="padding: var(--spacing-lg);">
+            <div class="card-header-title" style="margin-bottom: var(--spacing-md); border: none; padding-bottom: 0;">3. Payment Method</div>
             
             <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
               <!-- COD option -->
@@ -114,6 +136,28 @@
               </label>
             </div>
           </div>
+
+          <!-- Step 4: Additional Options (Order Notes & GSTIN) -->
+          <div class="glass-panel" style="padding: var(--spacing-lg);">
+            <div class="card-header-title" style="margin-bottom: 12px; border: none; padding-bottom: 0;">4. Order Notes & Corporate GST</div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div>
+                <label class="form-label" style="font-size: 0.8rem;">Delivery Notes / Instructions</label>
+                <textarea v-model="form.order_notes" placeholder="e.g. Leave package with guard or call before delivery..." class="form-textarea" rows="2" style="font-size: 0.85rem;"></textarea>
+              </div>
+
+              <div>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #4a0e2e; cursor: pointer;">
+                  <input type="checkbox" v-model="form.is_gst_order" style="accent-color: #4a0e2e;" />
+                  🏢 Request GST Tax Invoice for Business Purchase
+                </label>
+                <div v-if="form.is_gst_order" style="display: flex; gap: 8px; margin-top: 8px;">
+                  <input type="text" v-model="form.company_name" placeholder="Company Legal Name" class="form-input" style="font-size: 0.85rem;" />
+                  <input type="text" v-model="form.gstin" placeholder="GSTIN (e.g. 33AAAAA0000A1Z5)" class="form-input" style="font-size: 0.85rem; text-transform: uppercase;" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Right: Summary and Place Order button -->
@@ -124,7 +168,7 @@
             <!-- Items list preview -->
             <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border);">
               <div v-for="item in cartItems" :key="item.product_variant_id" style="display: flex; gap: var(--spacing-sm); align-items: center;">
-                <img :src="item.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=150&auto=format&fit=crop'" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border);" loading="lazy" />
+                <img :src="item.image || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border);" loading="lazy" />
                 <div style="flex: 1; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <strong style="color: var(--color-text-primary);">{{ item.name }}</strong>
                   <div style="color: var(--color-text-muted);">Size: {{ item.size || 'OS' }} x {{ item.quantity }}</div>
@@ -156,11 +200,19 @@
               <span style="font-weight: 800; color: var(--color-primary); font-size: 1.6rem;">₹{{ grandTotal }}</span>
             </div>
 
+            <!-- Terms Acceptance -->
+            <div style="margin-bottom: 16px;">
+              <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; color: #64748b; cursor: pointer;">
+                <input type="checkbox" v-model="form.terms_accepted" style="margin-top: 2px; accent-color: #4a0e2e;" />
+                <span>I agree to Maya Sree Fashion's <router-link to="/privacy-policy" style="color: #4a0e2e; text-decoration: underline;">Terms & Conditions</router-link> and <router-link to="/return-policy" style="color: #4a0e2e; text-decoration: underline;">7-Day Return Policy</router-link>.</span>
+              </label>
+            </div>
+
             <!-- Submit -->
             <button 
               class="btn btn--primary" 
               style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 1.05rem; border-radius: 8px;"
-              :disabled="submitting || cartItems.length === 0"
+              :disabled="submitting || cartItems.length === 0 || !form.terms_accepted"
               @click="submitCheckout"
             >
               {{ submitting ? 'Processing Checkout...' : '🛍️ Place Secure Order' }}
@@ -200,8 +252,14 @@ const form = ref({
   shipping_city: '',
   shipping_state: '',
   shipping_postal_code: '',
+  shipping_method: 'standard',
   payment_method: 'cod',
   coupon_code: '',
+  order_notes: '',
+  is_gst_order: false,
+  company_name: '',
+  gstin: '',
+  terms_accepted: true,
 });
 
 const loadCart = () => {

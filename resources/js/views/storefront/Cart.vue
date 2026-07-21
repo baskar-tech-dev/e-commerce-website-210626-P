@@ -9,110 +9,146 @@
       <router-link to="/shop" class="btn btn--primary" style="padding: 0.6rem 2rem;">Shop Now</router-link>
     </div>
 
-    <div v-else class="cart-layout-grid">
-      <!-- Left: Item rows -->
-      <div class="cart-items-column">
-        <div v-for="item in cartItems" :key="item.product_variant_id" class="glass-panel cart-item-card">
-          <!-- Thumbnail -->
-          <div class="cart-item-thumbnail">
-            <img :src="item.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=150&auto=format&fit=crop'" alt="item thumbnail" loading="lazy" />
-          </div>
-
-          <!-- Product meta details -->
-          <div class="cart-item-details">
-            <router-link :to="`/products/${item.product_uuid || item.product_id}`" class="cart-item-name">
-              {{ item.name }}
-            </router-link>
-            <span class="cart-item-meta">
-              Size: {{ item.size || 'OS' }} <span v-if="item.color">| Color: {{ item.color }}</span>
-            </span>
-            <span class="cart-item-price">₹{{ item.selling_price }}</span>
-          </div>
-
-          <!-- Quantity selector -->
-          <div class="cart-item-qty">
-            <button type="button" class="qty-btn" @click="updateQty(item, -1)">−</button>
-            <span class="qty-val">{{ item.quantity }}</span>
-            <button type="button" class="qty-btn" @click="updateQty(item, 1)">+</button>
-          </div>
-
-          <!-- Subtotal -->
-          <div class="cart-item-subtotal">
-            ₹{{ item.selling_price * item.quantity }}
-          </div>
-
-          <!-- Remove Button -->
-          <button type="button" class="cart-item-remove" @click="removeItem(item)" title="Remove item">
-            🗑️
-          </button>
+    <div v-else class="cart-container-wrap">
+      <!-- Free Shipping Progress Bar -->
+      <div class="free-shipping-card" style="background: #fffcf7; border: 1px solid #f1e6df; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #4a0e2e; margin-bottom: 8px;">
+          <span>{{ freeShippingMessage }}</span>
+          <span>{{ Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100)) }}%</span>
+        </div>
+        <div style="height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden;">
+          <div :style="{ width: `${Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100))}%` }" style="height: 100%; background: linear-gradient(90deg, #d4af37, #4a0e2e); transition: width 0.3s ease;"></div>
         </div>
       </div>
 
-      <!-- Right: Summary and Voucher -->
-      <div class="cart-summary-column">
-        <!-- Coupon Voucher panel -->
-        <div class="glass-panel" style="padding: var(--spacing-md);">
-          <div class="card-header-title" style="font-size: 0.9rem; margin-bottom: var(--spacing-sm); border: none; padding-bottom: 0;">Apply Discount Code</div>
-          <form @submit.prevent="validateCoupon" style="display: flex; gap: var(--spacing-xs);">
-            <input 
-              type="text" 
-              v-model="couponCode" 
-              placeholder="e.g. VIBE10" 
-              class="form-input" 
-              style="padding: 0.35rem var(--spacing-sm); font-size: 0.85rem; text-transform: uppercase;"
-              :disabled="appliedCoupon" 
-            />
-            <button 
-              type="submit" 
-              class="btn" 
-              :class="appliedCoupon ? 'btn--secondary' : 'btn--primary'"
-              style="padding: 0 var(--spacing-md); font-size: 0.85rem;"
-            >
-              {{ appliedCoupon ? 'Applied' : 'Apply' }}
+      <div class="cart-layout-grid">
+        <!-- Left: Item rows -->
+        <div class="cart-items-column">
+          <div v-for="item in cartItems" :key="item.product_variant_id" class="glass-panel cart-item-card">
+            <!-- Thumbnail -->
+            <div class="cart-item-thumbnail">
+              <img :src="item.image || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" alt="item thumbnail" loading="lazy" />
+            </div>
+
+            <!-- Product meta details -->
+            <div class="cart-item-details">
+              <router-link :to="`/products/${item.product_uuid || item.product_id}`" class="cart-item-name">
+                {{ item.name }}
+              </router-link>
+              <span class="cart-item-meta">
+                Size: {{ item.size || 'OS' }} <span v-if="item.color">| Color: {{ item.color }}</span>
+              </span>
+              <span class="cart-item-price">₹{{ item.selling_price }}</span>
+            </div>
+
+            <!-- Quantity selector -->
+            <div class="cart-item-qty">
+              <button type="button" class="qty-btn" @click="updateQty(item, -1)">−</button>
+              <span class="qty-val">{{ item.quantity }}</span>
+              <button type="button" class="qty-btn" @click="updateQty(item, 1)">+</button>
+            </div>
+
+            <!-- Subtotal -->
+            <div class="cart-item-subtotal">
+              ₹{{ item.selling_price * item.quantity }}
+            </div>
+
+            <!-- Remove Button -->
+            <button type="button" class="cart-item-remove" @click="removeItem(item)" title="Remove item">
+              🗑️
             </button>
-          </form>
-          <div v-if="couponMsg" style="font-size: 0.75rem; margin-top: 0.5rem; font-weight: bold;" :style="appliedCoupon ? 'color: var(--color-success);' : 'color: var(--color-danger);'">
-            {{ couponMsg }}
           </div>
-          <button v-if="appliedCoupon" class="btn btn--secondary btn--sm" @click="removeCoupon" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 2px 8px;">
-            Remove Code
-          </button>
         </div>
 
-        <!-- Summary panel -->
-        <div class="glass-panel" style="padding: var(--spacing-lg);">
-          <div class="card-header-title" style="margin-bottom: var(--spacing-md);">Order Summary</div>
-
-          <div style="display: flex; flex-direction: column; gap: var(--spacing-xs); font-size: 0.9rem; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-md);">
-            <!-- Subtotal -->
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--color-text-muted);">Cart Subtotal</span>
-              <span style="color: var(--color-text-primary); font-weight: 500;">₹{{ subtotal }}</span>
+        <!-- Right: Summary and Voucher -->
+        <div class="cart-summary-column">
+          <!-- Coupon Voucher panel -->
+          <div class="glass-panel" style="padding: var(--spacing-md);">
+            <div class="card-header-title" style="font-size: 0.9rem; margin-bottom: var(--spacing-sm); border: none; padding-bottom: 0;">Apply Discount Code</div>
+            <form @submit.prevent="validateCoupon" style="display: flex; gap: var(--spacing-xs);">
+              <input 
+                type="text" 
+                v-model="couponCode" 
+                placeholder="e.g. MAYASREE25" 
+                class="form-input" 
+                style="padding: 0.35rem var(--spacing-sm); font-size: 0.85rem; text-transform: uppercase;"
+                :disabled="appliedCoupon" 
+              />
+              <button 
+                type="submit" 
+                class="btn" 
+                :class="appliedCoupon ? 'btn--secondary' : 'btn--primary'"
+                style="padding: 0 var(--spacing-md); font-size: 0.85rem;"
+              >
+                {{ appliedCoupon ? 'Applied' : 'Apply' }}
+              </button>
+            </form>
+            <div v-if="couponMsg" style="font-size: 0.75rem; margin-top: 0.5rem; font-weight: bold;" :style="appliedCoupon ? 'color: var(--color-success);' : 'color: var(--color-danger);'">
+              {{ couponMsg }}
             </div>
+            <button v-if="appliedCoupon" class="btn btn--secondary btn--sm" @click="removeCoupon" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 2px 8px;">
+              Remove Code
+            </button>
+          </div>
 
-            <!-- Coupon Discount -->
-            <div v-if="discount > 0" style="display: flex; justify-content: space-between; color: var(--color-success); font-weight: 500;">
-              <span>Voucher Discount</span>
-              <span>− ₹{{ discount }}</span>
-            </div>
-
-            <!-- Shipping -->
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--color-text-muted);">Shipping Delivery</span>
-              <span v-if="shipping === 0" style="color: var(--color-success); font-weight: bold;">FREE</span>
-              <span v-else style="color: var(--color-text-primary); font-weight: 500;">₹{{ shipping }}</span>
+          <!-- Gift Wrap Option -->
+          <div class="glass-panel" style="padding: var(--spacing-md); margin-top: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #4a0e2e; cursor: pointer;">
+              <input type="checkbox" v-model="isGiftWrap" @change="toggleGiftWrap" style="accent-color: #4a0e2e;" />
+              🎁 Add Premium Gift Wrap Packaging (+₹99)
+            </label>
+            <div v-if="isGiftWrap" style="margin-top: 8px;">
+              <input 
+                type="text" 
+                v-model="giftMessage" 
+                placeholder="Enter personal gift note / blessing message..." 
+                class="form-input" 
+                style="font-size: 0.8rem; padding: 6px 10px;" 
+              />
             </div>
           </div>
 
-          <!-- Grand Total -->
-          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--spacing-lg);">
-            <span style="font-weight: 700; color: var(--color-text-primary); font-size: 1.05rem;">Estimated Total</span>
-            <span style="font-weight: 800; color: var(--color-primary); font-size: 1.6rem;">₹{{ grandTotal }}</span>
-          </div>
+          <!-- Summary panel -->
+          <div class="glass-panel" style="padding: var(--spacing-lg); margin-top: 12px;">
+            <div class="card-header-title" style="margin-bottom: var(--spacing-md);">Order Summary</div>
 
-          <button class="btn btn--primary" style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 1.05rem; border-radius: 8px;" @click="goToCheckout">
-            Proceed To Checkout ➔
-          </button>
+            <div style="display: flex; flex-direction: column; gap: var(--spacing-xs); font-size: 0.9rem; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-md);">
+              <!-- Subtotal -->
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--color-text-muted);">Cart Subtotal</span>
+                <span style="color: var(--color-text-primary); font-weight: 500;">₹{{ subtotal }}</span>
+              </div>
+
+              <!-- Coupon Discount -->
+              <div v-if="discount > 0" style="display: flex; justify-content: space-between; color: var(--color-success); font-weight: 500;">
+                <span>Voucher Discount</span>
+                <span>− ₹{{ discount }}</span>
+              </div>
+
+              <!-- Gift Wrap Fee -->
+              <div v-if="isGiftWrap" style="display: flex; justify-content: space-between; color: #0f172a; font-weight: 500;">
+                <span>Gift Packaging Fee</span>
+                <span>+ ₹99</span>
+              </div>
+
+              <!-- Shipping -->
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--color-text-muted);">Shipping Delivery</span>
+                <span v-if="shipping === 0" style="color: var(--color-success); font-weight: bold;">FREE</span>
+                <span v-else style="color: var(--color-text-primary); font-weight: 500;">₹{{ shipping }}</span>
+              </div>
+            </div>
+
+            <!-- Grand Total -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--spacing-lg);">
+              <span style="font-weight: 700; color: var(--color-text-primary); font-size: 1.05rem;">Estimated Total</span>
+              <span style="font-weight: 800; color: var(--color-primary); font-size: 1.6rem;">₹{{ grandTotal }}</span>
+            </div>
+
+            <button class="btn btn--primary" style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 1.05rem; border-radius: 8px;" @click="goToCheckout">
+              Proceed To Checkout ➔
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -183,12 +219,33 @@ const discount = computed(() => {
   }
 });
 
+const isGiftWrap = ref(false);
+const giftMessage = ref('');
+const freeShippingThreshold = 999;
+
+const freeShippingMessage = computed(() => {
+  if (subtotal.value >= freeShippingThreshold) {
+    return '🎉 Congratulations! You have unlocked FREE Delivery!';
+  }
+  const remaining = freeShippingThreshold - subtotal.value;
+  return `Add ₹${remaining} more to unlock FREE Express Delivery!`;
+});
+
+const toggleGiftWrap = () => {
+  localStorage.setItem('vibe_gift_wrap', JSON.stringify({
+    enabled: isGiftWrap.value,
+    message: giftMessage.value,
+    price: 99
+  }));
+};
+
 const shipping = computed(() => {
-  return (subtotal.value - discount.value >= 999) ? 0 : 100;
+  return (subtotal.value - discount.value >= freeShippingThreshold) ? 0 : 100;
 });
 
 const grandTotal = computed(() => {
-  return subtotal.value - discount.value + shipping.value;
+  const giftFee = isGiftWrap.value ? 99 : 0;
+  return Math.max(0, subtotal.value - discount.value + shipping.value + giftFee);
 });
 
 const validateCoupon = async () => {

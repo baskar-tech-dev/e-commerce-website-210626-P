@@ -14,7 +14,7 @@
           <span class="section-tag">Let's Connect</span>
           <h1 class="contact-hero__title">We'd Love to Hear From You</h1>
           <p class="contact-hero__subtitle">
-            We're here to help with product inquiries, orders, sizing, shipping, exchanges, wholesale, and custom stitching. Reach out to our dedicated support team.
+            We're here to help with product inquiries, orders, sizing, shipping, exchanges, and custom stitching. Reach out to our dedicated support team.
           </p>
           <div class="contact-hero__actions">
             <a href="https://wa.me/919944285102" target="_blank" class="contact-btn contact-btn--whatsapp">
@@ -87,7 +87,7 @@
             <div class="quick-card__body">
               <a href="mailto:sales@mayasreefashion.com" class="quick-card__value text-email">sales@mayasreefashion.com</a>
               <p class="quick-card__sub">Response within 24 hours.</p>
-              <p class="quick-card__sub">For orders & bulk wholesale queries.</p>
+              <p class="quick-card__sub">For order & product queries.</p>
             </div>
             <a href="mailto:sales@mayasreefashion.com" class="contact-btn contact-btn--charcoal btn-full">Send Email</a>
           </div>
@@ -176,7 +176,6 @@
                   <option value="Sizing & Fit">Sizing & Custom Blouse Fit</option>
                   <option value="Order Status">Order Status & Tracking</option>
                   <option value="Exchanges & Returns">Exchanges & Returns</option>
-                  <option value="Wholesale Inquiry">Bulk / Wholesale Inquiry</option>
                   <option value="Other">Other Inquiry</option>
                 </select>
                 <span v-if="errors.subject" class="error-text">{{ errors.subject }}</span>

@@ -65,9 +65,9 @@
             </div>
             
             <div class="story-card">
-              <h3 class="story-card__title">Backed by Global Standards</h3>
+              <h3 class="story-card__title">Crafted to International Standards</h3>
               <p class="story-card__text">
-                To bring this dream to life with uncompromising quality, we are backed by <strong>India Knit Fashion</strong>, an industry-leading apparel sourcing and export company. This partnership ensures every single stitch meets rigorous quality and manufacturing standards.
+                Every single piece is designed and tailored with meticulous care, combining traditional South Indian weaving art with contemporary precision to ensure unmatched comfort and lasting elegance.
               </p>
             </div>
           </div>

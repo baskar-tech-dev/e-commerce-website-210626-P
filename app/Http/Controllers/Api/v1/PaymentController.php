@@ -313,4 +313,87 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Initiate payment refund for an order.
+     */
+    public function refund(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'amount' => 'required|numeric|min:1',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $order = Order::lockForUpdate()->findOrFail($validated['order_id']);
+
+            if ($order->payment_status !== 'paid') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot refund an unpaid order.',
+                ], 422);
+            }
+
+            $order->payment_status = 'refunded';
+            $order->status = 'returned';
+            $order->refunded_at = now();
+            $order->refund_amount = $validated['amount'];
+            $order->save();
+
+            // Log payment refund record
+            $this->paymentRepository->updateOrCreatePayment(
+                [
+                    'order_id' => $order->id,
+                    'gateway' => $order->payment_gateway ?? 'razorpay',
+                ],
+                [
+                    'amount' => $validated['amount'],
+                    'currency' => $order->currency ?? 'INR',
+                    'status' => 'refunded',
+                    'refunded_at' => now(),
+                    'gateway_response' => [
+                        'refund_reason' => $validated['reason'] ?? 'Customer refund requested',
+                        'processed_by' => auth()->id(),
+                    ],
+                ]
+            );
+
+            // Return stock to inventory ledger
+            $userId = auth()->id();
+            foreach ($order->items as $item) {
+                if ($item->product_variant_id) {
+                    $this->inventoryService->postLedgerEntry(
+                        $item->product_variant_id,
+                        'RETURN',
+                        'IN',
+                        $item->quantity,
+                        null,
+                        'Order',
+                        $order->id,
+                        "Refund stock return for order #{$order->order_number}",
+                        $userId
+                    );
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully refunded ₹{$validated['amount']} for order #{$order->order_number}.",
+                'data' => $order,
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("PaymentController@refund failed: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process refund: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

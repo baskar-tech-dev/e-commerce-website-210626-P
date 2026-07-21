@@ -42,6 +42,16 @@ class ProductVariant extends Model
         'sort_order' => 'integer',
     ];
 
+    protected $appends = ['discount_percentage'];
+
+    public function getDiscountPercentageAttribute(): int
+    {
+        if (!$this->mrp || $this->mrp <= $this->selling_price) {
+            return 0;
+        }
+        return (int) round((($this->mrp - $this->selling_price) / $this->mrp) * 100);
+    }
+
     /**
      * Get the product that owns this variant.
      */

@@ -23,6 +23,7 @@ class ProductVariantResource extends JsonResource
             'color_code' => $this->color_code,
             'mrp' => $this->mrp,
             'selling_price' => $this->selling_price,
+            'discount_percentage' => $this->discount_percentage,
             'cost_price' => $this->cost_price,
             'stock_quantity' => $this->stock_quantity,
             'reserved_quantity' => $this->reserved_quantity,

@@ -10,7 +10,7 @@
     <!-- Left Column: Tab list -->
     <div class="glass-panel" style="padding: var(--spacing-md); height: fit-content; display: flex; flex-direction: column; gap: var(--spacing-xs);">
       <button 
-        v-for="tab in ['general', 'payment', 'email']" 
+        v-for="tab in ['general', 'cms', 'payment', 'email']" 
         :key="tab"
         type="button"
         @click="activeTab = tab"
@@ -18,6 +18,7 @@
         style="text-align: left; text-transform: capitalize; justify-content: flex-start;"
       >
         <span v-if="tab === 'general'">🏪 General Store</span>
+        <span v-else-if="tab === 'cms'">🎨 Homepage & CMS</span>
         <span v-else-if="tab === 'payment'">💳 Payment Gateways</span>
         <span v-else-if="tab === 'email'">✉️ Notifications (SMTP)</span>
       </button>
@@ -66,7 +67,57 @@
           </div>
         </div>
 
-        <!-- Tab 2: Payment Gateways -->
+        <!-- Tab 2: Homepage & CMS Settings -->
+        <div v-if="activeTab === 'cms'" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+          <div class="card-header-title" style="margin-bottom: var(--spacing-xs);">Announcement Bar & Hero Banner</div>
+          
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-sm);">
+            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+              <input type="checkbox" v-model="settings.announcement.announcement_bar_enabled" />
+              Enable Storefront Announcement Bar
+            </label>
+            <div class="form-group" v-if="settings.announcement.announcement_bar_enabled">
+              <label class="form-label">Announcement Text *</label>
+              <input type="text" v-model="settings.announcement.announcement_bar_text" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hero Banner Title *</label>
+            <input type="text" v-model="settings.hero.hero_title" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hero Subtitle *</label>
+            <textarea v-model="settings.hero.hero_subtitle" class="form-input" style="height: 60px; resize: vertical;" required></textarea>
+          </div>
+
+          <div class="responsive-grid-1-1" style="gap: var(--spacing-md);">
+            <div class="form-group">
+              <label class="form-label">Hero CTA Button Text *</label>
+              <input type="text" v-model="settings.hero.hero_cta_text" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hero CTA Button Target Link *</label>
+              <input type="text" v-model="settings.hero.hero_cta_link" class="form-input" required />
+            </div>
+          </div>
+
+          <div class="card-header-title" style="margin-top: var(--spacing-md); margin-bottom: var(--spacing-xs);">Newsletter & Promotions</div>
+
+          <div class="responsive-grid-1-1" style="gap: var(--spacing-md);">
+            <div class="form-group">
+              <label class="form-label">Newsletter Title *</label>
+              <input type="text" v-model="settings.newsletter.newsletter_title" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Newsletter Subtitle *</label>
+              <input type="text" v-model="settings.newsletter.newsletter_subtitle" class="form-input" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Payment Gateways -->
         <div v-if="activeTab === 'payment'" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
           <div class="card-header-title" style="margin-bottom: var(--spacing-xs);">Active Gateways Toggles</div>
 
@@ -176,6 +227,20 @@ const settings = ref({
     currency: 'INR',
     store_address: '',
   },
+  announcement: {
+    announcement_bar_enabled: true,
+    announcement_bar_text: '',
+  },
+  hero: {
+    hero_title: '',
+    hero_subtitle: '',
+    hero_cta_text: 'SHOP NOW',
+    hero_cta_link: '/shop',
+  },
+  newsletter: {
+    newsletter_title: '',
+    newsletter_subtitle: '',
+  },
   payment: {
     cod_active: true,
     razorpay_active: false,
@@ -201,6 +266,15 @@ const fetchSettings = async () => {
       
       // Merge with defaults to prevent null crashes
       if (data.general) settings.value.general = { ...settings.value.general, ...data.general };
+      if (data.announcement) {
+        settings.value.announcement = {
+          ...settings.value.announcement,
+          ...data.announcement,
+          announcement_bar_enabled: filterBool(data.announcement.announcement_bar_enabled)
+        };
+      }
+      if (data.hero) settings.value.hero = { ...settings.value.hero, ...data.hero };
+      if (data.newsletter) settings.value.newsletter = { ...settings.value.newsletter, ...data.newsletter };
       if (data.payment) {
         settings.value.payment = {
           ...settings.value.payment,
@@ -230,6 +304,12 @@ const saveSettings = async () => {
     const payload = {
       settings: {
         general: { ...settings.value.general },
+        announcement: {
+          ...settings.value.announcement,
+          announcement_bar_enabled: settings.value.announcement.announcement_bar_enabled ? '1' : '0'
+        },
+        hero: { ...settings.value.hero },
+        newsletter: { ...settings.value.newsletter },
         payment: {
           ...settings.value.payment,
           cod_active: settings.value.payment.cod_active ? '1' : '0',

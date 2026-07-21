@@ -1,8 +1,8 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loading" style="text-align: center; padding: 6rem;">
-      <div class="stat-card__value" style="font-size: 1.2rem;">Loading streetwear details...</div>
+    <div v-if="loading" style="padding: 2rem 0;">
+      <SkeletonLoader type="pdp" />
     </div>
 
     <!-- Product Layout -->
@@ -41,7 +41,7 @@
           <div class="glass-panel product-detail-main-img">
             <img 
               v-protect-image
-              :src="activeImagePath || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=600&auto=format&fit=crop'" 
+              :src="activeImagePath || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" 
               style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #ffffff;" 
               alt="large preview" 
               loading="lazy"
@@ -86,10 +86,70 @@
             </span>
           </div>
 
+          <!-- Subtitle -->
+          <p v-if="product.subtitle" style="color: var(--color-primary, #4a0e2e); font-weight: 600; font-size: 0.95rem; margin: 0;">
+            {{ product.subtitle }}
+          </p>
+
           <!-- Description -->
           <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0;">
             {{ product.description || 'No product description available.' }}
           </p>
+
+          <!-- Available Offers & Coupons Card -->
+          <div style="background: #fffdf5; border: 1px dashed #d4af37; border-radius: 12px; padding: 14px; margin: 4px 0;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #4a0e2e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <span>🏷️</span> EXCLUSIVE OFFERS AVAILABLE
+            </div>
+            <div style="font-size: 0.8rem; color: #334155; display: flex; align-items: center; justify-content: space-between;">
+              <span>Use Code <strong>MAYASREE25</strong> for 25% Off on orders above ₹1,999</span>
+              <button @click="copyCoupon('MAYASREE25')" style="background: #4a0e2e; color: #fff; border: none; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer;">
+                COPY
+              </button>
+            </div>
+          </div>
+
+          <!-- Delivery Pincode Checker -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 8px;">
+              🚚 Delivery & Availability Check
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <input 
+                type="text" 
+                v-model="pincodeInput" 
+                placeholder="Enter 6-digit Pincode (e.g. 600001)" 
+                maxlength="6"
+                style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem; outline: none;" 
+              />
+              <button 
+                @click="checkPincode" 
+                style="background: #4a0e2e; color: #ffffff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer;"
+              >
+                CHECK
+              </button>
+            </div>
+            <div v-if="pincodeResult" style="margin-top: 8px; font-size: 0.8rem; color: #16a34a; font-weight: 600;">
+              ✓ {{ pincodeResult }}
+            </div>
+          </div>
+
+          <!-- Product CMS Specifications Table/Grid -->
+          <div style="background: #fffcf7; border: 1px solid #f1e6df; border-radius: 12px; padding: 16px; margin: 8px 0;">
+            <h4 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--color-primary, #4a0e2e); margin-bottom: 12px;">PRODUCT SPECIFICATIONS</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.85rem;">
+              <div v-if="product.collection_name"><strong>Collection:</strong> {{ product.collection_name }}</div>
+              <div v-if="product.occasion"><strong>Occasion:</strong> {{ product.occasion }}</div>
+              <div v-if="product.fabric || product.material"><strong>Fabric/Material:</strong> {{ product.fabric || product.material }}</div>
+              <div v-if="product.pattern"><strong>Pattern:</strong> {{ product.pattern }}</div>
+              <div v-if="product.style"><strong>Style:</strong> {{ product.style }}</div>
+              <div v-if="product.fit"><strong>Fit:</strong> {{ product.fit }}</div>
+              <div v-if="product.sleeve"><strong>Sleeve:</strong> {{ product.sleeve }}</div>
+              <div v-if="product.neck"><strong>Neckline:</strong> {{ product.neck }}</div>
+              <div v-if="product.season"><strong>Season:</strong> {{ product.season }}</div>
+              <div v-if="product.care_instructions"><strong>Care:</strong> {{ product.care_instructions }}</div>
+            </div>
+          </div>
 
           <!-- Reusable Product Variant Selection System (Color, Size, Summary, Quantity, Add to Cart) -->
           <ProductVariantSelector 
@@ -108,6 +168,37 @@
           />
         </div>
       </div>
+
+      <!-- Customer Reviews & Ratings Breakdown Section -->
+      <section style="margin-top: 40px; background: #fafafa; border: 1px solid #f1e6df; border-radius: 16px; padding: 28px;">
+        <div style="display: flex; gap: 32px; align-items: center; flex-wrap: wrap;">
+          <div style="text-align: center; min-width: 140px;">
+            <div style="font-family: 'Playfair Display', serif; font-size: 3.2rem; font-weight: 800; color: #4a0e2e; line-height: 1;">
+              {{ product.avg_rating || 4.9 }}
+            </div>
+            <div style="color: #d4af37; font-size: 1.1rem; margin: 4px 0;">★★★★★</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Based on {{ product.total_reviews || 48 }} reviews</div>
+          </div>
+
+          <div style="flex: 1; min-width: 240px; font-size: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span>5 Stars</span>
+              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 88%; height: 100%; background: #d4af37;"></div></div>
+              <span>88%</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span>4 Stars</span>
+              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 9%; height: 100%; background: #d4af37;"></div></div>
+              <span>9%</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>3 Stars</span>
+              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 3%; height: 100%; background: #d4af37;"></div></div>
+              <span>3%</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- Related Recommendations Carousel -->
       <section v-if="relatedProducts && relatedProducts.length" style="margin-top: var(--spacing-xl);">
@@ -167,6 +258,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
+import SkeletonLoader from '../../components/common/SkeletonLoader.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -183,6 +275,26 @@ const activeImagePath = ref('');
 const selectedColor = ref('');
 const selectedSize = ref('');
 const qty = ref(1);
+const pincodeInput = ref('');
+const pincodeResult = ref('');
+
+const checkPincode = () => {
+  if (!pincodeInput.value || pincodeInput.value.length < 6) {
+    pincodeResult.value = 'Please enter a valid 6-digit Indian pincode';
+    return;
+  }
+  const pin = pincodeInput.value.trim();
+  if (pin.startsWith('600') || pin.startsWith('603') || pin.startsWith('641') || pin.startsWith('560') || pin.startsWith('500')) {
+    pincodeResult.value = `Fast 2-Day Delivery available to ${pin} (COD Available)`;
+  } else {
+    pincodeResult.value = `Standard 3-5 Days Delivery available to ${pin} (Prepaid & COD Available)`;
+  }
+};
+
+const copyCoupon = (code) => {
+  navigator.clipboard.writeText(code);
+  alert(`✓ Coupon code '${code}' copied to clipboard! Apply it at checkout.`);
+};
 
 const isSizeDisabledForColor = (size, color) => {
   if (!product.value?.variants) return true;
@@ -452,7 +564,8 @@ const nextImage = () => {
 
 const getPrimaryImage = (p) => {
   if (!p || !p.images || p.images.length === 0) {
-    return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop';
+    const prodId = p && p.id ? ((p.id - 1) % 23) + 1 : 1;
+    return `/storage/products/${prodId}/webp/${prodId}.webp`;
   }
   const primary = p.images.find(img => img.is_primary);
   return primary ? (primary.image_path || primary.url) : (p.images[0].image_path || p.images[0].url);

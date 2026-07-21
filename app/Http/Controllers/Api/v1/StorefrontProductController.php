@@ -26,7 +26,7 @@ class StorefrontProductController extends Controller
             });
         }
 
-        // Category Filter
+        // Category Filter (ID or Slug)
         if ($request->has('category_id') && !empty($request->input('category_id'))) {
             $categoryId = $request->input('category_id');
             $categoryIds = Category::where('parent_id', $categoryId)
@@ -34,11 +34,52 @@ class StorefrontProductController extends Controller
                 ->push((int)$categoryId)
                 ->toArray();
             $query->whereIn('category_id', $categoryIds);
+        } elseif ($request->has('category') && !empty($request->input('category'))) {
+            $catSlug = strtolower($request->input('category'));
+            if ($catSlug === 'sarees' || $catSlug === 'blouses' || $catSlug === 'kurtis' || $catSlug === 'dupatta') {
+                $category = Category::where('slug', $catSlug)->first();
+                if ($category) {
+                    $query->where('category_id', $category->id);
+                }
+            } elseif ($catSlug === 'trending') {
+                $query->where('is_featured', true);
+            }
         }
 
+        // Occasion Filter
+        if ($request->filled('occasion')) {
+            $occ = strtolower($request->input('occasion'));
+            $query->where(function ($q) use ($occ) {
+                $q->where('name', 'like', "%{$occ}%")
+                  ->orWhere('description', 'like', "%{$occ}%");
+            });
+        }
 
+        // Collection Filter
+        if ($request->filled('collection')) {
+            $col = strtolower($request->input('collection'));
+            if ($col === 'new_arrival' || $col === 'new') {
+                $query->orderBy('created_at', 'desc');
+            } elseif ($col === 'trending') {
+                $query->where('is_featured', true);
+            } elseif ($col === 'premium' || $col === 'luxury') {
+                $query->where('selling_price', '>=', 1000);
+            }
+        }
 
-        // Price Filter
+        // Price Range Preset Filter (Under 499, Under 999, Luxury)
+        if ($request->filled('price_range')) {
+            $range = $request->input('price_range');
+            if ($range === 'under_499' || $range === '499') {
+                $query->where('selling_price', '<=', 499);
+            } elseif ($range === 'under_999' || $range === '999') {
+                $query->where('selling_price', '<=', 999);
+            } elseif ($range === 'luxury' || $range === '1500+') {
+                $query->where('selling_price', '>=', 1500);
+            }
+        }
+
+        // Price Limit Filter (Custom Min/Max)
         if ($request->filled('min_price')) {
             $query->where('selling_price', '>=', (float) $request->input('min_price'));
         }

@@ -61,30 +61,56 @@
         </div>
 
 
-        <!-- Price Limits Section -->
+        <!-- Price Range Section -->
         <div class="filter-card">
           <div class="filter-card-header" @click="toggleSection('price')">
-            <span class="filter-section-name">Price Limits</span>
+            <span class="filter-section-name">Price Range</span>
             <ChevronUp v-if="openSections.price" :size="16" />
             <ChevronDown v-else :size="16" />
           </div>
           <div v-show="openSections.price" class="filter-card-body">
-            <div style="display: flex; gap: var(--spacing-xs); align-items: center; margin-top: 0.5rem;">
-              <input 
-                type="number" 
-                v-model="filters.min_price" 
-                placeholder="Min" 
-                class="form-input compact-input" 
-                @change="fetchProducts(1)"
-              />
-              <span style="color: var(--color-text-muted);">—</span>
-              <input 
-                type="number" 
-                v-model="filters.max_price" 
-                placeholder="Max" 
-                class="form-input compact-input" 
-                @change="fetchProducts(1)"
-              />
+            <div class="price-range-wrap">
+              <!-- Live price display -->
+              <div class="price-range-display">
+                <span class="price-range-val">₹{{ priceRangeMin }}</span>
+                <span class="price-range-sep">—</span>
+                <span class="price-range-val">₹{{ priceRangeMax }}</span>
+              </div>
+              <!-- Dual Range Slider Track -->
+              <div class="dual-range-track-wrap">
+                <div
+                  class="dual-range-fill"
+                  :style="{
+                    left: ((priceRangeMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN) * 100) + '%',
+                    width: ((priceRangeMax - priceRangeMin) / (PRICE_MAX - PRICE_MIN) * 100) + '%'
+                  }"
+                ></div>
+                <!-- Min thumb -->
+                <input
+                  type="range"
+                  class="dual-range-input dual-range-min"
+                  :min="PRICE_MIN"
+                  :max="PRICE_MAX"
+                  :step="PRICE_STEP"
+                  v-model.number="priceRangeMin"
+                  @input="onPriceRangeChange"
+                />
+                <!-- Max thumb -->
+                <input
+                  type="range"
+                  class="dual-range-input dual-range-max"
+                  :min="PRICE_MIN"
+                  :max="PRICE_MAX"
+                  :step="PRICE_STEP"
+                  v-model.number="priceRangeMax"
+                  @input="onPriceRangeChange"
+                />
+              </div>
+              <!-- Min/Max labels -->
+              <div class="price-range-labels">
+                <span>₹{{ PRICE_MIN }}</span>
+                <span>₹{{ PRICE_MAX.toLocaleString() }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -201,7 +227,7 @@
                 :class="{ active: filters.category_id == sub.id }"
               >
                 <img 
-                  :src="sub.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=150&auto=format&fit=crop'" 
+                  :src="sub.image || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" 
                   class="bubble-image" 
                   alt="subcategory"
                 />
@@ -386,14 +412,47 @@
           <!-- Price Section -->
           <div class="sheet-filter-group">
             <div class="sheet-group-header" @click="toggleSection('price')">
-              <span>Price Limits</span>
+              <span>Price Range</span>
               <span>{{ openSections.price ? '−' : '+' }}</span>
             </div>
             <div v-show="openSections.price" class="sheet-group-body">
-              <div style="display: flex; gap: 10px; align-items: center; padding: 10px 0;">
-                <input type="number" v-model="filters.min_price" placeholder="Min" class="form-input" @change="fetchProducts(1)" />
-                <span>—</span>
-                <input type="number" v-model="filters.max_price" placeholder="Max" class="form-input" @change="fetchProducts(1)" />
+              <div class="price-range-wrap" style="padding: 8px 0;">
+                <div class="price-range-display">
+                  <span class="price-range-val">₹{{ priceRangeMin }}</span>
+                  <span class="price-range-sep">—</span>
+                  <span class="price-range-val">₹{{ priceRangeMax }}</span>
+                </div>
+                <div class="dual-range-track-wrap">
+                  <div
+                    class="dual-range-fill"
+                    :style="{
+                      left: ((priceRangeMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN) * 100) + '%',
+                      width: ((priceRangeMax - priceRangeMin) / (PRICE_MAX - PRICE_MIN) * 100) + '%'
+                    }"
+                  ></div>
+                  <input
+                    type="range"
+                    class="dual-range-input dual-range-min"
+                    :min="PRICE_MIN"
+                    :max="PRICE_MAX"
+                    :step="PRICE_STEP"
+                    v-model.number="priceRangeMin"
+                    @input="onPriceRangeChange"
+                  />
+                  <input
+                    type="range"
+                    class="dual-range-input dual-range-max"
+                    :min="PRICE_MIN"
+                    :max="PRICE_MAX"
+                    :step="PRICE_STEP"
+                    v-model.number="priceRangeMax"
+                    @input="onPriceRangeChange"
+                  />
+                </div>
+                <div class="price-range-labels">
+                  <span>₹{{ PRICE_MIN }}</span>
+                  <span>₹{{ PRICE_MAX.toLocaleString() }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -599,18 +658,43 @@ const lastPage = ref(1);
 const filters = ref({
   search: '',
   category_id: '',
+  category: '',
+  occasion: '',
+  collection: '',
+  price_range: '',
   min_price: '',
   max_price: '',
   sort_by: 'newest',
 });
 
-// Mock Filters State
-const mockFilters = ref({
-  size: '',
-  color: '',
-  fabric: [],
-  inStockOnly: false,
-});
+// Price Range Slider Constants
+const PRICE_MIN = 0;
+const PRICE_MAX = 10000;
+const PRICE_STEP = 100;
+
+const priceRangeMin = ref(PRICE_MIN);
+const priceRangeMax = ref(PRICE_MAX);
+
+let priceDebounceTimer = null;
+
+const onPriceRangeChange = () => {
+  // Prevent thumbs crossing each other
+  if (priceRangeMin.value >= priceRangeMax.value) {
+    if (priceRangeMin.value >= PRICE_MAX) {
+      priceRangeMin.value = PRICE_MAX - PRICE_STEP;
+    } else {
+      priceRangeMax.value = priceRangeMin.value + PRICE_STEP;
+    }
+  }
+  // Sync to filters and debounce fetch
+  filters.value.min_price = priceRangeMin.value === PRICE_MIN ? '' : priceRangeMin.value;
+  filters.value.max_price = priceRangeMax.value === PRICE_MAX ? '' : priceRangeMax.value;
+
+  clearTimeout(priceDebounceTimer);
+  priceDebounceTimer = setTimeout(() => {
+    fetchProducts(1);
+  }, 450);
+};
 
 // Section collapsibility states
 const openSections = ref({
@@ -625,6 +709,14 @@ const openSections = ref({
 const toggleSection = (section) => {
   openSections.value[section] = !openSections.value[section];
 };
+
+// Mock Filters State (for size/color/fabric UI, non-API)
+const mockFilters = ref({
+  size: '',
+  color: '',
+  fabric: [],
+  inStockOnly: false,
+});
 
 const toggleMockSize = (size) => {
   mockFilters.value.size = mockFilters.value.size === size ? '' : size;
@@ -735,6 +827,10 @@ const fetchProducts = async (page = 1) => {
       page,
       search: filters.value.search,
       category_id: filters.value.category_id,
+      category: filters.value.category,
+      occasion: filters.value.occasion,
+      collection: filters.value.collection,
+      price_range: filters.value.price_range,
       min_price: filters.value.min_price,
       max_price: filters.value.max_price,
       sort_by: filters.value.sort_by === 'popularity' ? 'rating' : filters.value.sort_by,
@@ -786,12 +882,12 @@ const resetFilters = () => {
 watch(
   () => route.query,
   (newQuery) => {
-    if (newQuery.category_id) {
-      filters.value.category_id = newQuery.category_id;
-    }
-    if (newQuery.search) {
-      filters.value.search = newQuery.search;
-    }
+    if (newQuery.category_id) filters.value.category_id = newQuery.category_id;
+    if (newQuery.category) filters.value.category = newQuery.category;
+    if (newQuery.occasion) filters.value.occasion = newQuery.occasion;
+    if (newQuery.collection) filters.value.collection = newQuery.collection;
+    if (newQuery.price_range) filters.value.price_range = newQuery.price_range;
+    if (newQuery.search) filters.value.search = newQuery.search;
     fetchProducts(1);
   },
   { immediate: true }
@@ -829,7 +925,8 @@ const toggleWishlist = (product) => {
 
 const getPrimaryImage = (product) => {
   if (!product.images || product.images.length === 0) {
-    return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop';
+    const prodId = product.id ? ((product.id - 1) % 23) + 1 : 1;
+    return `/storage/products/${prodId}/webp/${prodId}.webp`;
   }
   const primary = product.images.find(img => img.is_primary);
   return primary ? (primary.image_path || primary.url) : (product.images[0].image_path || product.images[0].url);
@@ -1101,6 +1198,98 @@ onMounted(() => {
   font-size: 0.8rem;
   padding: 6px 12px;
 }
+
+/* ===== Dual Range Price Slider ===== */
+.price-range-wrap {
+  padding: 4px 2px 8px;
+}
+
+.price-range-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.price-range-val {
+  background: #4a0e2e;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.price-range-sep {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.dual-range-track-wrap {
+  position: relative;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  margin: 10px 0 6px;
+}
+
+.dual-range-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #d4af37, #4a0e2e);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.dual-range-input {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: auto;
+  margin: 0;
+}
+
+/* Stack the two thumbs properly */
+.dual-range-min { z-index: 3; }
+.dual-range-max { z-index: 4; }
+
+/* Show real-looking thumb via a pseudo-overlay  */
+.dual-range-track-wrap::before,
+.dual-range-track-wrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #4a0e2e;
+  box-shadow: 0 2px 6px rgba(74,14,46,0.2);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+
 
 /* Size Pills */
 .size-pill-grid {

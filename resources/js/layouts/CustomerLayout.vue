@@ -1,32 +1,12 @@
 <template>
   <div class="storefront-layout">
     <!-- Brand Splash Screen Overlay -->
-    <Transition name="splash-fade">
-      <div v-if="showSplash" class="brand-splash-screen">
-        <div class="splash-content">
-          <div class="splash-logo-container">
-            <img :src="'/asset/profile/logo.png'" alt="Maya Sree Fashion Logo" class="splash-logo-img">
-          </div>
-          <div class="splash-text-container">
-            <span class="splash-brand-name">MAYA SREE</span>
-            <span class="splash-brand-sub">SOUTH INDIAN FASHION</span>
-          </div>
-          <div class="splash-divider"></div>
-          <p class="splash-tagline">A Mother's Dream • A Fashion Legacy</p>
-          <div class="splash-loader-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <SplashScreen :show="showSplash" />
+
 
     <!-- Top Announcement Bar -->
-    <div class="storefront-announcement">
-      <span>🚚 Free Shipping Above ₹999</span>
-      <span class="storefront-announcement__divider">|</span>
-      <span>🔄 Easy Exchange & Returns</span>
+    <div v-if="cmsStore.announcement?.announcement_bar_enabled !== false" class="storefront-announcement">
+      <span>{{ cmsStore.announcement?.announcement_bar_text || '🚚 Free Shipping Above ₹999 | 🔄 Easy 7-Day Exchange & Returns' }}</span>
     </div>
 
     <!-- Store Header -->
@@ -49,11 +29,79 @@
         </div>
 
         <!-- Global Search Bar (Desktop Only) -->
-        <div class="search-bar-container desktop-only">
+        <!-- Global Search Bar (Desktop Only) with Live Suggestions Overlay -->
+        <div class="search-bar-container desktop-only" style="position: relative;">
           <form class="search-form" @submit.prevent="executeSearch">
-            <input type="text" v-model="searchQuery" placeholder="Search Sarees, Blouses, Kurtis..." class="search-input">
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search Sarees, Blouses, Kurtis..." 
+              class="search-input"
+              @focus="showSearchOverlay = true"
+              @blur="hideSearchOverlayDelayed"
+            >
             <button type="submit" class="search-btn"><Search :size="16" /></button>
           </form>
+
+          <!-- Live Search Suggestions Overlay -->
+          <div 
+            v-if="showSearchOverlay && (searchQuery.trim().length > 0 || popularSearches.length > 0)" 
+            class="live-search-overlay"
+            style="position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #f1e6df; border-radius: 12px; box-shadow: 0 10px 25px rgba(74,14,46,0.15); margin-top: 6px; z-index: 100; padding: 16px; overflow: hidden;"
+          >
+            <!-- Suggestions for empty query: Popular Searches & Categories -->
+            <div v-if="!searchQuery.trim()">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 8px;">POPULAR SEARCHES</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+                <span 
+                  v-for="pop in popularSearches" 
+                  :key="pop"
+                  style="font-size: 0.8rem; background: #fffcf7; border: 1px solid #f1e6df; border-radius: 16px; padding: 4px 10px; cursor: pointer; color: #334155;"
+                  @mousedown="selectPopularSearch(pop)"
+                >
+                  🔍 {{ pop }}
+                </span>
+              </div>
+
+              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 8px;">TOP CATEGORIES</div>
+              <div style="display: flex; gap: 8px; font-size: 0.8rem;">
+                <router-link to="/shop?category=sarees" style="color: #4a0e2e; text-decoration: underline;">Silk Sarees</router-link>
+                <span>·</span>
+                <router-link to="/shop?category=blouses" style="color: #4a0e2e; text-decoration: underline;">Designer Blouses</router-link>
+                <span>·</span>
+                <router-link to="/shop?category=kurtis" style="color: #4a0e2e; text-decoration: underline;">Cotton Kurtis</router-link>
+              </div>
+            </div>
+
+            <!-- Instant Search Product Previews -->
+            <div v-else-if="liveSearchResults.length > 0">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 10px;">INSTANT MATCHES</div>
+              <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                <div 
+                  v-for="prod in liveSearchResults" 
+                  :key="prod.id"
+                  style="display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: 8px; cursor: pointer; transition: background 0.2s ease;"
+                  @mousedown="navigateToProduct(prod.uuid || prod.id)"
+                >
+                  <img :src="getPrimaryImage(prod)" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover;" alt="preview" />
+                  <div style="flex: 1; overflow: hidden;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">{{ prod.name }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">₹{{ prod.selling_price }}</div>
+                  </div>
+                </div>
+              </div>
+              <button 
+                @mousedown="executeSearch" 
+                style="width: 100%; background: #4a0e2e; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;"
+              >
+                VIEW ALL RESULTS FOR "{{ searchQuery }}" ➔
+              </button>
+            </div>
+
+            <div v-else style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 12px 0;">
+              No matching fashion items found for "{{ searchQuery }}"
+            </div>
+          </div>
         </div>
 
         <!-- Header Action Icons -->
@@ -115,7 +163,6 @@
             </li> 
           </template>
           <li><router-link to="/shop?category=trending">Trending Now</router-link></li>
-          <li><router-link to="/shop?category=wholesale">Manufacturer Wholesale</router-link></li>
           <li><router-link to="/about-us">About Us</router-link></li>
         </ul>
       </nav>
@@ -176,7 +223,7 @@
     </div>
 
     <!-- Global Floating WhatsApp Widget -->
-    <a href="https://wa.me/919944285102" target="_blank" class="whatsapp-floating-bubble-global" title="Chat on WhatsApp">
+    <a href="https://wa.me/919944285102" target="_blank" :class="['whatsapp-floating-bubble-global', { 'whatsapp-above-sticky': isProductDetailPage }]" title="Chat on WhatsApp">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="whatsapp-bubble-icon">
         <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
       </svg>
@@ -252,13 +299,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { Search, User, Heart, ShoppingBag, MessageCircle, ChevronDown, Home, Store } from 'lucide-vue-next';
+import { useCmsStore } from '../stores/cms';
+import SplashScreen from '../components/SplashScreen.vue';
 
 const router = useRouter();
 const route = useRoute();
+const cmsStore = useCmsStore();
 
 const cartCount = ref(0);
 const wishlistCount = ref(0);
@@ -266,8 +316,72 @@ const mobileDrawerOpen = ref(false);
 const searchQuery = ref('');
 const categories = ref([]);
 
+const showSearchOverlay = ref(false);
+const liveSearchResults = ref([]);
+const popularSearches = ref([
+  'Stretchable Blouses',
+  'Kora Silk Sarees',
+  'Cotton Kurtis',
+  'Festive Anarkali',
+  'Bridal Dupatta'
+]);
+
+let liveSearchTimer = null;
+
+watch(searchQuery, (newVal) => {
+  if (liveSearchTimer) clearTimeout(liveSearchTimer);
+  const query = (newVal || '').trim();
+  if (query.length < 2) {
+    liveSearchResults.value = [];
+    return;
+  }
+  liveSearchTimer = setTimeout(async () => {
+    try {
+      const response = await axios.get('/api/storefront/products', { params: { search: query, per_page: 5 } });
+      if (response.data && response.data.success) {
+        liveSearchResults.value = response.data.data;
+      }
+    } catch (err) {
+      console.error('Live search query failed:', err);
+    }
+  }, 250);
+});
+
+const hideSearchOverlayDelayed = () => {
+  setTimeout(() => {
+    showSearchOverlay.value = false;
+  }, 200);
+};
+
+const selectPopularSearch = (query) => {
+  searchQuery.value = query;
+  executeSearch();
+};
+
+const navigateToProduct = (id) => {
+  showSearchOverlay.value = false;
+  router.push(`/products/${id}`);
+};
+
+const getPrimaryImage = (prod) => {
+  if (prod.primary_image) return prod.primary_image;
+  if (prod.images && prod.images.length > 0) {
+    const primary = prod.images.find(img => img.is_primary);
+    return primary ? (primary.image_path || primary.url) : (prod.images[0].image_path || prod.images[0].url);
+  }
+  if (prod.image_url) return prod.image_url;
+  const prodId = prod.id ? ((prod.id - 1) % 23) + 1 : 1;
+  return `/storage/products/${prodId}/webp/${prodId}.webp`;
+};
+
 const showSplash = ref(false);
 const isInitialLoad = ref(true);
+
+// Detect if we're on a product detail page (has sticky Add-to-Cart bar)
+const isProductDetailPage = computed(() => {
+  const path = route.path || '';
+  return route.name === 'storefront.product.detail' || path.includes('/products');
+});
 
 const triggerSplash = (duration) => {
   showSplash.value = true;
@@ -336,12 +450,13 @@ const handleContextMenu = (e) => {
 
 onMounted(() => {
   if (isInitialLoad.value) {
-    triggerSplash(1500); // 1.5s splash on initial load
+    triggerSplash(3200); // 3.2s cinematic splash sequence on initial load
     isInitialLoad.value = false;
   }
   getCartCount();
   getWishlistCount();
   fetchCategories();
+  cmsStore.fetchCmsSettings();
   window.addEventListener('contextmenu', handleContextMenu);
 });
 
@@ -913,7 +1028,7 @@ onUnmounted(() => {
 }
 
 /* Tablet & Mobile Media Queries */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .storefront-announcement {
     flex-direction: column;
     gap: 4px;
@@ -954,7 +1069,7 @@ onUnmounted(() => {
     align-items: center;
     padding-left: 16px;
     padding-right: 16px;
-    height: 56px;
+    height: 52px; /* Tighter header for mobile */
   }
   .header-actions {
     gap: 16px;
@@ -968,15 +1083,15 @@ onUnmounted(() => {
     transform: translateX(-50%);
   }
   .brand-logo .brand-name {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
   .brand-logo .brand-sub {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     letter-spacing: 2px;
   }
   .header-logo-img {
-    height: 36px;
-    width: 36px;
+    height: 34px;
+    width: 34px;
   }
   .storefront-footer__container {
     grid-template-columns: 1fr;
@@ -987,195 +1102,82 @@ onUnmounted(() => {
     right: 0;
   }
   .whatsapp-floating-bubble-global {
-    bottom: 80px; /* Positions it nicely above the 64px bottom nav */
+    bottom: 80px;
     right: 16px;
-    width: 56px; /* Touch-friendly and large on mobile */
-    height: 56px;
+    width: 52px;
+    height: 52px;
     box-shadow: 0 6px 20px rgba(37, 211, 102, 0.25);
+    transition: bottom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s, box-shadow 0.3s;
+  }
+  /* Raise WhatsApp button above the sticky Add-to-Cart bar on product detail pages */
+  .whatsapp-floating-bubble-global.whatsapp-above-sticky {
+    bottom: 148px !important;
   }
   .whatsapp-bubble-icon {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
   }
 
-  /* Sticky search styles inside media query */
+  /* ---- Premium Mobile Search Bar ---- */
   .mobile-search-bar-container {
-    padding: 0 16px var(--spacing-sm) 16px;
+    padding: 6px 16px 10px;
     width: 100%;
+    background: rgba(255, 252, 247, 0.95);
   }
   .mobile-search-form {
     display: flex;
     align-items: center;
-    background: var(--blush-bg);
-    border: 1px solid var(--color-border);
+    background: #ffffff;
+    border: 1.5px solid #f1e6df;
     border-radius: 30px;
-    padding: 0 var(--spacing-sm);
+    padding: 0 12px;
     width: 100%;
-    height: 40px;
+    height: 44px;
+    box-shadow: 0 2px 12px rgba(74, 14, 46, 0.07);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mobile-search-form:focus-within {
+    border-color: #d4af37;
+    box-shadow: 0 2px 16px rgba(212, 175, 55, 0.18);
   }
   .search-form-icon {
-    color: var(--color-text-secondary);
+    color: #9c8a94;
     display: flex;
     align-items: center;
-    padding-left: 8px;
+    padding-left: 4px;
+    flex-shrink: 0;
+  }
+  .mobile-search-form .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    color: #2d2d2d;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+  }
+  .mobile-search-form .search-input::placeholder {
+    color: #b0a0a8;
+    font-size: 0.82rem;
   }
   .search-addon-icons {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding-right: 8px;
+    padding-right: 4px;
     color: var(--color-text-secondary);
   }
-}
 
-/* Premium Brand Splash Screen */
-.brand-splash-screen {
-  position: fixed;
-  inset: 0;
-  background: var(--color-primary); /* Deep Maroon */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-}
-
-.splash-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 2rem;
-  max-width: 400px;
-  animation: splashScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.splash-logo-container {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: #ffffff;
-  padding: var(--spacing-xs);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid var(--color-secondary); /* Zari Gold border */
-  margin-bottom: var(--spacing-md);
-  position: relative;
-  animation: logoPulse 2s infinite ease-in-out;
-}
-
-.splash-logo-img {
-  width: 90%;
-  height: 90%;
-  object-fit: contain;
-}
-
-.splash-text-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.splash-brand-name {
-  font-family: var(--font-family-heading);
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 4px;
-  line-height: 1.1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.splash-brand-sub {
-  font-family: var(--font-family-base);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-secondary); /* Zari Gold */
-  letter-spacing: 6px;
-  text-transform: uppercase;
-}
-
-.splash-divider {
-  width: 60px;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
-  margin: var(--spacing-md) 0;
-}
-
-.splash-tagline {
-  font-family: var(--font-family-base);
-  font-size: 0.85rem;
-  color: rgba(255, 252, 247, 0.8);
-  font-style: italic;
-  letter-spacing: 1px;
-  margin: 0 0 var(--spacing-md) 0;
-}
-
-.splash-loader-dots {
-  display: flex;
-  gap: 8px;
-  margin-top: var(--spacing-xs);
-}
-
-.splash-loader-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--color-secondary);
-  animation: splashDotPulse 1.2s infinite ease-in-out both;
-}
-
-.splash-loader-dots span:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.splash-loader-dots span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-/* Animations */
-@keyframes splashScaleIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.92);
+  /* Hero bleeds edge to edge — handled via hero component negative margins */
+  .storefront-main {
+    padding: 16px 16px 24px; /* reduced top — hero uses negative margin to bleed up */
   }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+  .storefront-container {
+    padding: 0 16px;
+    max-width: 100%;
   }
 }
 
-@keyframes logoPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    transform: scale(1.03);
-    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3); /* Zari Gold glow */
-  }
-}
-
-@keyframes splashDotPulse {
-  0%, 80%, 100% { 
-    transform: scale(0.6);
-    opacity: 0.3;
-  } 
-  40% { 
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* Vue Transition styling */
-.splash-fade-enter-active,
-.splash-fade-leave-active {
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.splash-fade-enter-from,
-.splash-fade-leave-to {
-  opacity: 0;
-}
 </style>
+

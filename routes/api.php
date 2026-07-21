@@ -44,13 +44,14 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/products/{id}', [StorefrontProductController::class, 'show']);
     Route::get('storefront/categories', [StorefrontProductController::class, 'categories']);
     Route::get('storefront/instagram-reels', [\App\Http\Controllers\Api\v1\StorefrontInstagramReelController::class, 'index']);
+    Route::get('storefront/cms', [\App\Http\Controllers\Api\v1\StorefrontCmsController::class, 'index']);
 });
 
 Route::post('storefront/checkout', [StorefrontCheckoutController::class, 'placeOrder'])
     ->middleware('throttle:checkout_api');
 
-Route::get('storefront/coupons/{code}', function ($code) {
-    $coupon = \App\Models\Coupon::where('code', $code)
+Route::get('storefront/coupons/{code}', function (\Illuminate\Http\Request $request, $code) {
+    $coupon = \App\Models\Coupon::where('code', strtoupper($code))
         ->where('is_active', true)
         ->where(function ($q) {
             $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
@@ -63,15 +64,72 @@ Route::get('storefront/coupons/{code}', function ($code) {
     if (!$coupon) {
         return response()->json([
             'success' => false,
-            'message' => 'Coupon not found or inactive',
+            'message' => 'Invalid or expired coupon code.',
+        ], 404);
+    }
+
+    $subtotal = (float) $request->input('subtotal', 0);
+
+    if ($coupon->min_order_amount && $subtotal > 0 && $subtotal < $coupon->min_order_amount) {
+        return response()->json([
+            'success' => false,
+            'message' => "Minimum order value of ₹{$coupon->min_order_amount} required for this coupon.",
+        ], 422);
+    }
+
+    $discountAmount = 0;
+    if ($coupon->type === 'percentage') {
+        $discountAmount = ($subtotal * $coupon->value) / 100;
+        if ($coupon->max_discount_amount && $discountAmount > $coupon->max_discount_amount) {
+            $discountAmount = $coupon->max_discount_amount;
+        }
+    } else {
+        $discountAmount = min($subtotal, $coupon->value);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Coupon applied successfully!',
+        'data' => [
+            'code' => $coupon->code,
+            'type' => $coupon->type,
+            'value' => $coupon->value,
+            'discount_amount' => round($discountAmount, 2),
+            'min_order_amount' => $coupon->min_order_amount ?? $coupon->min_order_value,
+        ],
+    ]);
+})->middleware('throttle:coupon_api');
+
+// Auto-apply best coupon route
+Route::get('storefront/coupons/auto-apply/best', function (\Illuminate\Http\Request $request) {
+    $subtotal = (float) $request->input('subtotal', 0);
+    $bestCoupon = \App\Models\Coupon::where('is_active', true)
+        ->where('is_auto_apply', true)
+        ->where(function ($q) {
+            $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+        })
+        ->where(function ($q) {
+            $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
+        })
+        ->where(function ($q) use ($subtotal) {
+            $q->whereNull('min_order_value')->orWhere('min_order_value', '<=', $subtotal);
+        })
+        ->orderBy('value', 'desc')
+        ->first();
+
+    if (!$bestCoupon) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No auto-applicable coupon found.',
         ], 404);
     }
 
     return response()->json([
         'success' => true,
-        'data' => $coupon,
+        'message' => 'Best coupon auto-discovered!',
+        'data' => $bestCoupon,
     ]);
-})->middleware('throttle:coupon_api');
+});
 
 // Customer Profile routes
 Route::middleware('throttle:authenticated_api')->group(function () {
@@ -107,6 +165,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         
         Route::get('inventory', [InventoryController::class, 'index']);
         Route::post('inventory/adjust', [InventoryController::class, 'adjust']);
+        Route::post('inventory/batch-adjust', [InventoryController::class, 'batchAdjust']);
         Route::get('inventory/ledger', [InventoryController::class, 'ledger']);
         
         Route::post('purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive']);
@@ -128,6 +187,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus']);
         Route::put('orders/{id}/shipping', [OrderController::class, 'updateShipping']);
         Route::post('orders/{id}/notes', [OrderController::class, 'addAdminNote']);
+        Route::get('orders/{id}/invoice', [OrderController::class, 'invoice']);
+        Route::get('orders/{id}/packing-slip', [OrderController::class, 'packingSlip']);
+        Route::get('orders/{id}/awb', [OrderController::class, 'awbLabel']);
+        Route::get('orders/manifest/print', [OrderController::class, 'manifest']);
+        Route::post('payments/refund', [\App\Http\Controllers\Api\v1\PaymentController::class, 'refund']);
         Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
         
         Route::put('returns/{id}/status', [ReturnController::class, 'updateStatus']);

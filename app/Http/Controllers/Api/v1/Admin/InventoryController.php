@@ -114,11 +114,48 @@ class InventoryController extends Controller
             ]);
         } catch (Exception $e) {
             Log::error('InventoryController@ledger failed: ' . $e->getMessage());
+    /**
+     * Post a batch stock adjustment for multiple variants.
+     */
+    public function batchAdjust(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.type' => 'required|string|in:adjustment_in,adjustment_out,damage',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.reason' => 'required|string|max:500',
+            'items.*.notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $userId = auth()->id();
+            $results = [];
+
+            foreach ($validated['items'] as $item) {
+                $results[] = $this->inventoryService->adjustStock(
+                    $item['product_variant_id'],
+                    $item['type'],
+                    $item['quantity'],
+                    $item['reason'],
+                    $item['notes'] ?? null,
+                    $userId
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Batch stock adjustments processed successfully',
+                'count' => count($results),
+                'data' => $results
+            ], 201);
+        } catch (Exception $e) {
+            Log::error('InventoryController@batchAdjust failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve stock ledger history',
-                'error_code' => 'SERVER_ERROR'
-            ], 500);
+                'message' => $e->getMessage(),
+                'error_code' => 'BAD_REQUEST'
+            ], 400);
         }
     }
 }
