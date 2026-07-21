@@ -178,21 +178,31 @@ const slides = computed(() => {
     {
       leftImage : '/asset/banner-1-left.png',
       rightImage: '/asset/banner-1-right.png',
-      tag       : 'NEW COLLECTION 2025',
-      script    : 'South Indian Style',
-      title     : 'Timeless Elegance,<br><span class="grad">South Indian Craft</span>',
-      desc      : 'Silk sarees, kurtis & stretchable blouses crafted for supreme comfort.',
-      ctaText   : 'Explore Collection',
+      tag       : 'EXCLUSIVE SOUTH INDIAN HERITAGE',
+      script    : 'Handcrafted Perfection',
+      title     : 'Timeless Elegance,<br><span class="gradient-text">South Indian Craftsmanship</span>',
+      desc      : 'Graceful silk sarees, breathable everyday kurtis, and stretchable ready-made blouses tailored for supreme comfort.',
+      ctaText   : 'EXPLORE SHOP',
       ctaLink   : '/shop',
+    },
+    {
+      leftImage : '/asset/banner-2-left.png',
+      rightImage: '/asset/banner-2-right.png',
+      tag       : 'FESTIVAL & WEDDING SPECIAL',
+      script    : 'Royal Heritage',
+      title     : 'Grand Festive Weaves<br><span class="gradient-text">& Bridal Blouses</span>',
+      desc      : 'Radiate timeless allure during weddings and celebrations with our rich zari borders and flawless fits.',
+      ctaText   : 'SHOP OCCASIONS',
+      ctaLink   : '/shop?category=wedding',
     },
   ];
 });
 
-const trustBadges = computed(() => cmsStore.trustBadges || [
+const trustBadges = computed(() => cmsStore.trustBadges?.length ? cmsStore.trustBadges : [
   { icon: 'Gem',       title: 'PREMIUM QUALITY' },
-  { icon: 'RotateCcw', title: 'EASY RETURNS'    },
-  { icon: 'Lock',      title: 'SECURE PAYMENT'  },
-  { icon: 'Truck',     title: 'FAST DELIVERY'   },
+  { icon: 'RotateCcw', title: 'EASY 7-DAY RETURNS' },
+  { icon: 'Lock',      title: '100% SECURE PAYMENT' },
+  { icon: 'Truck',     title: 'EXPRESS DELIVERY' },
 ]);
 
 const getIconComponent = (n) =>
@@ -308,9 +318,10 @@ onUnmounted(()  => { clearInterval(slideTimer); });
   color: #4a0e2e; line-height: 1.2; margin: 0 0 16px;
 }
 :deep(.gradient-text), :deep(.grad) {
-  background: linear-gradient(135deg,#4a0e2e 0%,#d4af37 100%);
+  background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 .hero-desc {
   font-family: 'Poppins', sans-serif;
