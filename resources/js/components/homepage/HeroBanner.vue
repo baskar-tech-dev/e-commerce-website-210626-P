@@ -2,19 +2,15 @@
   <section class="hero-section">
 
     <!-- ================================================================
-         MOBILE HERO — Editorial luxury layout (≤767px)
-         Image occupies ~68% viewport. Text in cream card below.
+         MOBILE HERO — Top Fully Rounded Arch Style Layout (≤767px)
          ================================================================ -->
     <div
       class="mh mobile-only"
       @touchstart.passive="onTouchStart"
       @touchend.passive="onTouchEnd"
     >
-
-      <!-- IMAGE STAGE ------------------------------------------------- -->
-      <div class="mh__stage">
-
-        <!-- Slides -->
+      <!-- DUAL ARCHED IMAGE SHOWCASE (≤767px) -->
+      <div class="mh__showcase">
         <div
           v-for="(slide, idx) in slides"
           :key="idx"
@@ -22,69 +18,67 @@
           :class="{ 'is-active': currentSlide === idx }"
           :aria-hidden="currentSlide !== idx"
         >
-          <img
-            :src="slide.leftImage || slide.banner_image || '/asset/banner-1-left.png'"
-            :alt="slide.tag || 'Maya Sree Fashion'"
-            class="mh__image"
-            loading="lazy"
-            draggable="false"
-          />
+          <div class="mh__images-wrapper">
+            <div class="mh__main-card">
+              <img
+                :src="slide.leftImage || slide.banner_image || '/asset/banner-1-left.png'"
+                :alt="slide.tag || 'Maya Sree Fashion'"
+                class="mh__img"
+              />
+            </div>
+            <div class="mh__sub-card">
+              <img
+                :src="slide.rightImage || '/asset/banner-1-right.png'"
+                alt="Maya Sree Fashion Showcase"
+                class="mh__img"
+              />
+            </div>
+          </div>
         </div>
 
-        <!-- Very subtle bottom vignette — not a heavy overlay -->
-        <div class="mh__vignette" aria-hidden="true"></div>
-
-        <!-- Dot indicators — top-right, inside image -->
-        <div
-          v-if="slides.length > 1"
-          class="mh__dots"
-          role="tablist"
-          aria-label="Slide navigation"
-        >
-          <button
-            v-for="(_, i) in slides"
-            :key="i"
-            class="mh__dot"
-            :class="{ 'is-active': currentSlide === i }"
-            @click="goToSlide(i)"
-            :aria-label="`Slide ${i + 1}`"
-            :aria-selected="currentSlide === i"
-            role="tab"
-          ></button>
-        </div>
+        <!-- Touch Controls -->
+        <button class="mh__control prev" @click="prevSlide" aria-label="Previous Slide">
+          <ChevronLeft :size="18" />
+        </button>
+        <button class="mh__control next" @click="nextSlide" aria-label="Next Slide">
+          <ChevronRight :size="18" />
+        </button>
       </div>
 
-      <!-- TEXT CARD ---------------------------------------------------- -->
-      <!-- Floats slightly over the bottom of the image via negative margin -->
-      <div class="mh__card">
-        <!-- Transition wrapper for text content -->
+      <!-- Dot indicators -->
+      <div v-if="slides.length > 1" class="mh__dots">
+        <button
+          v-for="(_, i) in slides"
+          :key="i"
+          class="mh__dot"
+          :class="{ 'is-active': currentSlide === i }"
+          @click="goToSlide(i)"
+          :aria-label="`Slide ${i + 1}`"
+        ></button>
+      </div>
+
+      <!-- TEXT CONTENT SECTION (Unboxed) -->
+      <div class="mh__content-inner">
         <transition name="card-fade" mode="out-in">
           <div :key="currentSlide" class="mh__card-inner">
-
-            <!-- Collection badge -->
-            <p class="mh__badge">
-              <span class="mh__badge-line"></span>
-              {{ slides[currentSlide]?.tag || 'SOUTH INDIAN HERITAGE' }}
-              <span class="mh__badge-line"></span>
+            <div class="mh__tag-wrap">
+              <span class="mh__tag">{{ slides[currentSlide]?.tag || 'SOUTH INDIAN HERITAGE' }}</span>
+            </div>
+            <p class="mh__script" v-if="slides[currentSlide]?.script">
+              {{ slides[currentSlide]?.script }} <span class="heart-icon">♡</span>
             </p>
-
-            <!-- Headline — serif, strong -->
             <h1
               class="mh__heading"
               v-html="slides[currentSlide]?.title || heroTitle"
             ></h1>
-
-            <!-- Description — one concise line -->
             <p class="mh__sub">
               {{ slides[currentSlide]?.desc || heroSubtitle }}
             </p>
-
-            <!-- CTA -->
             <router-link
               :to="slides[currentSlide]?.ctaLink || heroCtaLink"
               class="mh__cta"
             >
-              {{ slides[currentSlide]?.ctaText || 'Explore Collection' }}
+              {{ slides[currentSlide]?.ctaText || 'EXPLORE SHOP' }}
               <span class="mh__cta-arrow" aria-hidden="true">
                 <ArrowRight :size="15" />
               </span>
@@ -95,7 +89,7 @@
     </div>
 
     <!-- ================================================================
-         DESKTOP HERO — Unchanged two-column grid (≥768px)
+         DESKTOP HERO — Top Fully Rounded Arch Style Layout (≥768px)
          ================================================================ -->
     <div class="hero-carousel desktop-only">
       <div
@@ -105,28 +99,51 @@
         :class="{ active: currentSlide === index }"
       >
         <div class="hero-grid">
-          <!-- Left: Image showcase -->
-          <div class="hero-images-wrapper">
-            <div class="hero-main-card">
-              <img
-                :src="slide.leftImage || slide.banner_image || '/asset/banner-1-left.png'"
-                alt="Maya Sree Fashion Main Banner"
-                class="hero-img"
-              />
+          <!-- Left: Image showcase with top fully rounded arch style -->
+          <div class="hero-images-container">
+            <div class="hero-images-wrapper">
+              <div class="hero-main-card">
+                <img
+                  :src="slide.leftImage || slide.banner_image || '/asset/banner-1-left.png'"
+                  alt="Maya Sree Fashion Main Banner"
+                  class="hero-img"
+                />
+              </div>
+              <div class="hero-sub-card">
+                <img
+                  :src="slide.rightImage || '/asset/banner-1-right.png'"
+                  alt="Maya Sree Fashion Showcase"
+                  class="hero-img"
+                />
+                <div class="hero-circle-badge">
+                  <div class="circle-thumb-frame">
+                    <img :src="slide.circleThumb || '/asset/Bottle-Green-Designer-Stretchable-Blouse.jpeg'" alt="Blouse Detail" />
+                  </div>
+                  <div class="badge-pill-labels">
+                    <span class="pill-tag-top">{{ slide.thumbTag || 'ELASTIC WORK IN BOTTOM' }}</span>
+                    <span class="pill-tag-bottom">{{ slide.thumbSub || 'Stretchable ReadyMade Blouse' }}</span>
+                  </div>
+                </div>
+              </div>
+              <button class="carousel-control prev" @click="prevSlide" aria-label="Previous Slide">
+                <ChevronLeft :size="20" />
+              </button>
+              <button class="carousel-control next" @click="nextSlide" aria-label="Next Slide">
+                <ChevronRight :size="20" />
+              </button>
             </div>
-            <div class="hero-sub-card">
-              <img
-                :src="slide.rightImage || '/asset/banner-1-right.png'"
-                alt="Maya Sree Fashion Showcase"
-                class="hero-img"
-              />
+
+            <!-- Desktop Pagination Dots -->
+            <div v-if="slides.length > 1" class="hero-desktop-dots">
+              <button
+                v-for="(_, i) in slides"
+                :key="i"
+                class="h-dot"
+                :class="{ active: currentSlide === i }"
+                @click="goToSlide(i)"
+                :aria-label="`Slide ${i + 1}`"
+              ></button>
             </div>
-            <button class="carousel-control prev" @click="prevSlide" aria-label="Previous Slide">
-              <ChevronLeft :size="20" />
-            </button>
-            <button class="carousel-control next" @click="nextSlide" aria-label="Next Slide">
-              <ChevronRight :size="20" />
-            </button>
           </div>
 
           <!-- Right: Text content -->
@@ -271,33 +288,163 @@ onUnmounted(()  => { clearInterval(slideTimer); });
   gap: 48px;
   align-items: center;
 }
+.hero-images-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
 .hero-images-wrapper {
   position: relative;
-  display: flex; gap: 16px;
-  align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 580px;
 }
 .hero-main-card {
-  flex: 1; border-radius: 20px; overflow: hidden;
-  box-shadow: 0 15px 35px rgba(74,14,46,.12);
-  border: 2px solid #f1e6df; height: 460px;
+  position: relative;
+  z-index: 3;
+  width: 55%;
+  height: 475px;
+  border-radius: 240px 240px 24px 24px;
+  overflow: hidden;
+  border: 4px solid #f4e8dc;
+  box-shadow: 0 18px 40px rgba(74, 14, 46, 0.16);
+  background: #fdfaf7;
+  transition: transform 0.4s ease;
 }
 .hero-sub-card {
-  width: 45%; border-radius: 16px; overflow: hidden;
-  box-shadow: 0 10px 25px rgba(74,14,46,.1);
-  border: 2px solid #f1e6df; height: 360px;
+  position: relative;
+  z-index: 2;
+  width: 48%;
+  height: 415px;
+  margin-left: -22px;
+  border-radius: 200px 200px 24px 24px;
+  overflow: hidden;
+  border: 4px solid #f4e8dc;
+  box-shadow: 0 12px 30px rgba(74, 14, 46, 0.12);
+  background: #fdfaf7;
+  transition: transform 0.4s ease;
+}
+
+/* Detail Circle Badge Overlay */
+.hero-circle-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  z-index: 5;
+}
+.circle-thumb-frame {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  background: #ffffff;
+}
+.circle-thumb-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.badge-pill-labels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.pill-tag-top {
+  background: #046307;
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+  font-family: 'Poppins', sans-serif;
+}
+.pill-tag-bottom {
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+  font-family: 'Poppins', sans-serif;
 }
 .hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Desktop Controls */
 .carousel-control {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  background: rgba(255,255,255,.85); border: 1px solid #e2e8f0;
-  color: #4a0e2e; width: 40px; height: 40px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.1);
-  transition: all .2s; z-index: 10;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  border: none;
 }
-.carousel-control:hover { background: #4a0e2e; color: #fff; }
-.carousel-control.prev { left: -12px; }
-.carousel-control.next { right: -12px; }
+.carousel-control.prev {
+  left: -18px;
+  background: #ffffff;
+  color: #2d1420;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  border: 1px solid #f1e6df;
+}
+.carousel-control.prev:hover {
+  background: #4a0e2e;
+  color: #ffffff;
+}
+.carousel-control.next {
+  right: -18px;
+  background: #350920;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(53, 9, 32, 0.3);
+}
+.carousel-control.next:hover {
+  background: #4a0e2e;
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Desktop Pagination Dots */
+.hero-desktop-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.h-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d8cbd0;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.h-dot.active {
+  width: 22px;
+  border-radius: 4px;
+  background: #4a0e2e;
+}
 .hero-content { display: flex; flex-direction: column; align-items: flex-start; }
 .hero-tag-wrapper { margin-bottom: 12px; }
 .hero-tag {
@@ -355,14 +502,13 @@ onUnmounted(()  => { clearInterval(slideTimer); });
 }
 
 /* ================================================================== */
-/* MOBILE HERO  — Editorial luxury layout                              */
+/* MOBILE HERO — Top Fully Rounded Arch Style Layout (≤767px)         */
 /* ================================================================== */
 @media (max-width: 767px) {
 
   .mobile-only  { display: block; }
   .desktop-only { display: none;  }
 
-  /* Strip section padding — hero manages its own spacing */
   .hero-section {
     padding: 0;
     background: #fffcf7;
@@ -371,232 +517,230 @@ onUnmounted(()  => { clearInterval(slideTimer); });
     overflow: visible;
   }
 
-  /* ── Outer wrapper — bleeds past container padding ── */
   .mh {
-    width: calc(100% + 32px);
-    margin-left: -16px;
-    margin-right: -16px;
-    margin-top: -24px;
+    width: 100%;
     background: #fffcf7;
     position: relative;
-    user-select: none;
+    padding: 16px 12px 24px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  /* ── IMAGE STAGE ─────────────────────────────────── */
-  .mh__stage {
+  /* ── MOBILE ARCHED IMAGE SHOWCASE ───────────────── */
+  .mh__showcase {
     position: relative;
     width: 100%;
-    height: 62vw;            /* ~62% of viewport width ≈ 68–72% vh on most phones */
-    min-height: 320px;
-    max-height: 520px;
-    overflow: hidden;
-    border-radius: 0 0 28px 28px;
-    background: #f5ece4;
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
   }
 
-  /* Each slide */
   .mh__slide {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity .95s cubic-bezier(.4,0,.2,1);
-  }
-  .mh__slide.is-active {
-    opacity: 1;
-    z-index: 1;
-  }
-
-  /* The fashion photo */
-  .mh__image {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    display: block;
-    will-change: transform;
-    animation: kenBurns 8s ease-in-out infinite alternate;
-  }
-  /* Pause animation on inactive slides */
-  .mh__slide:not(.is-active) .mh__image {
-    animation: none;
-  }
-
-  @keyframes kenBurns {
-    from { transform: scale(1);    object-position: center 20%; }
-    to   { transform: scale(1.06); object-position: center 30%; }
-  }
-
-  /* Subtle bottom vignette — only lowest 30% of image */
-  .mh__vignette {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 40%;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(255,252,247,.18) 60%,
-      rgba(255,252,247,.72) 100%
-    );
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  /* Elegant dots — bottom centre of stage */
-  .mh__dots {
-    position: absolute;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
     display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mh__slide.is-active {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mh__images-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .mh__main-card {
+    position: relative;
+    z-index: 3;
+    width: 56%;
+    height: 360px;
+    border-radius: 175px 175px 22px 22px;
+    overflow: hidden;
+    border: 3px solid #f4e8dc;
+    box-shadow: 0 12px 28px rgba(74, 14, 46, 0.16);
+    background: #fdfaf7;
+  }
+
+  .mh__sub-card {
+    position: relative;
+    z-index: 2;
+    width: 49%;
+    height: 315px;
+    margin-left: -22px;
+    border-radius: 150px 150px 22px 22px;
+    overflow: hidden;
+    border: 3px solid #f4e8dc;
+    box-shadow: 0 10px 24px rgba(74, 14, 46, 0.12);
+    background: #fdfaf7;
+  }
+
+  .mh__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Mobile Carousel Controls */
+  .mh__control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .mh__control.prev {
+    left: -4px;
+    background: #ffffff;
+    color: #2d1420;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #f1e6df;
+  }
+
+  .mh__control.next {
+    right: -4px;
+    background: #350920;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(53, 9, 32, 0.3);
+  }
+
+  /* Mobile Dots */
+  .mh__dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 6px;
+    margin-top: 4px;
+    margin-bottom: 10px;
     z-index: 5;
   }
 
-  /* Each dot is an accessible button with visual dot via ::after */
   .mh__dot {
-    width: 44px; height: 44px;           /* 44×44 touch target */
-    background: transparent; border: none;
-    cursor: pointer; padding: 0;
-    display: flex; align-items: center; justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mh__dot::after {
-    content: '';
-    display: block;
-    width: 7px; height: 7px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: rgba(74,14,46,.28);
-    transition: all .35s cubic-bezier(.4,0,.2,1);
+    background: #d8cbd0;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
   }
-  .mh__dot.is-active::after {
-    background: #4a0e2e;
-    width: 22px;
+
+  .mh__dot.is-active {
+    width: 18px;
     border-radius: 4px;
+    background: #4a0e2e;
   }
 
-  /* ── TEXT CARD ───────────────────────────────────── */
-  /*  Floats 24px over the bottom rounded edge of the stage */
-  .mh__card {
-    position: relative;
-    z-index: 10;
-    margin-top: -24px;
-    margin-left: 12px;
-    margin-right: 12px;
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 24px 20px 28px;
-    box-shadow:
-      0 -4px 20px rgba(74,14,46,.05),
-      0  8px 32px rgba(74,14,46,.08);
-    border: 1px solid rgba(212,175,55,.18);
-    min-height: 170px;
+  /* Mobile Content Section Inside Box */
+  .mh__content-inner {
+    width: 100%;
+    text-align: center;
+    padding-top: 4px;
   }
-
-  /* Fade-in transition when slide changes */
-  .card-fade-enter-active { transition: opacity .4s ease, transform .4s ease; }
-  .card-fade-leave-active { transition: opacity .25s ease, transform .25s ease; }
-  .card-fade-enter-from   { opacity: 0; transform: translateY(8px); }
-  .card-fade-leave-to     { opacity: 0; transform: translateY(-6px); }
 
   .mh__card-inner {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-  }
-
-  /* Collection badge */
-  .mh__badge {
-    display: flex;
     align-items: center;
-    gap: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: .65rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #9c8a94;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mh__badge-line {
-    display: inline-block;
-    height: 1px;
-    flex: 1;
-    background: linear-gradient(90deg, transparent, #d4af37, transparent);
-    opacity: .55;
-    min-width: 20px;
-    max-width: 36px;
+    gap: 8px;
   }
 
-  /* Serif headline */
+  .mh__tag-wrap {
+    margin-bottom: 2px;
+  }
+
+  .mh__tag {
+    background: #4a0e2e;
+    color: #d4af37;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: inline-block;
+  }
+
+  .mh__script {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #4a0e2e;
+    margin: 0;
+  }
+
   .mh__heading {
     font-family: 'Playfair Display', serif;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 800;
     line-height: 1.25;
     color: #2d1420;
     margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
-  /* Gradient text inside headline */
   :deep(.mh__heading .grad),
   :deep(.mh__heading .gradient-text) {
     background: linear-gradient(120deg, #4a0e2e 0%, #b59226 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
-  /* Description */
   .mh__sub {
     font-family: 'Poppins', sans-serif;
-    font-size: .80rem;
-    color: #72626a;
-    line-height: 1.55;
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.5;
     margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
-  /* CTA Button */
   .mh__cta {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    align-self: flex-start;
-    margin-top: 4px;
-    padding: 13px 24px;
-    min-height: 48px;
-    background: #4a0e2e;
-    color: #f5e1a4;
+    margin-top: 6px;
+    padding: 11px 24px;
+    background: linear-gradient(135deg, #4a0e2e 0%, #350920 100%);
+    color: #ffffff;
     font-family: 'Poppins', sans-serif;
-    font-size: .78rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     text-decoration: none;
-    border-radius: 30px;
-    border: 1px solid rgba(212,175,55,.45);
-    box-shadow: 0 6px 18px rgba(74,14,46,.22);
-    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mh__cta:active {
-    transform: scale(.97);
-    box-shadow: 0 2px 8px rgba(74,14,46,.2);
+    border-radius: 24px;
+    border: 1px solid #d4af37;
+    box-shadow: 0 4px 14px rgba(74, 14, 46, 0.2);
   }
 
   .mh__cta-arrow {
     display: flex;
     align-items: center;
-    color: rgba(245,225,164,.8);
+    color: #d4af37;
   }
 
 }

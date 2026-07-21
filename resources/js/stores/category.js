@@ -25,11 +25,11 @@ export const useCategoryStore = defineStore('category', {
       }
     },
 
-    async fetchPublicCategories() {
+    async fetchPublicCategories(params = {}) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/storefront/categories');
+        const response = await axios.get('/api/storefront/categories', { params });
         if (response.data.success) {
           this.categories = response.data.data;
         }

@@ -158,18 +158,26 @@ class StorefrontProductController extends Controller
     }
 
     /**
-     * Public categories list for storefront filter dropdowns.
+     * Public categories list for storefront filter dropdowns and homepage category grid.
      */
-    public function categories(): JsonResponse
+    public function categories(Request $request): JsonResponse
     {
-        $categories = Category::whereNull('parent_id')
-            ->where('is_active', true)
-            ->with(['children' => function($query) {
-                $query->where('is_active', true)->orderBy('sort_order')->orderBy('name');
+        $query = Category::where('is_active', true);
+
+        if ($request->boolean('featured') || $request->boolean('home') || $request->input('is_featured') === '1') {
+            $query->where('is_featured', true);
+        } elseif ($request->boolean('all')) {
+            // Return all active categories including subcategories
+        } else {
+            $query->whereNull('parent_id');
+        }
+
+        $categories = $query->with(['children' => function($subQuery) {
+                $subQuery->where('is_active', true)->orderBy('sort_order')->orderBy('name');
             }])
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'icon', 'image']);
+            ->get(['id', 'parent_id', 'name', 'slug', 'icon', 'image', 'description', 'sort_order', 'is_active', 'is_featured']);
 
         return response()->json([
             'success' => true,

@@ -202,7 +202,7 @@
               </div>
               <div class="form-group--row">
                 <input type="checkbox" id="is_featured" v-model="form.is_featured" class="form-input" />
-                <label for="is_featured" class="form-label" style="cursor: pointer; margin-bottom: 0;">Featured</label>
+                <label for="is_featured" class="form-label" style="cursor: pointer; margin-bottom: 0;">Show on Homepage (Featured)</label>
               </div>
             </div>
           </div>
