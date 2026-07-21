@@ -310,6 +310,10 @@ const router = useRouter();
 const route = useRoute();
 const cmsStore = useCmsStore();
 
+const isProductDetail = computed(() => {
+  return route.name === 'storefront.product.detail' || route.path.includes('/products/');
+});
+
 const cartCount = ref(0);
 const wishlistCount = ref(0);
 const mobileDrawerOpen = ref(false);
@@ -1113,6 +1117,9 @@ onUnmounted(() => {
   .whatsapp-floating-bubble-global.whatsapp-above-sticky {
     bottom: 148px !important;
   }
+  .whatsapp-floating-bubble-global.above-sticky-bar {
+    bottom: 140px; /* Shift it above the 64px bottom nav + 64px sticky action bar */
+  }
   .whatsapp-bubble-icon {
     width: 26px;
     height: 26px;
@@ -1178,6 +1185,5 @@ onUnmounted(() => {
     max-width: 100%;
   }
 }
-
 </style>
 

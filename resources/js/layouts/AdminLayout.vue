@@ -7,8 +7,12 @@
     <!-- Sidebar -->
     <aside :class="['sidebar', { 'sidebar--collapsed': isSidebarCollapsed }]">
       <div class="sidebar__brand">
-        <span style="font-size: 1.35rem; display: flex; align-items: center;"><Shirt :size="24" /></span>
-        <span v-if="!isSidebarCollapsed" style="margin-left: 6px;">Vibe</span><span v-if="!isSidebarCollapsed" class="sidebar__brand-accent">Admin</span>
+        <template v-if="!isSidebarCollapsed">
+          <span>Future Mind</span><span class="sidebar__brand-accent"> One</span>
+        </template>
+        <template v-else>
+          <img :src="'/asset/about/fmonr.png'" alt="Future Mind One Logo" style="max-height: 40px; max-width: 40px; object-fit: contain; border-radius: 4px;" />
+        </template>
       </div>
       
       <nav class="sidebar__nav" style="padding-right: 4px;">

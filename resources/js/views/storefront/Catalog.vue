@@ -696,6 +696,14 @@ const onPriceRangeChange = () => {
   }, 450);
 };
 
+// Mock Filters State
+const mockFilters = ref({
+  size: '',
+  color: '',
+  fabric: [],
+  inStockOnly: false,
+});
+
 // Section collapsibility states
 const openSections = ref({
   category: true,
@@ -875,6 +883,8 @@ const resetFilters = () => {
     fabric: [],
     inStockOnly: false,
   };
+  tempMinPrice.value = 0;
+  tempMaxPrice.value = 15000;
   activeQuickFilter.value = '';
   fetchProducts(1);
 };
@@ -888,6 +898,14 @@ watch(
     if (newQuery.collection) filters.value.collection = newQuery.collection;
     if (newQuery.price_range) filters.value.price_range = newQuery.price_range;
     if (newQuery.search) filters.value.search = newQuery.search;
+    if (newQuery.min_price) {
+      filters.value.min_price = Number(newQuery.min_price);
+      priceRangeMin.value = Number(newQuery.min_price);
+    }
+    if (newQuery.max_price) {
+      filters.value.max_price = Number(newQuery.max_price);
+      priceRangeMax.value = Number(newQuery.max_price);
+    }
     fetchProducts(1);
   },
   { immediate: true }
@@ -2195,5 +2213,111 @@ onMounted(() => {
 
 .sizes-info-list {
   font-weight: 500;
+}
+
+/* Trendy Price Range Slider Styles */
+.price-slider-wrapper {
+  padding: 12px 4px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.slider-track-container {
+  position: relative;
+  height: 6px;
+  background: #E6DED5; /* Border line color */
+  border-radius: 999px;
+  margin: 10px 0;
+}
+
+.slider-track {
+  position: absolute;
+  height: 100%;
+  background: #5B163A; /* Deep maroon */
+  border-radius: 999px;
+}
+
+.slider-input {
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  top: -1px;
+  left: 0;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Chrome, Safari, Opera, Edge */
+.slider-input::-webkit-slider-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #5B163A; /* Maroon border */
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: 0 3px 8px rgba(91, 22, 58, 0.2);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  z-index: 10;
+  position: relative;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background-color: #FFFDF9;
+}
+
+.slider-input::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+  background-color: #5B163A;
+}
+
+/* Firefox */
+.slider-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #5B163A;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(91, 22, 58, 0.2);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  z-index: 10;
+}
+
+.slider-input::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  background-color: #FFFDF9;
+}
+
+.slider-input::-moz-range-thumb:active {
+  transform: scale(1.25);
+  background-color: #5B163A;
+}
+
+.price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2C2C2C; /* Dark charcoal */
+}
+
+.price-label-badge {
+  background-color: #FCFAF7; /* Soft cream */
+  border: 1px solid #E6DED5;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: monospace;
 }
 </style>
