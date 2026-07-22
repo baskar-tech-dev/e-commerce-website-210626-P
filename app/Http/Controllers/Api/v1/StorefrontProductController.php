@@ -47,6 +47,16 @@ class StorefrontProductController extends Controller
             $query->where('is_featured', true);
         }
 
+        // New Arrival Filter
+        if ($request->boolean('new_arrival') || $request->boolean('is_new_arrival') || $request->input('is_new_arrival') === '1') {
+            $query->where('is_new_arrival', true);
+        }
+
+        // Bestseller Filter
+        if ($request->boolean('bestseller') || $request->boolean('is_bestseller') || $request->input('is_bestseller') === '1') {
+            $query->where('is_bestseller', true);
+        }
+
         // Occasion Filter
         if ($request->filled('occasion')) {
             $occ = strtolower(trim($request->input('occasion')));
@@ -62,8 +72,10 @@ class StorefrontProductController extends Controller
         // Collection Filter
         if ($request->filled('collection')) {
             $col = strtolower($request->input('collection'));
-            if ($col === 'new_arrival' || $col === 'new') {
-                $query->orderBy('created_at', 'desc');
+            if ($col === 'new_arrival' || $col === 'new' || $col === 'new_arrivals') {
+                $query->where('is_new_arrival', true);
+            } elseif ($col === 'bestseller' || $col === 'best_sellers' || $col === 'bestsellers') {
+                $query->where('is_bestseller', true);
             } elseif ($col === 'trending') {
                 $query->where('is_featured', true);
             } elseif ($col === 'premium' || $col === 'luxury') {

@@ -175,9 +175,9 @@ const fetchProducts = async () => {
   try {
     const [allRes, featRes, newRes, bestRes] = await Promise.all([
       axios.get('/api/storefront/products', { params: { per_page: 16 } }),
-      axios.get('/api/storefront/products', { params: { featured: 1, per_page: 8 } }),
-      axios.get('/api/storefront/products', { params: { sort_by: 'newest', per_page: 8 } }),
-      axios.get('/api/storefront/products', { params: { sort_by: 'popular', per_page: 8 } })
+      axios.get('/api/storefront/products', { params: { is_featured: 1, per_page: 8 } }),
+      axios.get('/api/storefront/products', { params: { is_new_arrival: 1, per_page: 8 } }),
+      axios.get('/api/storefront/products', { params: { is_bestseller: 1, per_page: 8 } })
     ]);
 
     if (allRes.data && allRes.data.success) {
