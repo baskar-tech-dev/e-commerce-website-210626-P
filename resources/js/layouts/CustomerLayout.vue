@@ -35,7 +35,7 @@
             <input 
               type="text" 
               v-model="searchQuery" 
-              placeholder="Search Sarees, Blouses, Kurtis..." 
+              :placeholder="placeholderText" 
               class="search-input"
               @focus="showSearchOverlay = true"
               @blur="hideSearchOverlayDelayed"
@@ -43,63 +43,65 @@
             <button type="submit" class="search-btn"><Search :size="16" /></button>
           </form>
 
-          <!-- Live Search Suggestions Overlay -->
+          <!-- Live Search Suggestions Overlay (Categories & Products Only) -->
           <div 
-            v-if="showSearchOverlay && (searchQuery.trim().length > 0 || popularSearches.length > 0)" 
+            v-if="showSearchOverlay" 
             class="live-search-overlay"
-            style="position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #f1e6df; border-radius: 12px; box-shadow: 0 10px 25px rgba(74,14,46,0.15); margin-top: 6px; z-index: 100; padding: 16px; overflow: hidden;"
+            style="position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #f1e6df; border-radius: 14px; box-shadow: 0 12px 30px rgba(74,14,46,0.18); margin-top: 6px; z-index: 1000; padding: 16px; max-height: 420px; overflow-y: auto;"
           >
-            <!-- Suggestions for empty query: Popular Searches & Categories -->
-            <div v-if="!searchQuery.trim()">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 8px;">POPULAR SEARCHES</div>
-              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
-                <span 
-                  v-for="pop in popularSearches" 
-                  :key="pop"
-                  style="font-size: 0.8rem; background: #fffcf7; border: 1px solid #f1e6df; border-radius: 16px; padding: 4px 10px; cursor: pointer; color: #334155;"
-                  @mousedown="selectPopularSearch(pop)"
-                >
-                  🔍 {{ pop }}
-                </span>
+            <!-- 1. CATEGORIES -->
+            <div v-if="matchingCategories && matchingCategories.length > 0" style="margin-bottom: 16px;">
+              <div style="font-size: 0.72rem; font-weight: 800; color: #4a0e2e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <span>📁</span> CATEGORIES
               </div>
-
-              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 8px;">TOP CATEGORIES</div>
-              <div style="display: flex; gap: 8px; font-size: 0.8rem;">
-                <router-link to="/shop?category=sarees" style="color: #4a0e2e; text-decoration: underline;">Silk Sarees</router-link>
-                <span>·</span>
-                <router-link to="/shop?category=blouses" style="color: #4a0e2e; text-decoration: underline;">Designer Blouses</router-link>
-                <span>·</span>
-                <router-link to="/shop?category=kurtis" style="color: #4a0e2e; text-decoration: underline;">Cotton Kurtis</router-link>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <router-link
+                  v-for="cat in matchingCategories" 
+                  :key="cat.id"
+                  :to="`/shop?category_id=${cat.id}`"
+                  style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; background: #fffdf9; border: 1px solid #f1e6df; border-radius: 20px; padding: 6px 14px; color: #4a0e2e; text-decoration: none; transition: all 0.2s ease;"
+                  @mousedown="showSearchOverlay = false"
+                >
+                  <img v-if="cat.image" :src="cat.image" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover;" />
+                  <span v-else>🏷️</span>
+                  <span>{{ cat.name }}</span>
+                </router-link>
               </div>
             </div>
 
-            <!-- Instant Search Product Previews -->
-            <div v-else-if="liveSearchResults.length > 0">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #4a0e2e; letter-spacing: 1px; margin-bottom: 10px;">INSTANT MATCHES</div>
+            <!-- 2. PRODUCTS -->
+            <div v-if="displayProducts && displayProducts.length > 0">
+              <div style="font-size: 0.72rem; font-weight: 800; color: #4a0e2e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                <span>🛍️</span> PRODUCTS
+              </div>
               <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                 <div 
-                  v-for="prod in liveSearchResults" 
+                  v-for="prod in displayProducts" 
                   :key="prod.id"
-                  style="display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: 8px; cursor: pointer; transition: background 0.2s ease;"
+                  style="display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 10px; cursor: pointer; background: #fffcf7; border: 1px solid #f8f1ea; transition: background 0.2s ease;"
                   @mousedown="navigateToProduct(prod.uuid || prod.id)"
                 >
-                  <img :src="getPrimaryImage(prod)" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover;" alt="preview" />
+                  <img :src="getPrimaryImage(prod)" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0;" alt="preview" />
                   <div style="flex: 1; overflow: hidden;">
                     <div style="font-size: 0.85rem; font-weight: 600; color: #0f172a; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">{{ prod.name }}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">₹{{ prod.selling_price }}</div>
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #4a0e2e;">₹{{ prod.selling_price || prod.price }}</div>
                   </div>
+                  <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">View ➔</span>
                 </div>
               </div>
+              
               <button 
+                v-if="searchQuery.trim()"
                 @mousedown="executeSearch" 
-                style="width: 100%; background: #4a0e2e; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;"
+                style="width: 100%; background: #4a0e2e; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;"
               >
                 VIEW ALL RESULTS FOR "{{ searchQuery }}" ➔
               </button>
             </div>
 
-            <div v-else style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 12px 0;">
-              No matching fashion items found for "{{ searchQuery }}"
+            <!-- Empty state -->
+            <div v-else-if="searchQuery.trim() && matchingCategories.length === 0" style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 16px 0;">
+              No matching categories or products found for "{{ searchQuery }}"
             </div>
           </div>
         </div>
@@ -140,7 +142,14 @@
       <div class="mobile-search-bar-container mobile-only">
         <form class="search-form mobile-search-form" @submit.prevent="executeSearch">
           <span class="search-form-icon"><Search :size="16" /></span>
-          <input type="text" v-model="searchQuery" placeholder="Search Sarees, Blouses, Kurtis..." class="search-input">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            :placeholder="placeholderText" 
+            class="search-input"
+            @focus="showSearchOverlay = true"
+            @blur="hideSearchOverlayDelayed"
+          >
         </form>
       </div>
 
@@ -320,14 +329,24 @@ const mobileDrawerOpen = ref(false);
 const searchQuery = ref('');
 const categories = ref([]);
 
+const placeholderText = ref('Search - Trending Blouses, ReadyMade Blouses, Stretchable Blouses...');
+const placeholderPhrases = [
+  'Search - Trending Blouses, ReadyMade Blouses, Stretchable Blouses...',
+  'Search - Designer Blouses, Silk Blouses, Velvet Blouses...',
+  'Search - Embroidered Blouses, Cotton Blouses, Elbow Sleeve Blouses...'
+];
+let placeholderIndex = 0;
+let placeholderInterval = null;
+
 const showSearchOverlay = ref(false);
 const liveSearchResults = ref([]);
 const popularSearches = ref([
   'Stretchable Blouses',
-  'Kora Silk Sarees',
-  'Cotton Kurtis',
-  'Festive Anarkali',
-  'Bridal Dupatta'
+  'ReadyMade Blouses',
+  'Designer Blouses',
+  'Silk Blouses',
+  'Velvet Blouses',
+  'Embroidered Blouses'
 ]);
 
 let liveSearchTimer = null;
@@ -437,6 +456,37 @@ const subscribeNewsletter = () => {
   alert('✓ Thank you for subscribing! Check your email inbox for discount codes.');
 };
 
+const defaultSearchProducts = ref([]);
+
+const fetchDefaultSearchProducts = async () => {
+  try {
+    const res = await axios.get('/api/storefront/products?featured=1');
+    if (res.data && res.data.data) {
+      defaultSearchProducts.value = res.data.data.slice(0, 4);
+    }
+  } catch (e) {
+    console.error('Failed to fetch default search products:', e);
+  }
+};
+
+const matchingCategories = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) {
+    return categories.value.slice(0, 6);
+  }
+  return categories.value.filter(c => 
+    c.name.toLowerCase().includes(query) || 
+    (c.slug && c.slug.toLowerCase().includes(query))
+  ).slice(0, 6);
+});
+
+const displayProducts = computed(() => {
+  if (searchQuery.value.trim().length >= 2) {
+    return liveSearchResults.value;
+  }
+  return defaultSearchProducts.value;
+});
+
 const fetchCategories = async () => {
   try {
     const response = await axios.get('/api/storefront/categories');
@@ -460,12 +510,19 @@ onMounted(() => {
   getCartCount();
   getWishlistCount();
   fetchCategories();
+  fetchDefaultSearchProducts();
   cmsStore.fetchCmsSettings();
   window.addEventListener('contextmenu', handleContextMenu);
+
+  placeholderInterval = setInterval(() => {
+    placeholderIndex = (placeholderIndex + 1) % placeholderPhrases.length;
+    placeholderText.value = placeholderPhrases[placeholderIndex];
+  }, 3500);
 });
 
 onUnmounted(() => {
   window.removeEventListener('contextmenu', handleContextMenu);
+  if (placeholderInterval) clearInterval(placeholderInterval);
 });
 </script>
 

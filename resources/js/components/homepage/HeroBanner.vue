@@ -115,15 +115,6 @@
                   alt="Maya Sree Fashion Showcase"
                   class="hero-img"
                 />
-                <div class="hero-circle-badge">
-                  <div class="circle-thumb-frame">
-                    <img :src="slide.circleThumb || '/asset/Bottle-Green-Designer-Stretchable-Blouse.jpeg'" alt="Blouse Detail" />
-                  </div>
-                  <div class="badge-pill-labels">
-                    <span class="pill-tag-top">{{ slide.thumbTag || 'ELASTIC WORK IN BOTTOM' }}</span>
-                    <span class="pill-tag-bottom">{{ slide.thumbSub || 'Stretchable ReadyMade Blouse' }}</span>
-                  </div>
-                </div>
               </div>
               <button class="carousel-control prev" @click="prevSlide" aria-label="Previous Slide">
                 <ChevronLeft :size="20" />

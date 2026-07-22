@@ -25,10 +25,14 @@
 
 <script setup>
 const occasions = [
-  { id: 1, name: 'Daily Wear', image: '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp', link: '/shop?occasion=daily' },
-  { id: 2, name: 'Office Wear', image: '/asset/Mustard-Yellow-Stretchable-Readymade-Blouse.jpeg', link: '/shop?occasion=office' },
-  { id: 3, name: 'Wedding Collection', image: '/asset/festive-collection.jpg', link: '/shop?occasion=wedding' },
-  { id: 4, name: 'Festival Collection', image: '/asset/Bottle-Green-Designer-Stretchable-Blouse.jpeg', link: '/shop?occasion=festival' }
+  { id: 1, name: '👰 Bridal', image: '/asset/banner-1-right.png', link: '/shop?occasion=Bridal' },
+  { id: 2, name: '💍 Wedding Guest', image: '/asset/festive-collection.jpg', link: '/shop?occasion=Wedding%20Guest' },
+  { id: 3, name: '🎉 Festive', image: '/asset/Bottle-Green-Designer-Stretchable-Blouse.jpeg', link: '/shop?occasion=Festive' },
+  { id: 4, name: '🎊 Party Wear', image: '/asset/Mustard-Yellow-Stretchable-Readymade-Blouse.jpeg', link: '/shop?occasion=Party%20Wear' },
+  { id: 5, name: '👨‍👩‍👧 Family Functions', image: '/asset/banner-1-left.png', link: '/shop?occasion=Family%20Functions' },
+  { id: 6, name: '🙏 Temple Wear', image: '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp', link: '/shop?occasion=Temple%20Wear' },
+  { id: 7, name: '💼 Office Wear', image: '/asset/Mustard-Yellow-Stretchable-Readymade-Blouse.jpeg', link: '/shop?occasion=Office%20Wear' },
+  { id: 8, name: '🌿 Daily Wear', image: '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp', link: '/shop?occasion=Daily%20Wear' }
 ];
 </script>
 

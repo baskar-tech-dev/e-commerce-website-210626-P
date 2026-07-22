@@ -92,9 +92,24 @@
               <label for="input_material" class="form-label">Material / Fabric</label>
             </div>
             <div class="floating-label-group">
-              <input type="text" v-model="form.care_instructions" :class="{'has-value': !!form.care_instructions}" class="form-input" placeholder=" " id="input_care_instructions" />
-              <label for="input_care_instructions" class="form-label">Care Instructions</label>
+              <select v-model="form.occasion" :class="{'has-value': !!form.occasion}" class="form-select" id="select_occasion">
+                <option value="">Select Occasion (Optional)</option>
+                <option value="Bridal">👰 Bridal</option>
+                <option value="Wedding Guest">💍 Wedding Guest</option>
+                <option value="Festive">🎉 Festive</option>
+                <option value="Party Wear">🎊 Party Wear</option>
+                <option value="Family Functions">👨‍👩‍👧 Family Functions</option>
+                <option value="Temple Wear">🙏 Temple Wear</option>
+                <option value="Office Wear">💼 Office Wear</option>
+                <option value="Daily Wear">🌿 Daily Wear</option>
+              </select>
+              <label for="select_occasion" class="form-label">Occasion / Wear Type</label>
             </div>
+          </div>
+
+          <div class="floating-label-group">
+            <input type="text" v-model="form.care_instructions" :class="{'has-value': !!form.care_instructions}" class="form-input" placeholder=" " id="input_care_instructions" />
+            <label for="input_care_instructions" class="form-label">Care Instructions</label>
           </div>
 
           <!-- Tags -->

@@ -34,7 +34,7 @@
               type="text" 
               v-model="filters.search" 
               @input="debounceSearch"
-              placeholder="Search blouses, sarees..." 
+              placeholder="Search - Trending Blouses, ReadyMade Blouses, Stretchable Blouses..." 
               class="form-input search-field" 
             />
             <Search :size="16" class="search-field-icon" />
@@ -60,6 +60,24 @@
           </div>
         </div>
 
+
+        <!-- Occasion Filter Section -->
+        <div class="filter-card">
+          <div class="filter-card-header" @click="toggleSection('occasion')">
+            <span class="filter-section-name">Shop By Occasion</span>
+            <ChevronUp v-if="openSections.occasion" :size="16" />
+            <ChevronDown v-else :size="16" />
+          </div>
+          <div v-show="openSections.occasion" class="filter-card-body">
+            <div class="filter-options-list">
+              <label class="custom-radio-option" v-for="occ in occasionList" :key="occ.value">
+                <input type="radio" :value="occ.value" v-model="filters.occasion" @change="fetchProducts(1)" />
+                <span class="radio-indicator"></span>
+                <span class="option-label">{{ occ.label }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
 
         <!-- Price Range Section -->
         <div class="filter-card">
@@ -704,9 +722,22 @@ const mockFilters = ref({
   inStockOnly: false,
 });
 
+const occasionList = [
+  { label: 'All Occasions', value: '' },
+  { label: '👰 Bridal', value: 'Bridal' },
+  { label: '💍 Wedding Guest', value: 'Wedding Guest' },
+  { label: '🎉 Festive', value: 'Festive' },
+  { label: '🎊 Party Wear', value: 'Party Wear' },
+  { label: '👨‍👩‍👧 Family Functions', value: 'Family Functions' },
+  { label: '🙏 Temple Wear', value: 'Temple Wear' },
+  { label: '💼 Office Wear', value: 'Office Wear' },
+  { label: '🌿 Daily Wear', value: 'Daily Wear' }
+];
+
 // Section collapsibility states
 const openSections = ref({
   category: true,
+  occasion: true,
   price: false,
   size: false,
   color: false,

@@ -28,8 +28,7 @@
             <div 
               v-for="img in product.images" 
               :key="img.id" 
-              class="glass-panel" 
-              style="width: 70px; height: 70px; flex-shrink: 0; padding: 2px; border-radius: 8px; cursor: pointer; border: 1px solid var(--color-border);"
+              class="glass-panel product-detail-thumb-item" 
               :style="activeImagePath === img.image_path ? 'border-color: var(--color-primary); border-width: 2px;' : ''"
               @click="activeImagePath = img.image_path"
             >
@@ -46,14 +45,10 @@
             <img 
               v-protect-image
               :src="activeImagePath || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" 
-              style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #ffffff;" 
+              style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: transparent;" 
               alt="large preview" 
               loading="lazy"
             />
-            <!-- Watermark Overlay -->
-            <div class="product-image-watermark">
-              <img :src="'/asset/profile/logo.png'" alt="Maya Sree Watermark" />
-            </div>
 
             <!-- Left & Right Switch Controls -->
             <template v-if="product && product.images && product.images.length > 1">
@@ -210,18 +205,19 @@
           <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">More styles from {{ product.category?.name || 'this collection' }}.</p>
         </div>
 
-        <div class="similar-products-grid">
-          <ProductCard 
+        <div class="product-cards-scroll-track">
+          <div 
             v-for="p in relatedProducts" 
             :key="p.id" 
-            :product="p"
-            @quick-add="handleQuickAdd"
-          />
+            class="product-card-scroll-item"
+          >
+            <ProductCard :product="p" @quick-add="handleQuickAdd" />
+          </div>
         </div>
       </section>
 
       <!-- 3. Shop by Category (beautiful image cards) -->
-      <section style="margin-top: 48px; background: #fffdf9; border: 1px solid #f1e6df; border-radius: 18px; padding: 24px 16px;">
+      <section style="margin-top: 48px;">
         <CategoryGrid />
       </section>
 
@@ -847,10 +843,8 @@ onMounted(() => {
   padding-right: 0.25rem;
 }
 
-/* Custom scrollbar styling for thumbnails list */
 .product-detail-thumbnails::-webkit-scrollbar {
   width: 4px;
-  height: 4px;
 }
 .product-detail-thumbnails::-webkit-scrollbar-thumb {
   background: var(--color-border);
@@ -867,6 +861,16 @@ onMounted(() => {
   width: 100%;
 }
 
+.product-detail-thumb-item {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+}
+
 @media (max-width: 768px) {
   .product-detail-layout {
     grid-template-columns: 1fr;
@@ -874,19 +878,34 @@ onMounted(() => {
   }
 
   .product-detail-gallery {
-    flex-direction: column-reverse;
-    gap: var(--spacing-md);
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
     width: 100%;
   }
 
   .product-detail-thumbnails {
-    flex-direction: row;
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    max-height: none;
-    padding-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    width: 58px;
+    flex-shrink: 0;
+    max-height: calc(100vw - 32px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 6px;
     padding-right: 0;
+    scrollbar-width: none;
+  }
+
+  .product-detail-thumbnails::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-detail-thumb-item {
+    width: 54px;
+    height: 54px;
+    border-radius: 6px;
   }
 
   .mobile-only {
@@ -1096,7 +1115,7 @@ onMounted(() => {
 .lightbox-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.95);
+  background-color: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 99999;
@@ -1143,9 +1162,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   border-radius: 12px;
-  background-color: #ffffff;
+  background-color: transparent;
   overflow: hidden;
 }
 
@@ -1289,7 +1307,7 @@ onMounted(() => {
   }
 }
 
-/* Product Cards Scroll Track & Similar Products Grid */
+/* Product Cards Scroll Track */
 .product-cards-scroll-track {
   display: flex;
   gap: 16px;
@@ -1297,15 +1315,14 @@ onMounted(() => {
   padding-bottom: 12px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .product-cards-scroll-track::-webkit-scrollbar {
-  height: 6px;
-}
-
-.product-cards-scroll-track::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 4px;
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
 }
 
 .product-card-scroll-item {
@@ -1313,23 +1330,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.similar-products-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-}
-
-@media (max-width: 1024px) {
-  .similar-products-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
-  .similar-products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
   .product-card-scroll-item {
     width: 175px;
   }

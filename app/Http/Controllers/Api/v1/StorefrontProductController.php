@@ -41,9 +41,9 @@ class StorefrontProductController extends Controller
                 if ($category) {
                     $query->where('category_id', $category->id);
                 }
-            } elseif ($catSlug === 'trending') {
-                $query->where('is_featured', true);
-            }
+        // Featured Filter
+        if ($request->boolean('featured') || $request->input('featured') === '1' || $request->input('is_featured') === '1') {
+            $query->where('is_featured', true);
         }
 
         // Occasion Filter
