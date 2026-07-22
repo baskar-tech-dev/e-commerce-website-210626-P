@@ -36,11 +36,12 @@ class StorefrontProductController extends Controller
             $query->whereIn('category_id', $categoryIds);
         } elseif ($request->has('category') && !empty($request->input('category'))) {
             $catSlug = strtolower($request->input('category'));
-            if ($catSlug === 'sarees' || $catSlug === 'blouses' || $catSlug === 'kurtis' || $catSlug === 'dupatta') {
-                $category = Category::where('slug', $catSlug)->first();
-                if ($category) {
-                    $query->where('category_id', $category->id);
-                }
+            $category = Category::where('slug', $catSlug)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
         // Featured Filter
         if ($request->boolean('featured') || $request->input('featured') === '1' || $request->input('is_featured') === '1') {
             $query->where('is_featured', true);
@@ -48,11 +49,14 @@ class StorefrontProductController extends Controller
 
         // Occasion Filter
         if ($request->filled('occasion')) {
-            $occ = strtolower($request->input('occasion'));
-            $query->where(function ($q) use ($occ) {
-                $q->where('name', 'like', "%{$occ}%")
-                  ->orWhere('description', 'like', "%{$occ}%");
-            });
+            $occ = strtolower(trim($request->input('occasion')));
+            if (!empty($occ)) {
+                $query->where(function ($q) use ($occ) {
+                    $q->where('occasion', 'like', "%{$occ}%")
+                      ->orWhere('name', 'like', "%{$occ}%")
+                      ->orWhere('description', 'like', "%{$occ}%");
+                });
+            }
         }
 
         // Collection Filter
@@ -162,22 +166,25 @@ class StorefrontProductController extends Controller
      */
     public function categories(Request $request): JsonResponse
     {
-        $query = Category::where('is_active', true);
+        $query = Category::query();
 
         if ($request->boolean('featured') || $request->boolean('home') || $request->input('is_featured') === '1') {
             $query->where('is_featured', true);
         } elseif ($request->boolean('all')) {
-            // Return all active categories including subcategories
+            // Return all active categories
         } else {
-            $query->whereNull('parent_id');
+            $query->where(function($q) {
+                $q->whereNull('parent_id')->orWhere('parent_id', 0)->orWhere('parent_id', '');
+            });
         }
 
-        $categories = $query->with(['children' => function($subQuery) {
-                $subQuery->where('is_active', true)->orderBy('sort_order')->orderBy('name');
-            }])
-            ->orderBy('sort_order')
+        $categories = $query->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'parent_id', 'name', 'slug', 'icon', 'image', 'description', 'sort_order', 'is_active', 'is_featured']);
+
+        if ($categories->isEmpty()) {
+            $categories = Category::all();
+        }
 
         return response()->json([
             'success' => true,

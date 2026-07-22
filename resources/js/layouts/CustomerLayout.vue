@@ -43,36 +43,36 @@
             <button type="submit" class="search-btn"><Search :size="16" /></button>
           </form>
 
-          <!-- Live Search Suggestions Overlay (Categories & Products Only) -->
+          <!-- Live Search Suggestions Overlay (Category Bubbles & Best Selling Products) -->
           <div 
             v-if="showSearchOverlay" 
             class="live-search-overlay"
-            style="position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #f1e6df; border-radius: 14px; box-shadow: 0 12px 30px rgba(74,14,46,0.18); margin-top: 6px; z-index: 1000; padding: 16px; max-height: 420px; overflow-y: auto;"
+            style="position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #f1e6df; border-radius: 14px; box-shadow: 0 12px 30px rgba(74,14,46,0.18); margin-top: 6px; z-index: 1000; padding: 16px; max-height: 440px; overflow-y: auto;"
           >
-            <!-- 1. CATEGORIES -->
-            <div v-if="matchingCategories && matchingCategories.length > 0" style="margin-bottom: 16px;">
-              <div style="font-size: 0.72rem; font-weight: 800; color: #4a0e2e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                <span>📁</span> CATEGORIES
+            <!-- 1. CATEGORY BUBBLES -->
+            <div v-if="displayOverlayCategories && displayOverlayCategories.length > 0" style="margin-bottom: 18px;">
+              <div style="font-size: 0.72rem; font-weight: 800; color: #4a0e2e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                <span>🏷️</span> {{ searchQuery.trim() ? 'MATCHING CATEGORIES' : 'TOP CATEGORIES' }}
               </div>
               <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 <router-link
-                  v-for="cat in matchingCategories" 
-                  :key="cat.id"
-                  :to="`/shop?category_id=${cat.id}`"
-                  style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; background: #fffdf9; border: 1px solid #f1e6df; border-radius: 20px; padding: 6px 14px; color: #4a0e2e; text-decoration: none; transition: all 0.2s ease;"
+                  v-for="cat in displayOverlayCategories" 
+                  :key="cat.id || cat.name"
+                  :to="cat.link || `/shop?category_id=${cat.id}`"
+                  style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; background: #fff8f2; border: 1px solid #f2e3d7; border-radius: 20px; padding: 6px 14px; color: #4a0e2e; text-decoration: none; box-shadow: 0 2px 5px rgba(74,14,46,0.04); transition: all 0.2s ease;"
                   @mousedown="showSearchOverlay = false"
                 >
-                  <img v-if="cat.image" :src="cat.image" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover;" />
+                  <img v-if="cat.image" :src="cat.image" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;" alt="cat" />
                   <span v-else>🏷️</span>
                   <span>{{ cat.name }}</span>
                 </router-link>
               </div>
             </div>
 
-            <!-- 2. PRODUCTS -->
+            <!-- 2. BEST SELLING PRODUCTS / MATCHING PRODUCTS -->
             <div v-if="displayProducts && displayProducts.length > 0">
               <div style="font-size: 0.72rem; font-weight: 800; color: #4a0e2e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                <span>🛍️</span> PRODUCTS
+                <span>🔥</span> {{ searchQuery.trim() ? 'MATCHING PRODUCTS' : 'BEST SELLING PRODUCTS' }}
               </div>
               <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                 <div 
@@ -100,7 +100,7 @@
             </div>
 
             <!-- Empty state -->
-            <div v-else-if="searchQuery.trim() && matchingCategories.length === 0" style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 16px 0;">
+            <div v-else-if="searchQuery.trim() && displayOverlayCategories.length === 0" style="font-size: 0.85rem; color: #64748b; text-align: center; padding: 16px 0;">
               No matching categories or products found for "{{ searchQuery }}"
             </div>
           </div>
@@ -156,21 +156,9 @@
       <!-- Navigation Menu (Desktop Subheader) -->
       <nav class="desktop-navigation desktop-only">
         <ul class="nav-links">
-          <template v-for="cat in categories" :key="cat.id">
-            <li v-if="cat.children && cat.children.length > 0" class="has-dropdown">
-              <router-link :to="`/shop?category_id=${cat.id}`">
-                {{ cat.name }} <ChevronDown :size="14" />
-              </router-link>
-              <ul class="dropdown-menu">
-                <li v-for="child in cat.children" :key="child.id">
-                  <router-link :to="`/shop?category_id=${child.id}`">{{ child.name }}</router-link>
-                </li>
-              </ul>
-            </li>
-            <li v-else>
-              <router-link :to="`/shop?category_id=${cat.id}`">{{ cat.name }}</router-link>
-            </li> 
-          </template>
+          <li v-for="cat in displayHeaderCategories" :key="cat.id || cat.name">
+            <router-link :to="`/shop?category_id=${cat.id}`">{{ cat.name }}</router-link>
+          </li> 
           <li><router-link to="/shop?category=trending">Trending Now</router-link></li>
           <li><router-link to="/about-us">About Us</router-link></li>
         </ul>
@@ -456,41 +444,68 @@ const subscribeNewsletter = () => {
   alert('✓ Thank you for subscribing! Check your email inbox for discount codes.');
 };
 
-const defaultSearchProducts = ref([]);
+const defaultOverlayCategories = [
+  { id: 'c1', name: 'ReadyMade Blouse', link: '/shop?search=ReadyMade' },
+  { id: 'c2', name: 'Womens', link: '/shop?search=Womens' },
+  { id: 'c3', name: 'Kids', link: '/shop?search=Kids' },
+  { id: 'c4', name: 'Mens', link: '/shop?search=Mens' }
+];
+
+const displayOverlayCategories = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  const cats = (categories.value && categories.value.length > 0) ? categories.value : defaultOverlayCategories;
+  if (!query) {
+    return cats.slice(0, 8);
+  }
+  return cats.filter(c => 
+    c.name.toLowerCase().includes(query) || 
+    (c.slug && c.slug.toLowerCase().includes(query))
+  ).slice(0, 8);
+});
+
+const bestSellingProducts = ref([]);
 
 const fetchDefaultSearchProducts = async () => {
   try {
-    const res = await axios.get('/api/storefront/products?featured=1');
-    if (res.data && res.data.data) {
-      defaultSearchProducts.value = res.data.data.slice(0, 4);
+    const res = await axios.get('/api/storefront/products', { params: { featured: 1, per_page: 5 } });
+    if (res.data && res.data.data && res.data.data.length > 0) {
+      bestSellingProducts.value = res.data.data;
+    } else {
+      const fallback = await axios.get('/api/storefront/products', { params: { per_page: 5 } });
+      if (fallback.data && fallback.data.data) {
+        bestSellingProducts.value = fallback.data.data;
+      }
     }
   } catch (e) {
-    console.error('Failed to fetch default search products:', e);
+    console.error('Failed to fetch best selling products:', e);
   }
 };
-
-const matchingCategories = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase();
-  if (!query) {
-    return categories.value.slice(0, 6);
-  }
-  return categories.value.filter(c => 
-    c.name.toLowerCase().includes(query) || 
-    (c.slug && c.slug.toLowerCase().includes(query))
-  ).slice(0, 6);
-});
 
 const displayProducts = computed(() => {
   if (searchQuery.value.trim().length >= 2) {
     return liveSearchResults.value;
   }
-  return defaultSearchProducts.value;
+  return bestSellingProducts.value;
+});
+
+const defaultHeaderCategories = [
+  { id: 1, name: 'ReadyMade Blouse', slug: 'readymade-blouse' },
+  { id: 2, name: 'Womens', slug: 'womens' },
+  { id: 3, name: 'Kids', slug: 'kids' },
+  { id: 4, name: 'Mens', slug: 'mens' }
+];
+
+const displayHeaderCategories = computed(() => {
+  if (categories.value && categories.value.length > 0) {
+    return categories.value;
+  }
+  return defaultHeaderCategories;
 });
 
 const fetchCategories = async () => {
   try {
     const response = await axios.get('/api/storefront/categories');
-    if (response.data.success) {
+    if (response.data && response.data.success) {
       categories.value = response.data.data;
     }
   } catch (err) {

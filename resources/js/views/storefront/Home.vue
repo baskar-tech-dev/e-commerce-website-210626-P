@@ -21,7 +21,7 @@
         <!-- Featured Collections Section -->
         <FeaturedCollection 
           v-if="section.id === 'featured_collections' && isSectionEnabled(section)" 
-          :products="products"
+          :products="featuredProducts.length > 0 ? featuredProducts : products"
           :wishlist-ids="wishlistIds"
           @toggle-wishlist="toggleWishlist"
           @quick-add="quickAdd"
@@ -137,6 +137,7 @@ const cmsStore = useCmsStore();
 
 const loading = ref(true);
 const products = ref([]);
+const featuredProducts = ref([]);
 const newArrivalsProducts = ref([]);
 const bestSellerProducts = ref([]);
 const activeReels = ref([]);
@@ -172,14 +173,20 @@ const isSectionEnabled = (sec) => {
 
 const fetchProducts = async () => {
   try {
-    const [allRes, newRes, bestRes] = await Promise.all([
+    const [allRes, featRes, newRes, bestRes] = await Promise.all([
       axios.get('/api/storefront/products', { params: { per_page: 16 } }),
+      axios.get('/api/storefront/products', { params: { featured: 1, per_page: 8 } }),
       axios.get('/api/storefront/products', { params: { sort_by: 'newest', per_page: 8 } }),
-      axios.get('/api/storefront/products', { params: { featured: 1, per_page: 8 } })
+      axios.get('/api/storefront/products', { params: { sort_by: 'popular', per_page: 8 } })
     ]);
 
     if (allRes.data && allRes.data.success) {
       products.value = allRes.data.data;
+    }
+    if (featRes.data && featRes.data.success && featRes.data.data.length > 0) {
+      featuredProducts.value = featRes.data.data;
+    } else {
+      featuredProducts.value = products.value.slice(0, 4);
     }
     if (newRes.data && newRes.data.success && newRes.data.data.length > 0) {
       newArrivalsProducts.value = newRes.data.data;
