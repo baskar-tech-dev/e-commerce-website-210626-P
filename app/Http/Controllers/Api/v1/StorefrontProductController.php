@@ -142,12 +142,12 @@ class StorefrontProductController extends Controller
             ], 404);
         }
 
-        // Related Products (4 products in same category)
+        // Related Products (products in same category)
         $related = Product::with('images')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->limit(4)
+            ->limit(8)
             ->get();
 
         return response()->json([

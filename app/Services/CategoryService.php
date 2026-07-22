@@ -33,6 +33,10 @@ class CategoryService
 
     public function createCategory(array $data): Category
     {
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['image'] = $this->processCategoryImage($data['image']);
+        }
+
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
         } else {
@@ -47,6 +51,10 @@ class CategoryService
 
     public function updateCategory(int $id, array $data): ?Category
     {
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['image'] = $this->processCategoryImage($data['image'], $id);
+        }
+
         if (!empty($data['name']) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
         } elseif (!empty($data['slug'])) {
@@ -58,6 +66,91 @@ class CategoryService
         }
 
         return $this->categoryRepository->update($id, $data);
+    }
+
+    public function processCategoryImage(\Illuminate\Http\UploadedFile $file, ?int $categoryId = null): string
+    {
+        $folder = $categoryId ? "categories/{$categoryId}" : "categories";
+        $originalDir = "{$folder}/original";
+        $webpDir = "{$folder}/webp";
+
+        \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($originalDir);
+        \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($webpDir);
+
+        $fileName = Str::uuid()->toString();
+        $originalExt = $file->getClientOriginalExtension();
+        $originalPath = $file->storeAs($originalDir, "{$fileName}.{$originalExt}", 'public');
+        $sourcePath = \Illuminate\Support\Facades\Storage::disk('public')->path($originalPath);
+
+        $webpPath = "{$folder}/webp/{$fileName}.webp";
+        $fullWebpPath = \Illuminate\Support\Facades\Storage::disk('public')->path($webpPath);
+
+        $success = $this->resizeAndConvertWebp($sourcePath, $fullWebpPath, 1000);
+
+        if (!$success) {
+            return '/storage/' . $originalPath;
+        }
+
+        return '/storage/' . $webpPath;
+    }
+
+    protected function resizeAndConvertWebp(string $sourcePath, string $destinationPath, int $targetWidth = 1000, int $quality = 80): bool
+    {
+        if (!function_exists('imagecreatefromjpeg')) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $info = getimagesize($sourcePath);
+        if (!$info) return false;
+
+        $mime = $info['mime'];
+        $width = $info[0];
+        $height = $info[1];
+
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $image = @imagecreatefromjpeg($sourcePath);
+                break;
+            case 'image/png':
+                $image = @imagecreatefrompng($sourcePath);
+                if ($image) {
+                    imagepalettetotruecolor($image);
+                    imagealphablending($image, true);
+                    imagesavealpha($image, true);
+                }
+                break;
+            case 'image/webp':
+                $image = @imagecreatefromwebp($sourcePath);
+                break;
+            default:
+                return false;
+        }
+
+        if (!$image) return false;
+
+        $aspectRatio = $width / $height;
+        if ($width > $targetWidth) {
+            $newWidth = $targetWidth;
+            $newHeight = intval($targetWidth / $aspectRatio);
+        } else {
+            $newWidth = $width;
+            $newHeight = $height;
+        }
+
+        $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        if ($newImage) {
+            imagealphablending($newImage, false);
+            imagesavealpha($newImage, true);
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            $success = imagewebp($newImage, $destinationPath, $quality);
+            imagedestroy($newImage);
+        } else {
+            $success = false;
+        }
+
+        imagedestroy($image);
+        return $success;
     }
 
     public function deleteCategory(int $id): bool

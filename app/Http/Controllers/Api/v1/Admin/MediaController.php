@@ -19,8 +19,10 @@ class MediaController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,webp,avif|max:10240', // max 10MB
+            'file' => 'required|image|mimes:jpeg,png,jpg,webp,avif|max:5120', // max 5MB limit
             'product_id' => 'nullable|integer|exists:products,id',
+            'category_id' => 'nullable|integer|exists:categories,id',
+            'folder' => 'nullable|string|max:50',
             'color_group' => 'nullable|string|max:50',
             'variant_id' => 'nullable|integer|exists:product_variants,id',
         ]);
@@ -49,10 +51,18 @@ class MediaController extends Controller
 
         // Expose path definitions
         $productId = $request->input('product_id');
+        $categoryId = $request->input('category_id');
+        $folderType = $request->input('folder');
         $colorGroup = $request->input('color_group');
         $variantId = $request->input('variant_id');
 
-        $folder = $productId ? "products/{$productId}" : "temp";
+        if ($categoryId || $folderType === 'categories') {
+            $folder = $categoryId ? "categories/{$categoryId}" : "categories";
+        } elseif ($productId) {
+            $folder = "products/{$productId}";
+        } else {
+            $folder = "temp";
+        }
         $fileName = Str::uuid()->toString();
 
         // 2. Setup Storage Directory relative to public disk root (storage/app/public)

@@ -38,7 +38,11 @@
           </div>
 
           <!-- Large display image -->
-          <div class="glass-panel product-detail-main-img">
+          <div 
+            class="glass-panel product-detail-main-img" 
+            style="cursor: zoom-in;"
+            @click="openLightbox"
+          >
             <img 
               v-protect-image
               :src="activeImagePath || '/storage/products/1/webp/71a5c1c3-186d-4a58-8135-1b523de86e6a.webp'" 
@@ -46,6 +50,11 @@
               alt="large preview" 
               loading="lazy"
             />
+            <!-- Watermark Overlay -->
+            <div class="product-image-watermark">
+              <img :src="'/asset/profile/logo.png'" alt="Maya Sree Watermark" />
+            </div>
+
             <!-- Left & Right Switch Controls -->
             <template v-if="product && product.images && product.images.length > 1">
               <button 
@@ -169,62 +178,72 @@
         </div>
       </div>
 
-      <!-- Customer Reviews & Ratings Breakdown Section -->
-      <section style="margin-top: 40px; background: #fafafa; border: 1px solid #f1e6df; border-radius: 16px; padding: 28px;">
-        <div style="display: flex; gap: 32px; align-items: center; flex-wrap: wrap;">
-          <div style="text-align: center; min-width: 140px;">
-            <div style="font-family: 'Playfair Display', serif; font-size: 3.2rem; font-weight: 800; color: #4a0e2e; line-height: 1;">
-              {{ product.avg_rating || 4.9 }}
-            </div>
-            <div style="color: #d4af37; font-size: 1.1rem; margin: 4px 0;">★★★★★</div>
-            <div style="font-size: 0.8rem; color: #64748b;">Based on {{ product.total_reviews || 48 }} reviews</div>
+      <!-- 1. Trending Products Section -->
+      <section v-if="trendingProducts && trendingProducts.length" style="margin-top: 48px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px;">
+          <div>
+            <h3 style="font-family: 'Playfair Display', serif; color: var(--color-primary, #4a0e2e); font-size: 1.6rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>🔥</span> Trending Products
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">Handpicked customer favorites trending this season.</p>
           </div>
-
-          <div style="flex: 1; min-width: 240px; font-size: 0.85rem;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span>5 Stars</span>
-              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 88%; height: 100%; background: #d4af37;"></div></div>
-              <span>88%</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span>4 Stars</span>
-              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 9%; height: 100%; background: #d4af37;"></div></div>
-              <span>9%</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span>3 Stars</span>
-              <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;"><div style="width: 3%; height: 100%; background: #d4af37;"></div></div>
-              <span>3%</span>
-            </div>
+          <router-link to="/shop" style="color: var(--color-primary, #4a0e2e); font-size: 0.85rem; font-weight: 700; text-decoration: none;">View All ➔</router-link>
+        </div>
+        
+        <div class="product-cards-scroll-track">
+          <div 
+            v-for="p in trendingProducts" 
+            :key="p.id" 
+            class="product-card-scroll-item"
+          >
+            <ProductCard :product="p" @quick-add="handleQuickAdd" />
           </div>
         </div>
       </section>
 
-      <!-- Related Recommendations Carousel -->
-      <section v-if="relatedProducts && relatedProducts.length" style="margin-top: var(--spacing-xl);">
-        <h3 style="color: var(--color-text-primary); font-size: 1.4rem; font-weight: bold; margin-bottom: var(--spacing-lg);">Trending Products</h3>
-        <div class="trending-products-scroll">
-            <div 
-              v-for="p in relatedProducts" 
-              :key="p.id" 
-              class="product-card"
-              style="cursor: pointer;"
-              @click="reloadDetail(p.uuid)"
-            >
-              <div class="product-card__image-container">
-                <img 
-                  v-protect-image
-                  :src="getPrimaryImage(p)" 
-                  class="product-card__image" 
-                  alt="recommend cover" 
-                  loading="lazy"
-                />
-              </div>
-            
-            <div class="product-card__details">
-              <span class="product-card__title">{{ p.name }}</span>
-              <span class="product-card__price">₹{{ p.selling_price }}</span>
-            </div>
+      <!-- 2. Similar Products Section -->
+      <section v-if="relatedProducts && relatedProducts.length" style="margin-top: 48px;">
+        <div style="margin-bottom: 18px;">
+          <h3 style="font-family: 'Playfair Display', serif; color: var(--color-primary, #4a0e2e); font-size: 1.6rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>✨</span> Similar Products
+          </h3>
+          <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">More styles from {{ product.category?.name || 'this collection' }}.</p>
+        </div>
+
+        <div class="similar-products-grid">
+          <ProductCard 
+            v-for="p in relatedProducts" 
+            :key="p.id" 
+            :product="p"
+            @quick-add="handleQuickAdd"
+          />
+        </div>
+      </section>
+
+      <!-- 3. Shop by Category (beautiful image cards) -->
+      <section style="margin-top: 48px; background: #fffdf9; border: 1px solid #f1e6df; border-radius: 18px; padding: 24px 16px;">
+        <CategoryGrid />
+      </section>
+
+      <!-- 4. Recently Viewed Section -->
+      <section v-if="recentlyViewedProducts && recentlyViewedProducts.length" style="margin-top: 48px; margin-bottom: 48px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px;">
+          <div>
+            <h3 style="font-family: 'Playfair Display', serif; color: var(--color-primary, #4a0e2e); font-size: 1.6rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>🕒</span> Recently Viewed
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">Products you recently explored.</p>
+          </div>
+          <button @click="clearRecentlyViewed" style="background: none; border: none; color: #94a3b8; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">Clear History</button>
+        </div>
+
+        <div class="product-cards-scroll-track">
+          <div 
+            v-for="p in recentlyViewedProducts" 
+            :key="p.id" 
+            class="product-card-scroll-item"
+          >
+            <ProductCard :product="p" @quick-add="handleQuickAdd" />
           </div>
         </div>
       </section>
@@ -248,6 +267,71 @@
           🛒 Add to Cart
         </button>
       </div>
+      <!-- Fullscreen Lightbox Overlay -->
+      <div v-if="isLightboxOpen" class="lightbox-overlay" @click="closeLightbox">
+        <!-- Close Button -->
+        <button class="lightbox-close-btn" @click.stop="closeLightbox" aria-label="Close fullscreen view">
+          <span style="font-size: 2rem; line-height: 1;">&times;</span>
+        </button>
+
+        <!-- Left arrow for Desktop -->
+        <button 
+          v-if="product.images && product.images.length > 1"
+          class="lightbox-nav-btn lightbox-prev-btn" 
+          @click.stop="navigateLightbox('prev')" 
+          aria-label="Previous Image"
+        >
+          <ChevronLeft :size="32" />
+        </button>
+
+        <!-- Scrollable Slides Container -->
+        <div 
+          class="lightbox-scroll-container" 
+          ref="lightboxContainer" 
+          @scroll="handleLightboxScroll"
+          @click.stop
+        >
+          <div 
+            v-for="img in product.images" 
+            :key="img.id" 
+            class="lightbox-slide"
+          >
+            <div class="lightbox-image-wrapper">
+              <img 
+                v-protect-image
+                :src="img.image_path" 
+                alt="fullscreen product preview" 
+                class="lightbox-img" 
+              />
+              <!-- Watermark on lightbox image -->
+              <div class="lightbox-watermark">
+                <img :src="'/asset/profile/logo.png'" alt="Maya Sree Watermark" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right arrow for Desktop -->
+        <button 
+          v-if="product.images && product.images.length > 1"
+          class="lightbox-nav-btn lightbox-next-btn" 
+          @click.stop="navigateLightbox('next')" 
+          aria-label="Next Image"
+        >
+          <ChevronRight :size="32" />
+        </button>
+
+        <!-- Bottom Thumbnails / Indicators -->
+        <div v-if="product.images && product.images.length > 1" class="lightbox-indicators" @click.stop>
+          <div 
+            v-for="img in product.images" 
+            :key="'dot-' + img.id" 
+            class="lightbox-dot"
+            :class="{ 'active': activeImagePath === img.image_path }"
+            @click="selectLightboxImage(img.image_path)"
+          ></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -259,6 +343,8 @@ import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
 import SkeletonLoader from '../../components/common/SkeletonLoader.vue';
+import CategoryGrid from '../../components/homepage/CategoryGrid.vue';
+import ProductCard from '../../components/ProductCard.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -270,6 +356,8 @@ const triggerSizeGuide = () => {
 
 const product = ref(null);
 const relatedProducts = ref([]);
+const trendingProducts = ref([]);
+const recentlyViewedProducts = ref([]);
 const loading = ref(true);
 const activeImagePath = ref('');
 const selectedColor = ref('');
@@ -277,6 +365,83 @@ const selectedSize = ref('');
 const qty = ref(1);
 const pincodeInput = ref('');
 const pincodeResult = ref('');
+
+// Lightbox state and navigation
+const isLightboxOpen = ref(false);
+const lightboxContainer = ref(null);
+
+const openLightbox = () => {
+  if (!product.value || !product.value.images || product.value.images.length === 0) return;
+  isLightboxOpen.value = true;
+  document.body.style.overflow = 'hidden';
+  
+  // Wait for the container to render, then scroll to active image
+  setTimeout(() => {
+    if (lightboxContainer.value) {
+      const idx = product.value.images.findIndex(img => img.image_path === activeImagePath.value);
+      if (idx !== -1) {
+        lightboxContainer.value.scrollTo({
+          left: lightboxContainer.value.clientWidth * idx,
+          behavior: 'auto'
+        });
+      }
+    }
+  }, 50);
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+  document.body.style.overflow = '';
+};
+
+const handleLightboxScroll = (event) => {
+  if (!product.value || !product.value.images) return;
+  const container = event.target;
+  const scrollLeft = container.scrollLeft;
+  const width = container.clientWidth;
+  if (width === 0) return;
+  
+  const idx = Math.round(scrollLeft / width);
+  if (idx >= 0 && idx < product.value.images.length) {
+    const targetImage = product.value.images[idx];
+    if (activeImagePath.value !== targetImage.image_path) {
+      activeImagePath.value = targetImage.image_path;
+    }
+  }
+};
+
+const navigateLightbox = (direction) => {
+  if (!product.value || !product.value.images || !lightboxContainer.value) return;
+  const images = product.value.images;
+  const currentIndex = images.findIndex(img => img.image_path === activeImagePath.value);
+  let targetIndex = currentIndex;
+  
+  if (direction === 'next') {
+    targetIndex = (currentIndex + 1) % images.length;
+  } else if (direction === 'prev') {
+    targetIndex = (currentIndex - 1 + images.length) % images.length;
+  }
+  
+  const container = lightboxContainer.value;
+  container.scrollTo({
+    left: container.clientWidth * targetIndex,
+    behavior: 'smooth'
+  });
+  
+  activeImagePath.value = images[targetIndex].image_path;
+};
+
+const selectLightboxImage = (imagePath) => {
+  if (!product.value || !product.value.images || !lightboxContainer.value) return;
+  activeImagePath.value = imagePath;
+  const idx = product.value.images.findIndex(img => img.image_path === imagePath);
+  if (idx !== -1) {
+    lightboxContainer.value.scrollTo({
+      left: lightboxContainer.value.clientWidth * idx,
+      behavior: 'smooth'
+    });
+  }
+};
 
 const checkPincode = () => {
   if (!pincodeInput.value || pincodeInput.value.length < 6) {
@@ -466,6 +631,78 @@ const discountPct = computed(() => {
   return Math.round(((mrp - sell) / mrp) * 100);
 });
 
+const fetchTrendingProducts = async () => {
+  try {
+    const res = await axios.get('/api/storefront/products?featured=1');
+    if (res.data && res.data.data) {
+      trendingProducts.value = res.data.data.slice(0, 8);
+    }
+  } catch (e) {
+    console.error('Failed to fetch trending products:', e);
+  }
+};
+
+const saveToRecentlyViewed = (prod) => {
+  if (!prod || !prod.id) return;
+  try {
+    const list = JSON.parse(localStorage.getItem('maya_recently_viewed') || '[]');
+    const filtered = list.filter(item => item.id !== prod.id && item.uuid !== prod.uuid);
+    filtered.unshift({
+      id: prod.id,
+      uuid: prod.uuid,
+      name: prod.name,
+      selling_price: prod.selling_price || prod.price,
+      mrp: prod.mrp,
+      images: prod.images || [],
+      primary_image: getPrimaryImage(prod),
+      category: prod.category
+    });
+    localStorage.setItem('maya_recently_viewed', JSON.stringify(filtered.slice(0, 10)));
+    loadRecentlyViewed();
+  } catch (e) {
+    console.error('Failed to save to recently viewed:', e);
+  }
+};
+
+const loadRecentlyViewed = () => {
+  try {
+    const list = JSON.parse(localStorage.getItem('maya_recently_viewed') || '[]');
+    if (product.value) {
+      recentlyViewedProducts.value = list.filter(item => item.id !== product.value.id && item.uuid !== product.value.uuid);
+    } else {
+      recentlyViewedProducts.value = list;
+    }
+  } catch (e) {
+    recentlyViewedProducts.value = [];
+  }
+};
+
+const clearRecentlyViewed = () => {
+  localStorage.removeItem('maya_recently_viewed');
+  recentlyViewedProducts.value = [];
+};
+
+const handleQuickAdd = (prod, size) => {
+  try {
+    const cart = JSON.parse(localStorage.getItem('vibe_cart_items') || '[]');
+    cart.push({
+      product_id: prod.id,
+      product_uuid: prod.uuid,
+      name: prod.name,
+      size: size || 'Free Size',
+      image: prod.primary_image || getPrimaryImage(prod),
+      selling_price: prod.selling_price || prod.price,
+      mrp: prod.mrp,
+      quantity: 1,
+    });
+    localStorage.setItem('vibe_cart_items', JSON.stringify(cart));
+    emit('update-cart-count');
+    alert(`✓ Added ${prod.name} (${size || 'Free Size'}) to cart!`);
+  } catch (e) {
+    console.error('Quick add failed:', e);
+  }
+};
+
 const fetchDetails = async (id) => {
   loading.value = true;
   try {
@@ -481,6 +718,9 @@ const fetchDetails = async (id) => {
         selectedColor.value = firstVariant.color || '';
         selectedSize.value = firstVariant.size || 'OS';
       }
+
+      // Save product to recently viewed list
+      saveToRecentlyViewed(product.value);
     }
   } catch (err) {
     console.error('Failed to query product details:', err);
@@ -573,6 +813,8 @@ const getPrimaryImage = (p) => {
 
 onMounted(() => {
   fetchDetails(route.params.uuid);
+  fetchTrendingProducts();
+  loadRecentlyViewed();
 });
 </script>
 
@@ -824,5 +1066,272 @@ onMounted(() => {
   color: #94a3b8;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* Image Watermark Style */
+.product-image-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+  opacity: 0.15;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-image-watermark img {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.2);
+}
+
+/* Lightbox Overlay Styles */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Scroll Container */
+.lightbox-scroll-container {
+  display: flex;
+  width: 100%;
+  height: 80vh;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  -webkit-overflow-scrolling: touch;
+}
+
+.lightbox-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Lightbox Slides */
+.lightbox-slide {
+  width: 100vw;
+  height: 100%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  padding: var(--spacing-md);
+}
+
+/* Image Wrapper */
+.lightbox-image-wrapper {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.lightbox-img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Lightbox Watermark */
+.lightbox-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 35%;
+  opacity: 0.12;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+}
+
+.lightbox-watermark img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.2);
+}
+
+/* Lightbox Close Button */
+.lightbox-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100001;
+  transition: all 0.2s ease;
+}
+
+.lightbox-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+/* Lightbox Navigation Buttons */
+.lightbox-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100000;
+  transition: all 0.2s ease;
+}
+
+.lightbox-nav-btn:hover {
+  background: var(--color-secondary, #d4af37);
+  color: var(--color-primary, #4a0e2e);
+  border-color: var(--color-secondary, #d4af37);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-prev-btn {
+  left: 32px;
+}
+
+.lightbox-next-btn {
+  right: 32px;
+}
+
+/* Lightbox Indicators / Dots */
+.lightbox-indicators {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  gap: 12px;
+  z-index: 100000;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.lightbox-dot.active {
+  background: var(--color-secondary, #d4af37);
+  transform: scale(1.2);
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive Hide Arrows on Mobile for full swipe layout */
+@media (max-width: 768px) {
+  .lightbox-nav-btn {
+    display: none; /* On mobile, pure swipe/scroll gestures are preferred */
+  }
+  .lightbox-close-btn {
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+  .lightbox-indicators {
+    bottom: 16px;
+  }
+  .lightbox-image-wrapper {
+    max-width: 95%;
+  }
+}
+
+/* Product Cards Scroll Track & Similar Products Grid */
+.product-cards-scroll-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.product-cards-scroll-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.product-cards-scroll-track::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+.product-card-scroll-item {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.similar-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 1024px) {
+  .similar-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .similar-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .product-card-scroll-item {
+    width: 175px;
+  }
 }
 </style>

@@ -164,12 +164,15 @@
                 🖼️
               </div>
               <div style="flex: 1;">
-                <input type="file" accept="image/*" @change="handleImageUpload" style="display: none;" ref="fileInput" />
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" @change="handleImageUpload" style="display: none;" ref="fileInput" />
                 <button type="button" class="btn btn--secondary" @click="$refs.fileInput.click()" :disabled="imageUploading">
-                  {{ imageUploading ? 'Uploading...' : (form.image ? 'Change Image' : 'Upload Image') }}
+                  {{ imageUploading ? 'Compressing & Uploading...' : (form.image ? 'Change Image' : 'Upload Image') }}
                 </button>
+                <div v-if="compressionStats" style="font-size: 0.75rem; color: #059669; font-weight: 600; margin-top: 0.25rem;">
+                  ⚡ Compressed: {{ compressionStats.formattedOriginalSize }} → {{ compressionStats.formattedCompressedSize }} ({{ compressionStats.reductionPercentage }}% smaller)
+                </div>
                 <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">
-                  Recommended ratio: 4:5 (e.g. 400x500px).
+                  Supported: JPG, PNG, WEBP. Max size: 5MB (Auto-compressed to WebP).
                 </div>
               </div>
             </div>
@@ -223,6 +226,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useCategoryStore } from '../../stores/category';
+import { validateAndCompressImage } from '../../utils/imageCompressor';
 import axios from 'axios';
 
 const categoryStore = useCategoryStore();
@@ -232,6 +236,7 @@ const submitting = ref(false);
 const errorMsg = ref(null);
 const currentId = ref(null);
 const imageUploading = ref(false);
+const compressionStats = ref(null);
 
 const form = ref({
   parent_id: null,
@@ -264,6 +269,7 @@ function getParentName(parentId) {
 function openCreateModal() {
   isEdit.value = false;
   currentId.value = null;
+  compressionStats.value = null;
   form.value = {
     parent_id: null,
     name: '',
@@ -281,6 +287,7 @@ function openCreateModal() {
 function openEditModal(category) {
   isEdit.value = true;
   currentId.value = category.id;
+  compressionStats.value = null;
   form.value = {
     parent_id: category.parent_id,
     name: category.name,
@@ -328,41 +335,61 @@ async function deleteCategory(id) {
 }
 
 async function handleImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  if (file.size > 10 * 1024 * 1024) {
-    alert('File size exceeds maximum limit of 10MB. Please select a smaller image or compress it before uploading.');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('file', file);
+  const rawFile = event.target.files[0];
+  if (!rawFile) return;
 
   imageUploading.value = true;
+  compressionStats.value = null;
+
   try {
+    // 1. Validate max file size (5MB) & compress image client-side via HTML Canvas
+    const compressionResult = await validateAndCompressImage(rawFile, {
+      maxSizeBytes: 5 * 1024 * 1024,
+      maxWidth: 1000,
+      maxHeight: 1200,
+      quality: 0.82
+    });
+
+    compressionStats.value = compressionResult;
+
+    // 2. Prepare FormData with compressed image blob
+    const formData = new FormData();
+    formData.append('file', compressionResult.file);
+    formData.append('folder', 'categories');
+    if (currentId.value) {
+      formData.append('category_id', currentId.value);
+    }
+
+    // 3. Upload to backend
     const res = await axios.post('/api/admin/media/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+
     if (res.data.success) {
       form.value.image = res.data.data.url;
     } else {
       alert('Upload failed: ' + res.data.message);
     }
   } catch (err) {
+    compressionStats.value = null;
     if (err.response?.status === 413) {
-      alert('Upload error (413 Payload Too Large): The image exceeds server upload limits. Please choose a smaller image or increase upload limits on your web server.');
+      alert('Upload error (413 Payload Too Large): The image exceeds server upload limits. Please choose a smaller image.');
     } else {
       alert('Upload error: ' + (err.response?.data?.message || err.message));
     }
   } finally {
     imageUploading.value = false;
+    // Reset file input so re-selecting same file triggers change event
+    if (event.target) {
+      event.target.value = '';
+    }
   }
 }
 
 function removeImage() {
   form.value.image = '';
+  compressionStats.value = null;
 }
 </script>

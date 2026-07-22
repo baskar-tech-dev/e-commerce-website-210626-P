@@ -42,12 +42,18 @@ class CategoryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'file|image|mimes:jpeg,png,jpg,webp,avif|max:5120', // max 5MB
+            ]);
+        }
+
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:categories,id',
             'name' => 'required|string|max:150',
             'slug' => 'nullable|string|max:180',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|max:500',
+            'image' => 'nullable',
             'icon' => 'nullable|string|max:50',
             'meta_title' => 'nullable|string|max:200',
             'meta_description' => 'nullable|string|max:500',
@@ -55,6 +61,10 @@ class CategoryController extends Controller
             'is_active' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image');
+        }
 
         try {
             $category = $this->categoryService->createCategory($validated);
@@ -95,12 +105,18 @@ class CategoryController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        if ($request->hasFile('image')) {
+            $request->validate([
+                'image' => 'file|image|mimes:jpeg,png,jpg,webp,avif|max:5120', // max 5MB
+            ]);
+        }
+
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:categories,id|different:id',
             'name' => 'sometimes|required|string|max:150',
             'slug' => 'nullable|string|max:180',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|max:500',
+            'image' => 'nullable',
             'icon' => 'nullable|string|max:50',
             'meta_title' => 'nullable|string|max:200',
             'meta_description' => 'nullable|string|max:500',
@@ -108,6 +124,10 @@ class CategoryController extends Controller
             'is_active' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image');
+        }
 
         try {
             $category = $this->categoryService->updateCategory($id, $validated);
