@@ -227,8 +227,8 @@
     </a>
 
     <!-- Main View Content -->
-    <main class="storefront-main">
-      <div class="storefront-container">
+    <main class="storefront-main" :class="{ 'home-main': $route.name === 'storefront.home' }">
+      <div :class="{ 'storefront-container': $route.name !== 'storefront.home' }">
         <router-view @update-cart-count="getCartCount" @update-wishlist-count="getWishlistCount"></router-view>
       </div>
     </main>
@@ -547,7 +547,7 @@ onUnmounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--cream-bg);
+  background: transparent;
   color: var(--color-text-primary); 
 }
 .storefront-announcement {
@@ -808,6 +808,9 @@ onUnmounted(() => {
 .storefront-main {
     flex: 1;
     padding: var(--spacing-lg) 40px;
+}
+.storefront-main.home-main {
+    padding: 0;
 }
 /* .storefront-container-fluid {
     max-width: 1400px;

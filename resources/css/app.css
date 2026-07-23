@@ -67,6 +67,11 @@ html {
 
 body {
     background-color: var(--color-bg);
+    background-image: url('/asset/profile/white_silk_bg.png');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
     color: var(--color-text-primary);
     font-family: var(--font-family-base);
     line-height: 1.5;
@@ -1386,6 +1391,20 @@ body.content-protected .order-number,
 body.content-protected .selectable {
     user-select: text !important;
     -webkit-user-select: text !important;
+}
+
+/* Centered Layout Container for full-bleed sections */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 20px;
+    }
 }
 
 

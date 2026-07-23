@@ -248,7 +248,7 @@ onUnmounted(()  => { clearInterval(slideTimer); });
 /* DESKTOP HERO  (unchanged from original)                             */
 /* ------------------------------------------------------------------ */
 .hero-section {
-  background: linear-gradient(135deg, #fffcf7 0%, #fcf7f2 100%);
+  background: transparent;
   border-bottom: 1px solid #f1e6df;
   padding: 40px 24px;
   overflow: hidden;
@@ -502,7 +502,7 @@ onUnmounted(()  => { clearInterval(slideTimer); });
 
   .hero-section {
     padding: 0;
-    background: #fffcf7;
+    background: transparent;
     border-bottom: none;
     min-height: unset;
     overflow: visible;
@@ -510,7 +510,7 @@ onUnmounted(()  => { clearInterval(slideTimer); });
 
   .mh {
     width: 100%;
-    background: #fffcf7;
+    background: transparent;
     position: relative;
     padding: 16px 12px 24px;
     box-sizing: border-box;
