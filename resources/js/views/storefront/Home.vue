@@ -79,7 +79,7 @@
           <span class="line"></span>
         </div>
       </div>
-      <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 var(--spacing-md);">
+      <div class="container-fluid featured-container">
         <div class="featured-grid">
           <div 
             v-for="product in visibleFeaturedProducts" 
@@ -186,7 +186,7 @@
           <span class="line"></span>
         </div>
       </div>
-      <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 var(--spacing-md);">
+      <div class="container-fluid featured-container">
         <div class="featured-grid">
           <div 
             v-for="product in visibleNewArrivalsProducts" 
@@ -1934,7 +1934,11 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .section {
-    padding: 32px 0;
+    padding: 24px 0;
+  }
+
+  .featured-collection-section {
+    padding: 16px 0 20px;
   }
 }
 
@@ -2041,7 +2045,7 @@ onUnmounted(() => {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 2fr 3fr;
   min-height: 520px;
   align-items: center;
   justify-items: center;
@@ -2791,12 +2795,26 @@ onUnmounted(() => {
 }
 
 /* Featured Grid: 6 columns on desktop (single row), 3 columns on tablet, 2 columns on mobile (2*2 grid) */
+/* Featured container — replaces inline styles for controllable responsiveness */
+.featured-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .featured-container {
+    padding: 0 8px;
+  }
+}
+
 .featured-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 @media (max-width: 1200px) {
@@ -2809,8 +2827,67 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .featured-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding: 0 16px !important;
+    gap: 8px;
+    padding: 0;
+    width: 100%;
+  }
+
+  /* Compact card for 2-up mobile layout */
+  .featured-grid .product-card {
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
+    box-sizing: border-box;
+    border-radius: 6px;
+  }
+
+  /* Square image on mobile — cuts card height by 40% vs 3:4 */
+  .featured-grid .product-image-container {
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Compact product info */
+  .featured-grid .product-info {
+    padding: 8px 10px 10px;
+  }
+
+  .featured-grid .product-title a {
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+  }
+
+  .featured-grid .current-price {
+    font-size: 0.88rem;
+  }
+
+  .featured-grid .old-price {
+    font-size: 0.72rem;
+  }
+
+  .featured-grid .product-price {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .featured-grid .product-rating {
+    font-size: 0.68rem;
+    padding-top: 4px;
+  }
+
+  /* Smaller wishlist button */
+  .featured-grid .btn-wishlist {
+    width: 26px;
+    height: 26px;
+    top: 6px;
+    right: 6px;
+  }
+
+  /* Smaller featured tag */
+  .featured-grid .product-tag {
+    font-size: 0.6rem;
+    padding: 3px 7px;
+    top: 6px;
+    left: 6px;
   }
 }
 
@@ -2856,7 +2933,7 @@ onUnmounted(() => {
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-  width: 210px;
+  width: 210px; /* overridden to 100% inside grid layouts */
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -4232,7 +4309,23 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .hero-content {
-    padding: 0 15px;
+    padding: 0 16px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-tag {
+    align-self: center;
+  }
+
+  .btn-shop-now {
+    align-self: center;
+  }
+
+  .hero-rating-badge {
+    justify-content: center !important;
   }
 
   .dark-stats-grid {
@@ -4602,7 +4695,7 @@ onUnmounted(() => {
 /* Ensure subcomponents like hero wrap appropriately under full width */
 @media (min-width: 1025px) {
   .storefront-home .hero-grid {
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 2fr 3fr;
     padding-top: var(--spacing-lg) !important;
     padding-bottom: var(--spacing-lg) !important;
   }
@@ -4627,7 +4720,6 @@ onUnmounted(() => {
   .storefront-home .faq-container,
   .storefront-home .reels-container-wrapper,
   .storefront-home .occasion-grid,
-  .storefront-home .featured-grid,
   .storefront-home .products-carousel-scroll {
     padding-left: 16px !important;
     padding-right: 16px !important;

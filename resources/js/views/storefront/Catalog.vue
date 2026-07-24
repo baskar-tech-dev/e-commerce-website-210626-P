@@ -61,30 +61,43 @@
         </div>
 
 
-        <!-- Price Limits Section -->
+        <!-- Price Range Section -->
         <div class="filter-card">
           <div class="filter-card-header" @click="toggleSection('price')">
-            <span class="filter-section-name">Price Limits</span>
+            <span class="filter-section-name">Price Range</span>
             <ChevronUp v-if="openSections.price" :size="16" />
             <ChevronDown v-else :size="16" />
           </div>
           <div v-show="openSections.price" class="filter-card-body">
-            <div style="display: flex; gap: var(--spacing-xs); align-items: center; margin-top: 0.5rem;">
-              <input 
-                type="number" 
-                v-model="filters.min_price" 
-                placeholder="Min" 
-                class="form-input compact-input" 
-                @change="fetchProducts(1)"
-              />
-              <span style="color: var(--color-text-muted);">—</span>
-              <input 
-                type="number" 
-                v-model="filters.max_price" 
-                placeholder="Max" 
-                class="form-input compact-input" 
-                @change="fetchProducts(1)"
-              />
+            <div class="price-range-wrapper">
+              <div class="price-range-labels">
+                <span class="price-label-val">₹{{ filters.min_price.toLocaleString() }}</span>
+                <span class="price-label-val">₹{{ filters.max_price.toLocaleString() }}</span>
+              </div>
+              <div class="dual-range-track-wrapper">
+                <div class="range-track-bg"></div>
+                <div class="range-track-fill" :style="rangeTrackStyle"></div>
+                <input
+                  type="range"
+                  class="dual-range-input range-min"
+                  :min="PRICE_MIN" :max="PRICE_MAX" step="100"
+                  :value="filters.min_price"
+                  @input="onMinRangeInput"
+                  @change="fetchProducts(1)"
+                />
+                <input
+                  type="range"
+                  class="dual-range-input range-max"
+                  :min="PRICE_MIN" :max="PRICE_MAX" step="100"
+                  :value="filters.max_price"
+                  @input="onMaxRangeInput"
+                  @change="fetchProducts(1)"
+                />
+              </div>
+              <div class="price-range-limits">
+                <span>₹{{ PRICE_MIN.toLocaleString() }}</span>
+                <span>₹{{ PRICE_MAX.toLocaleString() }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -383,17 +396,42 @@
           </div>
 
 
-          <!-- Price Section -->
+          <!-- Price Range Section -->
           <div class="sheet-filter-group">
             <div class="sheet-group-header" @click="toggleSection('price')">
-              <span>Price Limits</span>
+              <span>Price Range</span>
               <span>{{ openSections.price ? '−' : '+' }}</span>
             </div>
             <div v-show="openSections.price" class="sheet-group-body">
-              <div style="display: flex; gap: 10px; align-items: center; padding: 10px 0;">
-                <input type="number" v-model="filters.min_price" placeholder="Min" class="form-input" @change="fetchProducts(1)" />
-                <span>—</span>
-                <input type="number" v-model="filters.max_price" placeholder="Max" class="form-input" @change="fetchProducts(1)" />
+              <div class="price-range-wrapper" style="padding: 8px 0 16px;">
+                <div class="price-range-labels">
+                  <span class="price-label-val">₹{{ filters.min_price.toLocaleString() }}</span>
+                  <span class="price-label-val">₹{{ filters.max_price.toLocaleString() }}</span>
+                </div>
+                <div class="dual-range-track-wrapper">
+                  <div class="range-track-bg"></div>
+                  <div class="range-track-fill" :style="rangeTrackStyle"></div>
+                  <input
+                    type="range"
+                    class="dual-range-input range-min"
+                    :min="PRICE_MIN" :max="PRICE_MAX" step="100"
+                    :value="filters.min_price"
+                    @input="onMinRangeInput"
+                    @change="fetchProducts(1)"
+                  />
+                  <input
+                    type="range"
+                    class="dual-range-input range-max"
+                    :min="PRICE_MIN" :max="PRICE_MAX" step="100"
+                    :value="filters.max_price"
+                    @input="onMaxRangeInput"
+                    @change="fetchProducts(1)"
+                  />
+                </div>
+                <div class="price-range-limits">
+                  <span>₹{{ PRICE_MIN.toLocaleString() }}</span>
+                  <span>₹{{ PRICE_MAX.toLocaleString() }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -599,9 +637,30 @@ const lastPage = ref(1);
 const filters = ref({
   search: '',
   category_id: '',
-  min_price: '',
-  max_price: '',
+  min_price: 0,
+  max_price: 10000,
   sort_by: 'newest',
+});
+
+const PRICE_MIN = 0;
+const PRICE_MAX = 10000;
+
+const onMinRangeInput = (e) => {
+  const val = Number(e.target.value);
+  if (val >= filters.value.max_price) return;
+  filters.value.min_price = val;
+};
+
+const onMaxRangeInput = (e) => {
+  const val = Number(e.target.value);
+  if (val <= filters.value.min_price) return;
+  filters.value.max_price = val;
+};
+
+const rangeTrackStyle = computed(() => {
+  const left = ((filters.value.min_price - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+  const right = 100 - ((filters.value.max_price - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+  return { left: left + '%', right: right + '%' };
 });
 
 // Mock Filters State
@@ -799,8 +858,8 @@ const resetFilters = () => {
   filters.value = {
     search: '',
     category_id: blouseCat ? blouseCat.id : '',
-    min_price: '',
-    max_price: '',
+    min_price: 0,
+    max_price: 10000,
     sort_by: 'newest',
   };
   mockFilters.value = {
@@ -2043,5 +2102,109 @@ onMounted(() => {
 
 .sizes-info-list {
   font-weight: 500;
+}
+
+/* ============================================================
+   Premium Dual-Range Price Slider
+   ============================================================ */
+.price-range-wrapper {
+  padding: 8px 2px 4px;
+}
+
+.price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.price-label-val {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6E1F3A;
+  background-color: #FAF8F5;
+  border: 1px solid #D8C7A3;
+  border-radius: 6px;
+  padding: 3px 8px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.dual-range-track-wrapper {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.range-track-bg {
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  background-color: #E8DED2;
+  border-radius: 4px;
+  z-index: 0;
+}
+
+.range-track-fill {
+  position: absolute;
+  height: 4px;
+  background: linear-gradient(90deg, #6E1F3A, #B68D40);
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.dual-range-input {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+  -webkit-appearance: none;
+  z-index: 2;
+  outline: none;
+  cursor: pointer;
+}
+
+.dual-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #6E1F3A;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(110, 31, 58, 0.3);
+  pointer-events: all;
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dual-range-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  box-shadow: 0 4px 14px rgba(110, 31, 58, 0.4);
+}
+
+.dual-range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #6E1F3A;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(110, 31, 58, 0.3);
+  pointer-events: all;
+  cursor: grab;
+}
+
+.price-range-limits {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  color: #9c8a94;
+  margin-top: 8px;
 }
 </style>
