@@ -12,6 +12,10 @@
         <router-link to="/" style="color: var(--color-text-muted); text-decoration: none;">Home</router-link>
         <span style="margin: 0 0.5rem;">/</span>
         <router-link to="/shop" style="color: var(--color-text-muted); text-decoration: none;">Shop</router-link>
+        <template v-if="product.category">
+          <span style="margin: 0 0.5rem;">/</span>
+          <router-link :to="'/shop?category_id=' + product.category_id" style="color: var(--color-text-muted); text-decoration: none;">{{ product.category.name }}</router-link>
+        </template>
         <span style="margin: 0 0.5rem;">/</span>
         <span style="color: var(--color-text-primary);">{{ product.name }}</span>
       </div>
@@ -70,7 +74,14 @@
         <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
           <div>
             <div style="display: flex; gap: 0.5rem; margin-bottom: var(--spacing-xs);">
-              <span class="badge badge--secondary" style="font-size: 0.75rem;">{{ product.category?.name }}</span>
+              <router-link 
+                v-if="product.category" 
+                :to="'/shop?category_id=' + product.category_id" 
+                class="badge badge--secondary" 
+                style="font-size: 0.75rem; text-decoration: none;"
+              >
+                {{ product.category.name }}
+              </router-link>
             </div>
             <h1 style="color: var(--color-text-primary); font-size: 2.2rem; font-weight: 800; margin: 0; line-height: 1.1;">{{ product.name }}</h1>
           </div>
@@ -109,30 +120,61 @@
         </div>
       </div>
 
-      <!-- Related Recommendations Carousel -->
-      <section v-if="relatedProducts && relatedProducts.length" style="margin-top: var(--spacing-xl);">
-        <h3 style="color: var(--color-text-primary); font-size: 1.4rem; font-weight: bold; margin-bottom: var(--spacing-lg);">Trending Products</h3>
-        <div class="trending-products-scroll">
-            <div 
-              v-for="p in relatedProducts" 
-              :key="p.id" 
-              class="product-card"
-              style="cursor: pointer;"
-              @click="reloadDetail(p.uuid)"
-            >
-              <div class="product-card__image-container">
-                <img 
-                  v-protect-image
-                  :src="getPrimaryImage(p)" 
-                  class="product-card__image" 
-                  alt="recommend cover" 
-                  loading="lazy"
-                />
+      <!-- Similar Products Section -->
+      <section v-if="relatedProducts && relatedProducts.length" class="detail-recommend-section">
+        <h3 class="detail-section-title">Similar Products</h3>
+        <div class="detail-products-carousel">
+          <div 
+            v-for="p in relatedProducts" 
+            :key="p.id" 
+            class="detail-luxury-card"
+            @click="reloadDetail(p.uuid)"
+          >
+            <div class="card-img-box">
+              <img 
+                v-protect-image
+                :src="getPrimaryImage(p)" 
+                class="card-img" 
+                :alt="p.name"
+                loading="lazy"
+              />
+            </div>
+            <div class="card-info-box">
+              <h4 class="card-title">{{ p.name }}</h4>
+              <div class="card-price-row">
+                <span class="price-current">₹{{ p.selling_price }}</span>
+                <span v-if="p.mrp > p.selling_price" class="price-old">₹{{ p.mrp }}</span>
               </div>
-            
-            <div class="product-card__details">
-              <span class="product-card__title">{{ p.name }}</span>
-              <span class="product-card__price">₹{{ p.selling_price }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recently Viewed Section -->
+      <section v-if="recentlyViewed && recentlyViewed.length" class="detail-recommend-section recently-viewed-margin">
+        <h3 class="detail-section-title">Recently Viewed</h3>
+        <div class="detail-products-carousel">
+          <div 
+            v-for="p in recentlyViewed" 
+            :key="p.id" 
+            class="detail-luxury-card"
+            @click="reloadDetail(p.uuid)"
+          >
+            <div class="card-img-box">
+              <img 
+                v-protect-image
+                :src="p.image" 
+                class="card-img" 
+                :alt="p.name"
+                loading="lazy"
+              />
+            </div>
+            <div class="card-info-box">
+              <h4 class="card-title">{{ p.name }}</h4>
+              <div class="card-price-row">
+                <span class="price-current">₹{{ p.selling_price }}</span>
+                <span v-if="p.mrp > p.selling_price" class="price-old">₹{{ p.mrp }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -178,6 +220,7 @@ const triggerSizeGuide = () => {
 
 const product = ref(null);
 const relatedProducts = ref([]);
+const recentlyViewed = ref([]);
 const loading = ref(true);
 const activeImagePath = ref('');
 const selectedColor = ref('');
@@ -354,6 +397,38 @@ const discountPct = computed(() => {
   return Math.round(((mrp - sell) / mrp) * 100);
 });
 
+const trackRecentlyViewed = (prod) => {
+  if (!prod) return;
+  try {
+    let list = JSON.parse(localStorage.getItem('mayasree_recently_viewed') || '[]');
+    // Remove if already exists to move to top
+    list = list.filter(item => item.id !== prod.id);
+    // Add current product at the beginning
+    list.unshift({
+      id: prod.id,
+      uuid: prod.uuid,
+      name: prod.name,
+      selling_price: prod.selling_price,
+      mrp: prod.mrp,
+      image: getPrimaryImage(prod)
+    });
+    // Limit to 8 items
+    list = list.slice(0, 8);
+    localStorage.setItem('mayasree_recently_viewed', JSON.stringify(list));
+  } catch (e) {
+    console.error('Failed to track recently viewed product:', e);
+  }
+};
+
+const loadRecentlyViewed = () => {
+  try {
+    const list = JSON.parse(localStorage.getItem('mayasree_recently_viewed') || '[]');
+    recentlyViewed.value = list.filter(item => item.id !== product.value?.id);
+  } catch (e) {
+    recentlyViewed.value = [];
+  }
+};
+
 const fetchDetails = async (id) => {
   loading.value = true;
   try {
@@ -369,6 +444,10 @@ const fetchDetails = async (id) => {
         selectedColor.value = firstVariant.color || '';
         selectedSize.value = firstVariant.size || 'OS';
       }
+      
+      // Track this product & refresh recently viewed list
+      trackRecentlyViewed(product.value);
+      loadRecentlyViewed();
     }
   } catch (err) {
     console.error('Failed to query product details:', err);
@@ -556,67 +635,93 @@ onMounted(() => {
   }
 }
 
-.trending-products-scroll {
+/* Similar & Recently Viewed Products Sections */
+.detail-recommend-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #E8DED2;
+}
+
+.recently-viewed-margin {
+  margin-top: 50px;
+}
+
+.detail-section-title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2F2A26;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.detail-products-carousel {
   display: flex;
-  gap: var(--spacing-md);
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: var(--spacing-md);
+  padding-bottom: 15px;
   width: 100%;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-.trending-products-scroll::-webkit-scrollbar {
-  height: 6px;
+.detail-products-carousel::-webkit-scrollbar {
+  display: none;
 }
 
-.trending-products-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
-}
-
-.trending-products-scroll .product-card {
-  width: 200px;
+.detail-luxury-card {
+  width: 220px;
   flex-shrink: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: 1px solid #E8DED2;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.product-card__image-container {
+.detail-luxury-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(110, 31, 58, 0.06);
+  border-color: #D8C7A3;
+}
+
+.card-img-box {
   width: 100%;
   aspect-ratio: 3 / 4;
-  background: var(--blush-bg);
+  background: #FAF8F5;
   overflow: hidden;
   position: relative;
 }
 
-.product-card__image {
+.card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.trending-products-scroll .product-card:hover .product-card__image {
-  transform: scale(1.05);
+.detail-luxury-card:hover .card-img {
+  transform: scale(1.04);
 }
 
-.product-card__details {
-  padding: var(--spacing-sm);
+.card-info-box {
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.product-card__title {
+.card-title {
+  font-family: 'Poppins', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #2F2A26;
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -625,10 +730,22 @@ onMounted(() => {
   line-height: 1.3;
 }
 
-.product-card__price {
+.card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price-current {
   font-weight: 700;
-  color: var(--color-primary);
+  color: #6E1F3A;
   font-size: 0.95rem;
+}
+
+.price-old {
+  font-size: 0.8rem;
+  color: #9c8a94;
+  text-decoration: line-through;
 }
 
 /* Gallery Navigation Arrows */

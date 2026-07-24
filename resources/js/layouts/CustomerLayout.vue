@@ -1,33 +1,10 @@
 <template>
-  <div class="storefront-layout">
+  <div class="storefront-layout" :class="{ 'storefront-layout--announcement-sticky': isAnnouncementSticky }">
     <!-- Brand Splash Screen Overlay -->
-    <Transition name="splash-fade">
-      <div v-if="showSplash" class="brand-splash-screen">
-        <div class="splash-content">
-          <div class="splash-logo-container">
-            <img :src="'/asset/profile/logo.png'" alt="Maya Sree Fashion Logo" class="splash-logo-img">
-          </div>
-          <div class="splash-text-container">
-            <span class="splash-brand-name">MAYA SREE</span>
-            <span class="splash-brand-sub">SOUTH INDIAN FASHION</span>
-          </div>
-          <div class="splash-divider"></div>
-          <p class="splash-tagline">A Mother's Dream • A Fashion Legacy</p>
-          <div class="splash-loader-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <SplashScreen :show="showSplash" />
 
     <!-- Top Announcement Bar -->
-    <div class="storefront-announcement">
-      <span>🚚 Free Shipping Above ₹999</span>
-      <span class="storefront-announcement__divider">|</span>
-      <span>🔄 Easy Exchange & Returns</span>
-    </div>
+    <StorefrontAnnouncementBar @config-loaded="handleAnnouncementConfig" />
 
     <!-- Store Header -->
     <header class="storefront-header">
@@ -49,11 +26,66 @@
         </div>
 
         <!-- Global Search Bar (Desktop Only) -->
-        <div class="search-bar-container desktop-only">
+        <div class="search-bar-container desktop-only" ref="searchContainerRef">
           <form class="search-form" @submit.prevent="executeSearch">
-            <input type="text" v-model="searchQuery" placeholder="Search Sarees, Blouses, Kurtis..." class="search-input">
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search - Trending Blouses, ReadyMade Blouses, Stretchable Blouses..." 
+              class="search-input"
+              @focus="showSuggestions = true"
+            >
             <button type="submit" class="search-btn"><Search :size="16" /></button>
           </form>
+
+          <!-- Search Suggestions Dropdown Overlay -->
+          <div v-if="showSuggestions" class="search-suggestions-dropdown">
+            <!-- Top Categories -->
+            <div class="suggestions-section">
+              <div class="suggestions-header">
+                <span class="suggestions-icon">🏷️</span>
+                <h4>TOP CATEGORIES</h4>
+              </div>
+              <div class="suggestions-categories-grid">
+                <router-link 
+                  v-for="cat in suggestionCategories" 
+                  :key="cat.name" 
+                  :to="cat.link"
+                  class="suggestion-category-tag"
+                  @click="showSuggestions = false"
+                >
+                  <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img">
+                  <span>{{ cat.name }}</span>
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Best Selling Products -->
+            <div class="suggestions-section">
+              <div class="suggestions-header">
+                <span class="suggestions-icon">🔥</span>
+                <h4>BEST SELLING PRODUCTS</h4>
+              </div>
+              <div class="suggestions-products-list">
+                <router-link 
+                  v-for="prod in suggestionProducts" 
+                  :key="prod.id" 
+                  :to="`/products/${prod.uuid}`"
+                  class="suggestion-product-item"
+                  @click="showSuggestions = false"
+                >
+                  <div class="suggestion-prod-img-wrapper">
+                    <img :src="getPrimaryImage(prod)" :alt="prod.name" class="suggestion-prod-img">
+                  </div>
+                  <div class="suggestion-prod-info">
+                    <h5>{{ prod.name }}</h5>
+                    <span class="suggestion-prod-price">₹{{ prod.selling_price }}</span>
+                  </div>
+                  <span class="suggestion-prod-view-link">View ➔</span>
+                </router-link>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Header Action Icons -->
@@ -89,11 +121,66 @@
       </div>
 
       <!-- Sticky Mobile Search Bar -->
-      <div class="mobile-search-bar-container mobile-only">
+      <div class="mobile-search-bar-container mobile-only" ref="searchContainerMobileRef">
         <form class="search-form mobile-search-form" @submit.prevent="executeSearch">
-          <span class="search-form-icon"><Search :size="16" /></span>
-          <input type="text" v-model="searchQuery" placeholder="Search Sarees, Blouses, Kurtis..." class="search-input">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search - Trending Blouses, ReadyMade Blouses, Stretchable Blouses..." 
+            class="search-input"
+            @focus="showSuggestionsMobile = true"
+          >
+          <button type="submit" class="search-btn"><Search :size="16" /></button>
         </form>
+
+        <!-- Search Suggestions Dropdown Overlay for Mobile -->
+        <div v-if="showSuggestionsMobile" class="search-suggestions-dropdown search-suggestions-dropdown--mobile">
+          <!-- Top Categories -->
+          <div class="suggestions-section">
+            <div class="suggestions-header">
+              <span class="suggestions-icon">🏷️</span>
+              <h4>TOP CATEGORIES</h4>
+            </div>
+            <div class="suggestions-categories-grid">
+              <router-link 
+                v-for="cat in suggestionCategories" 
+                :key="cat.name" 
+                :to="cat.link"
+                class="suggestion-category-tag"
+                @click="showSuggestionsMobile = false"
+              >
+                <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img">
+                <span>{{ cat.name }}</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- Best Selling Products -->
+          <div class="suggestions-section">
+            <div class="suggestions-header">
+              <span class="suggestions-icon">🔥</span>
+              <h4>BEST SELLING PRODUCTS</h4>
+            </div>
+            <div class="suggestions-products-list">
+              <router-link 
+                v-for="prod in suggestionProducts" 
+                :key="prod.id" 
+                :to="`/products/${prod.uuid}`"
+                class="suggestion-product-item"
+                @click="showSuggestionsMobile = false"
+              >
+                <div class="suggestion-prod-img-wrapper">
+                  <img :src="getPrimaryImage(prod)" :alt="prod.name" class="suggestion-prod-img">
+                </div>
+                <div class="suggestion-prod-info">
+                  <h5>{{ prod.name }}</h5>
+                  <span class="suggestion-prod-price">₹{{ prod.selling_price }}</span>
+                </div>
+                <span class="suggestion-prod-view-link">View ➔</span>
+              </router-link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Navigation Menu (Desktop Subheader) -->
@@ -115,7 +202,6 @@
             </li> 
           </template>
           <li><router-link to="/shop?category=trending">Trending Now</router-link></li>
-          <li><router-link to="/shop?category=wholesale">Manufacturer Wholesale</router-link></li>
           <li><router-link to="/about-us">About Us</router-link></li>
         </ul>
       </nav>
@@ -183,8 +269,8 @@
     </a>
 
     <!-- Main View Content -->
-    <main class="storefront-main">
-      <div class="storefront-container">
+    <main class="storefront-main" :class="{ 'storefront-main--full-width': isHomePage }">
+      <div class="storefront-container" :class="{ 'storefront-container--full-width': isHomePage }">
         <router-view @update-cart-count="getCartCount" @update-wishlist-count="getWishlistCount"></router-view>
       </div>
     </main>
@@ -252,19 +338,84 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import { Search, User, Heart, ShoppingBag, MessageCircle, ChevronDown, Home, Store } from 'lucide-vue-next';
+import StorefrontAnnouncementBar from '../components/StorefrontAnnouncementBar.vue';
+import SplashScreen from '../components/SplashScreen.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+const isHomePage = computed(() => {
+  return route.name === 'storefront.home' || route.path === '/';
+});
+
+const isAnnouncementSticky = ref(false);
+const isAnnouncementEnabled = ref(false);
+
+const handleAnnouncementConfig = (config) => {
+  isAnnouncementSticky.value = !!(config.is_enabled && config.is_sticky && config.active_count > 0);
+  isAnnouncementEnabled.value = !!(config.is_enabled && config.active_count > 0);
+};
 
 const cartCount = ref(0);
 const wishlistCount = ref(0);
 const mobileDrawerOpen = ref(false);
 const searchQuery = ref('');
 const categories = ref([]);
+
+const showSuggestions = ref(false);
+const showSuggestionsMobile = ref(false);
+const searchContainerRef = ref(null);
+const searchContainerMobileRef = ref(null);
+
+const suggestionCategories = [
+  { name: 'ReadyMade Blouse', link: '/shop?search=Blouse', image: '/asset/occasion/Party-wear.png' },
+  { name: 'Womens', link: '/shop?category_id=1', image: '/asset/occasion/wedding-guest.png' },
+  { name: 'Kids', link: '/shop?category_id=3', image: '/asset/occasion/daily-wear.png' },
+  { name: 'Mens', link: '/shop?category_id=4', image: '/asset/occasion/office-wear.png' }
+];
+
+const suggestionProducts = ref([]);
+
+const fetchSuggestionProducts = async () => {
+  try {
+    const response = await axios.get('/api/storefront/products', {
+      params: { is_bestseller: 1, per_page: 3 }
+    });
+    if (response.data && response.data.success) {
+      suggestionProducts.value = response.data.data;
+    }
+    if (suggestionProducts.value.length === 0) {
+      const responseFallback = await axios.get('/api/storefront/products', {
+        params: { per_page: 3 }
+      });
+      if (responseFallback.data && responseFallback.data.success) {
+        suggestionProducts.value = responseFallback.data.data;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load suggestion products:', err);
+  }
+};
+
+const getPrimaryImage = (product) => {
+  if (product.images && product.images.length > 0) {
+    return product.images[0].image_path;
+  }
+  return '/asset/profile/logo.png';
+};
+
+const handleClickOutside = (event) => {
+  if (searchContainerRef.value && !searchContainerRef.value.contains(event.target)) {
+    showSuggestions.value = false;
+  }
+  if (searchContainerMobileRef.value && !searchContainerMobileRef.value.contains(event.target)) {
+    showSuggestionsMobile.value = false;
+  }
+};
 
 const showSplash = ref(false);
 const isInitialLoad = ref(true);
@@ -336,17 +487,20 @@ const handleContextMenu = (e) => {
 
 onMounted(() => {
   if (isInitialLoad.value) {
-    triggerSplash(1500); // 1.5s splash on initial load
+    triggerSplash(3200); // 3.2s cinematic splash sequence on initial load
     isInitialLoad.value = false;
   }
   getCartCount();
   getWishlistCount();
   fetchCategories();
+  fetchSuggestionProducts();
   window.addEventListener('contextmenu', handleContextMenu);
+  window.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
   window.removeEventListener('contextmenu', handleContextMenu);
+  window.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -382,6 +536,10 @@ onUnmounted(() => {
   top: 0;
   z-index: 1000;
   padding: var(--spacing-sm) 0;
+  transition: top 0.3s ease;
+}
+.storefront-layout--announcement-sticky .storefront-header {
+  top: 40px;
 }
 .storefront-header__container {
     max-width: 1400px;
@@ -429,33 +587,202 @@ onUnmounted(() => {
     flex: 1;
     max-width: 600px;
     margin: 0 var(--spacing-md);
+    position: relative;
 }
 .search-form {
     display: flex;
-    border: 1px solid var(--color-border);
-    border-radius: 30px;
-    overflow: hidden;
-    width:100%;
-    background-color: var(--blush-bg);
+    align-items: center;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 40px;
+    padding: 3px 6px;
+    width: 100%;
+    background-color: #FAF5F0 !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.search-form:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(73, 59, 84, 0.08);
 }
 .search-input {
     flex: 1;
     border: none;
-    padding: 10px 20px;
-    font-size: 0.9rem;
+    padding: 12px 24px;
+    font-size: 0.95rem;
     background: transparent;
     outline: none;
-    font-family: inherit;
-    color: var(--charcoal);
+    font-family: 'Poppins', sans-serif;
+    color: var(--color-text-primary);
+}
+.search-input::placeholder {
+    color: rgba(73, 59, 84, 0.5);
+    font-size: 0.9rem;
 }
 .search-btn {
-    padding: 10px 20px;
-    color: var(--color-primary);
-    font-size: 1rem;
-    border-radius: 30px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #FAF5F0;
+    border: 1.5px solid #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-left: auto;
+    padding: 0;
+    flex-shrink: 0;
 }
 .search-btn:hover {
-    color: var(--color-primary-hover);
+    background-color: #EDE4DC;
+    transform: scale(1.02);
+}
+.search-btn svg {
+    color: #111111;
+    width: 18px;
+    height: 18px;
+}
+
+/* Suggestions dropdown styles */
+.search-suggestions-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    z-index: 1000;
+    border: 1px solid rgba(73, 59, 84, 0.06);
+    animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestions-section {
+    margin-bottom: 24px;
+}
+.suggestions-section:last-child {
+    margin-bottom: 0;
+}
+.suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.suggestions-icon {
+    font-size: 1rem;
+}
+.suggestions-header h4 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 1.5px;
+    margin: 0;
+}
+.suggestions-categories-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.suggestion-category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #FAF8F5;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 30px;
+    padding: 6px 16px 6px 8px;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
+}
+.suggestion-category-tag:hover {
+    background-color: #FAF5F0;
+    border-color: var(--color-secondary);
+    transform: translateY(-1px);
+}
+.suggestion-cat-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+}
+.suggestions-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.suggestion-product-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #FAF8F5;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 12px;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s, border-color 0.2s;
+    text-align: left;
+}
+.suggestion-product-item:hover {
+    background-color: #FAF5F0;
+    border-color: var(--color-secondary);
+}
+.suggestion-prod-img-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.suggestion-prod-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.suggestion-prod-info {
+    flex: 1;
+}
+.suggestion-prod-info h5 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 2px 0;
+}
+.suggestion-prod-price {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.suggestion-prod-view-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #888888;
+    transition: color 0.2s;
+}
+.suggestion-product-item:hover .suggestion-prod-view-link {
+    color: var(--color-primary);
 }
 
 /* Header Actions */
@@ -963,9 +1290,10 @@ onUnmounted(() => {
     display: none;
   }
   .brand-logo {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
+    transform: none;
+    margin-left: 12px;
+    margin-right: auto;
   }
   .brand-logo .brand-name {
     font-size: 1.1rem;
@@ -1002,16 +1330,32 @@ onUnmounted(() => {
   .mobile-search-bar-container {
     padding: 0 16px var(--spacing-sm) 16px;
     width: 100%;
+    position: relative;
   }
   .mobile-search-form {
     display: flex;
     align-items: center;
-    background: var(--blush-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 30px;
-    padding: 0 var(--spacing-sm);
+    background-color: #FAF5F0 !important;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 40px;
+    padding: 3px 6px;
     width: 100%;
-    height: 40px;
+    height: 48px;
+  }
+  .mobile-search-form .search-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #FAF5F0;
+    border: 1.5px solid #111111;
+  }
+  .search-suggestions-dropdown--mobile {
+    width: calc(100% - 32px) !important;
+    left: 16px !important;
+    top: 54px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 16px !important;
   }
   .search-form-icon {
     color: var(--color-text-secondary);
@@ -1028,146 +1372,6 @@ onUnmounted(() => {
   }
 }
 
-/* Premium Brand Splash Screen */
-.brand-splash-screen {
-  position: fixed;
-  inset: 0;
-  background: var(--color-primary); /* Deep Maroon */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-}
-
-.splash-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 2rem;
-  max-width: 400px;
-  animation: splashScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.splash-logo-container {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: #ffffff;
-  padding: var(--spacing-xs);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid var(--color-secondary); /* Zari Gold border */
-  margin-bottom: var(--spacing-md);
-  position: relative;
-  animation: logoPulse 2s infinite ease-in-out;
-}
-
-.splash-logo-img {
-  width: 90%;
-  height: 90%;
-  object-fit: contain;
-}
-
-.splash-text-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.splash-brand-name {
-  font-family: var(--font-family-heading);
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 4px;
-  line-height: 1.1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.splash-brand-sub {
-  font-family: var(--font-family-base);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-secondary); /* Zari Gold */
-  letter-spacing: 6px;
-  text-transform: uppercase;
-}
-
-.splash-divider {
-  width: 60px;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
-  margin: var(--spacing-md) 0;
-}
-
-.splash-tagline {
-  font-family: var(--font-family-base);
-  font-size: 0.85rem;
-  color: rgba(255, 252, 247, 0.8);
-  font-style: italic;
-  letter-spacing: 1px;
-  margin: 0 0 var(--spacing-md) 0;
-}
-
-.splash-loader-dots {
-  display: flex;
-  gap: 8px;
-  margin-top: var(--spacing-xs);
-}
-
-.splash-loader-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--color-secondary);
-  animation: splashDotPulse 1.2s infinite ease-in-out both;
-}
-
-.splash-loader-dots span:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.splash-loader-dots span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-/* Animations */
-@keyframes splashScaleIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes logoPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    transform: scale(1.03);
-    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3); /* Zari Gold glow */
-  }
-}
-
-@keyframes splashDotPulse {
-  0%, 80%, 100% { 
-    transform: scale(0.6);
-    opacity: 0.3;
-  } 
-  40% { 
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 /* Vue Transition styling */
 .splash-fade-enter-active,
 .splash-fade-leave-active {
@@ -1177,5 +1381,15 @@ onUnmounted(() => {
 .splash-fade-enter-from,
 .splash-fade-leave-to {
   opacity: 0;
+}
+
+.storefront-main--full-width {
+  padding: 0 !important;
+}
+
+.storefront-container--full-width {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 </style>

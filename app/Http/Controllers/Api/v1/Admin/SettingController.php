@@ -34,7 +34,11 @@ class SettingController extends Controller
         foreach ($validated['settings'] as $group => $pairs) {
             if (!is_array($pairs)) continue;
             foreach ($pairs as $key => $value) {
-                Setting::set($key, $value, $group);
+                $type = null;
+                if ($group === 'announcement') {
+                    $type = 'json';
+                }
+                Setting::set($key, $value, $group, $type);
             }
         }
 

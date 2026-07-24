@@ -33,7 +33,7 @@
               <h1 class="hero-title" v-html="slide.title"></h1>
               <p class="hero-desc">{{ slide.desc }}</p>
               <router-link to="/shop" class="btn-shop-now">
-                SHOP NOW <ArrowRight :size="16" />
+                {{ slide.btnText }} <ArrowRight :size="16" />
               </router-link>
               
               <div class="hero-trust-badges">
@@ -43,88 +43,94 @@
                 </div>
                 <div class="trust-badge">
                   <div class="badge-icon"><RotateCcw :size="16" /></div>
-                  <span>EASY RETURNS</span>
+                  <span>EASY 7-DAY RETURNS</span>
                 </div>
                 <div class="trust-badge">
                   <div class="badge-icon"><Lock :size="16" /></div>
-                  <span>SECURE PAYMENT</span>
+                  <span>100% SECURE PAYMENT</span>
                 </div>
                 <div class="trust-badge">
                   <div class="badge-icon"><Truck :size="16" /></div>
-                  <span>FAST DELIVERY</span>
+                  <span>EXPRESS DELIVERY</span>
+                </div>
+              </div>
+
+              <!-- Customer Rating Badge -->
+              <div class="hero-rating-badge" style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; font-weight: 500; color: var(--color-text-primary); width: 100%;">
+                <Star :size="16" class="star-filled" style="fill: var(--color-secondary); color: var(--color-secondary);" />
+                <span>Rated <strong>4.8★</strong> by 1000+ customers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- 5. Featured Collection Section -->
+    <section class="section featured-collection-section">
+      <div class="section-header text-center">
+        <span class="section-tag">Curated For You</span>
+        <h2 class="section-title">Featured Collection</h2>
+        <div class="header-line">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+        </div>
+      </div>
+      <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <div class="featured-grid">
+          <div 
+            v-for="product in visibleFeaturedProducts" 
+            :key="product.id" 
+            class="product-card"
+          >
+            <span class="product-tag selling-fast">Featured</span>
+            <div class="product-image-container">
+              <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
+                <img 
+                  v-protect-image
+                  :src="getPrimaryImage(product)" 
+                  :alt="product.name" 
+                  class="product-image"
+                />
+              </router-link>
+              <button class="btn-wishlist" @click.stop="toggleWishlist(product)" aria-label="Toggle Wishlist">
+                <Heart :size="16" :class="{ 'heart-filled': isInWishlist(product.id) }" />
+              </button>
+              <div class="quick-add">
+                <span class="quick-add-title">Quick Add</span>
+                <div class="size-options">
+                  <span @click.stop="quickAdd(product, 'Free Size')">Free Size</span>
+                  <span @click.stop="quickAdd(product, 'L')">L</span>
+                  <span @click.stop="quickAdd(product, 'XL')">XL</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5. Real-time Social Ticker Banner -->
-    <section class="ticker-section">
-      <div class="ticker-metrics">
-        <div class="metric-item">
-          <Eye :size="16" />
-          <span><strong>{{ liveVisitors }}</strong> Customers viewing</span>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-item">
-          <ShoppingBag :size="16" />
-          <span><strong>{{ liveOrders }}</strong> Orders today</span>
-        </div>
-        <div class="metric-divider"></div>
-        <div class="metric-item">
-          <Star :size="16" class="star-filled" />
-          <span>Rated <strong>4.8★</strong> by 1000+ customers</span>
-        </div>
-      </div>
-
-      <!-- Seamless infinite marquee ticker -->
-      <div class="live-activity-container">
-        <span class="live-title">
-          <span class="live-pulse-dot"></span>
-          LIVE
-        </span>
-        <div class="live-marquee-wrapper">
-          <div class="live-activity-track">
-            <div v-for="(toast, idx) in activityToasts" :key="idx" class="activity-toast">
-              <span class="toast-avatar-fallback">👤</span>
-              <div class="toast-content">
-                <strong>{{ toast.name }}</strong> · {{ toast.city }} &nbsp;
-                <span class="toast-action">{{ toast.action }}</span> 
-                <span class="toast-highlight">{{ toast.item }}</span>
-                <span class="toast-time">{{ toast.time }}</span>
+            <div class="product-info">
+              <h4 class="product-title">
+                <router-link :to="`/products/${product.uuid}`">{{ product.name }}</router-link>
+              </h4>
+              <div class="product-price">
+                <span class="current-price">₹{{ product.selling_price }}</span>
+                <span v-if="product.mrp > product.selling_price" class="old-price">₹{{ product.mrp }}</span>
+              </div>
+              <div class="product-rating">
+                <span class="stars"><Star :size="12" class="star-filled inline" /> 4.8</span>
+                <span class="reviews-count">({{ Math.floor(Math.random() * 40) + 20 }})</span>
+                <span class="product-live-view"><Eye :size="12" /> {{ Math.floor(Math.random() * 15) + 10 }} viewing</span>
               </div>
             </div>
           </div>
         </div>
+        <div class="text-center mt-3 explore-btn-wrapper">
+          <router-link to="/shop" class="btn-explore-luxury">Explore More ➔</router-link>
+        </div>
       </div>
     </section>
 
-    <!-- 6. Shop by Occasion Section -->
-    <section class="section occasion-section">
-      <div class="section-header text-center">
-        <h2 class="section-title">SHOP BY OCCASION <span class="heart-icon">♡</span></h2>
-      </div>
-      <div class="occasion-grid">
-        <router-link 
-          v-for="occ in categoriesToShow" 
-          :key="occ.id" 
-          :to="occ.link" 
-          class="occasion-card"
-        >
-          <div class="occasion-img-wrapper">
-            <img :src="occ.image" :alt="occ.name" class="occasion-img">
-          </div>
-          <div class="occasion-overlay">
-            <h3 class="occasion-name">{{ occ.name }}</h3>
-            <span class="btn-explore">EXPLORE ➔</span>
-          </div>
-        </router-link>
-      </div>
-    </section>
-
-    <!-- 7. Our Story Legacy Section -->
+    <!-- 6. Our Story Legacy Section -->
     <section class="section story-section">
       <div class="container story-grid">
         <div class="story-image-block">
@@ -169,97 +175,25 @@
       </div>
     </section>
 
-    <!-- 8. Why Customers Love Mayasree -->
-    <section class="section values-section">
+    <!-- 7. New Arrivals Section -->
+    <section class="section new-arrivals-section">
       <div class="section-header text-center">
-        <h2 class="section-title">WHY CUSTOMERS LOVE MAYASREE</h2>
-      </div>
-      <div class="container values-grid">
-        <div class="value-item">
-          <div class="value-icon"><Shirt :size="24" /></div>
-          <h4>Premium Fabrics</h4>
-          <p>Soft, durable & skin-friendly</p>
-        </div>
-        <div class="value-item">
-          <div class="value-icon"><Sparkles :size="24" /></div>
-          <h4>Latest Fashion</h4>
-          <p>Trendy styles, always updated</p>
-        </div>
-        <div class="value-item">
-          <div class="value-icon"><CheckCircle :size="24" /></div>
-          <h4>100% Quality</h4>
-          <p>Checked before every delivery</p>
-        </div>
-        <div class="value-item">
-          <div class="value-icon"><Leaf :size="24" /></div>
-          <h4>Eco Friendly</h4>
-          <p>Sustainable fashion for a better tomorrow</p>
-        </div>
-        <div class="value-item">
-          <div class="value-icon"><RefreshCw :size="24" /></div>
-          <h4>Easy Returns</h4>
-          <p>7-Day easy exchange</p>
-        </div>
-        <div class="value-item">
-          <div class="value-icon"><Headset :size="24" /></div>
-          <h4>Dedicated Support</h4>
-          <p>We're here to help you</p>
+        <span class="section-tag">Just Launched</span>
+        <h2 class="section-title">New Arrivals</h2>
+        <div class="header-line">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
         </div>
       </div>
-    </section>
-
-    <!-- 9. Dark Stats Banner -->
-    <section class="dark-stats-banner">
-      <div class="container dark-stats-grid">
-        <div class="dark-stat-item">
-          <div class="dark-stat-icon"><Award :size="36" /></div>
-          <div>
-            <h3>5+</h3>
-            <p>Years Building A Legacy</p>
-          </div>
-        </div>
-        <div class="dark-stat-item">
-          <div class="dark-stat-icon"><Smile :size="36" /></div>
-          <div>
-            <h3>1000+</h3>
-            <p>Happy Customers</p>
-          </div>
-        </div>
-        <div class="dark-stat-item">
-          <div class="dark-stat-icon"><Store :size="36" /></div>
-          <div>
-            <h3>50+</h3>
-            <p>Trusted Suppliers</p>
-          </div>
-        </div>
-        <div class="dark-stat-item">
-          <div class="dark-stat-icon"><ClipboardCheck :size="36" /></div>
-          <div>
-            <h3>100%</h3>
-            <p>Quality Checked</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 10. Best Sellers Showcase -->
-    <section class="section best-sellers-section">
-      <div class="section-header text-center">
-        <h2 class="section-title">BEST SELLERS</h2>
-      </div>
-      
-      <div class="best-sellers-carousel-wrapper">
-        <button class="scroll-control left" @click="scrollProducts(-1)" aria-label="Scroll left">
-          <ChevronLeft :size="20" />
-        </button>
-        
-        <div class="products-grid" ref="productsGridContainer">
+      <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <div class="featured-grid">
           <div 
-            v-for="product in products" 
+            v-for="product in visibleNewArrivalsProducts" 
             :key="product.id" 
             class="product-card"
           >
-            <span class="product-tag selling-fast">Selling Fast</span>
+            <span class="product-tag new-arrival">New</span>
             <div class="product-image-container">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
                 <img 
@@ -297,14 +231,210 @@
             </div>
           </div>
         </div>
-        
-        <button class="scroll-control right" @click="scrollProducts(1)" aria-label="Scroll right">
-          <ChevronRight :size="20" />
-        </button>
+        <div class="text-center mt-3 explore-btn-wrapper">
+          <router-link to="/shop" class="btn-explore-luxury">Explore More ➔</router-link>
+        </div>
+      </div>
+    </section>
+
+      <!-- 8. Shop by Occasion Section -->
+    <section class="section occasion-section">
+      <div class="section-header text-center">
+        <span class="section-tag">Celebrate in Style</span>
+        <h2 class="section-title">Shop by Occasion</h2>
+        <div class="header-line">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+        </div>
+      </div>
+      <div class="occasion-grid">
+        <router-link 
+          v-for="occ in categoriesToShow" 
+          :key="occ.id" 
+          :to="occ.link" 
+          class="occasion-card"
+        >
+          <div class="occasion-img-wrapper">
+            <img :src="occ.image" :alt="occ.name" class="occasion-img">
+          </div>
+          <div class="occasion-content-overlay">
+            <div class="occasion-icon-badge">
+              <component :is="getOccasionIcon(occ.name)" :size="20" />
+            </div>
+            <h3 class="occasion-title">{{ occ.name }}</h3>
+            <p class="occasion-desc">{{ getOccasionDetails(occ.name).sub }}</p>
+            <!-- Decorative Gold Divider -->
+            <div class="decor-divider">
+              <span class="divider-line"></span>
+              <span class="divider-diamond">♦</span>
+              <span class="divider-line"></span>
+            </div>
+          </div>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- 8. Why Customers Love Mayasree -->
+    <section class="section values-section">
+      <div class="section-header text-center">
+        <span class="section-tag">Our Promise</span>
+        <h2 class="section-title">Why Customers Love Maya Sree</h2>
+        <div class="header-line">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+        </div>
+      </div>
+      <div class="container values-grid">
+        <div class="value-item">
+          <div class="value-icon"><Shirt :size="24" /></div>
+          <h4>Premium Fabrics</h4>
+          <p>Soft, durable & skin-friendly</p>
+        </div>
+        <div class="value-item">
+          <div class="value-icon"><Sparkles :size="24" /></div>
+          <h4>Latest Fashion</h4>
+          <p>Trendy styles, always updated</p>
+        </div>
+        <div class="value-item">
+          <div class="value-icon"><CheckCircle :size="24" /></div>
+          <h4>100% Quality</h4>
+          <p>Checked before every delivery</p>
+        </div>
+        <div class="value-item">
+          <div class="value-icon"><Leaf :size="24" /></div>
+          <h4>Eco Friendly</h4>
+          <p>Sustainable fashion for a better tomorrow</p>
+        </div>
+        <div class="value-item">
+          <div class="value-icon"><RefreshCw :size="24" /></div>
+          <h4>Easy Returns</h4>
+          <p>7-Day easy exchange</p>
+        </div>
+        <div class="value-item">
+          <div class="value-icon"><Headset :size="24" /></div>
+          <h4>Dedicated Support</h4>
+          <p>We're here to help you</p>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- The Maya Sree Edit Section -->
+    <section class="section new-popular-section">
+      <div class="section-header text-center edit-header">
+        <h2 class="edit-title">The Maya Sree Edit</h2>
+        <p class="edit-subtitle">A curated collection of handcrafted ready-made blouses designed for every celebration.</p>
+        <div class="edit-divider">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
+          <span class="line"></span>
+        </div>
       </div>
       
-      <div class="text-center mt-3">
-        <router-link to="/shop" class="btn-view-all">VIEW ALL BEST SELLERS ➔</router-link>
+      <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 var(--spacing-md);">
+        <!-- Tabs Nav Wrapper -->
+        <div class="tabs-nav-wrapper">
+          <div class="tabs-scroll-container" ref="tabsContainerRef">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              class="tab-btn"
+              :class="{ active: activeTab === tab.id }"
+              @click="setActiveTab(tab.id)"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Products Carousel -->
+        <div class="carousel-outer-wrapper">
+          <button class="carousel-arrow-btn left" @click="scrollCarousel('left')" aria-label="Scroll Carousel Left">
+            <ChevronLeft :size="20" />
+          </button>
+
+          <div v-if="isTabLoading" class="products-carousel-scroll">
+            <div v-for="n in 4" :key="n" class="skeleton-card" style="flex: 0 0 290px;">
+              <div class="skeleton-image"></div>
+              <div class="skeleton-info">
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line price"></div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="products-carousel-scroll" ref="carouselScrollRef">
+            <div 
+              v-for="product in tabProducts" 
+              :key="product.id" 
+              class="luxury-product-card"
+            >
+              <div class="card-image-wrapper">
+                <router-link :to="`/products/${product.uuid}`" class="card-image-link">
+                  <img 
+                    v-protect-image
+                    :src="getPrimaryImage(product)" 
+                    :alt="product.name" 
+                    class="luxury-product-image"
+                  />
+                </router-link>
+                
+                <!-- Wishlist -->
+                <button class="btn-card-wishlist" @click.stop="toggleWishlist(product)" aria-label="Add to Wishlist">
+                  <Heart :size="16" :class="{ 'heart-filled': isInWishlist(product.id) }" />
+                </button>
+
+                <!-- New / Premium Badge -->
+                <span v-if="product.is_new_arrival" class="luxury-badge new">NEW</span>
+                <span v-else-if="product.is_bestseller" class="luxury-badge best">BEST SELLER</span>
+
+                <!-- Quick Add Hover Overlay (matching Featured section style) -->
+                <div class="luxury-quick-add">
+                  <span class="luxury-quick-add-title">Quick Add</span>
+                  <div class="luxury-size-options">
+                    <span 
+                      v-for="size in getProductSizes(product)" 
+                      :key="size" 
+                      @click.stop="quickAdd(product, size)"
+                    >
+                      {{ size }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-details-wrapper">
+                <h4 class="luxury-product-title">
+                  <router-link :to="`/products/${product.uuid}`">{{ product.name }}</router-link>
+                </h4>
+
+                <div class="luxury-price-row">
+                  <span class="selling-price">₹{{ product.selling_price }}</span>
+                  <span v-if="product.mrp > product.selling_price" class="original-price">₹{{ product.mrp }}</span>
+                </div>
+
+                <!-- Rating Row at bottom -->
+                <div class="card-rating-row">
+                  <span class="stars"><Star :size="12" class="star-filled inline" /> 4.8</span>
+                  <span class="rating-count">({{ Math.floor(Math.random() * 30) + 15 }})</span>
+                  <span class="product-live-view"><Eye :size="12" /> {{ Math.floor(Math.random() * 15) + 10 }} viewing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="carousel-arrow-btn right" @click="scrollCarousel('right')" aria-label="Scroll Carousel Right">
+            <ChevronRight :size="20" />
+          </button>
+        </div>
+        
+        <div class="text-center mt-3 explore-btn-wrapper">
+          <router-link to="/shop" class="btn-explore-luxury">
+            Explore All Collections ➔
+          </router-link>
+        </div>
       </div>
     </section>
 
@@ -737,7 +867,12 @@ import {
   VolumeX,
   Youtube,
   ExternalLink,
-  Instagram
+  Instagram,
+  Briefcase,
+  Compass,
+  Gift,
+  Flame,
+  Crown
 } from 'lucide-vue-next';
 
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
@@ -830,47 +965,70 @@ const slides = [
   {
     leftImage: '/asset/banner-1-left.png',
     rightImage: '/asset/banner-1-right.png',
-    tag: 'DIRECT MANUFACTURER',
-    script: 'Wholesale Fashion',
-    title: 'Direct from<br>Manufacturer –<br>your <span class="highlight">savings</span> is here. <span class="heart-icon">♡</span>',
-    desc: 'Offering the best quality at true wholesale prices, exclusively for retailers and bulk fashion buyers.',
-    btnText: 'SHOP NOW'
+    tag: 'EXCLUSIVE SOUTH INDIAN HERITAGE',
+    script: 'Handcrafted Perfection',
+    title: 'Timeless Elegance,<br><span class="highlight">South Indian Craftsmanship</span>',
+    desc: 'Graceful silk sarees, breathable everyday kurtis, and stretchable ready-made blouses tailored for supreme comfort.',
+    btnText: 'EXPLORE SHOP'
   },
   {
     leftImage: '/asset/banner-2-left.png',
     rightImage: '/asset/banner-2-right.png',
-    tag: 'TRENDING NOW',
-    script: 'Stretchable Blouses',
-    title: 'Ready-Made Elegance –<br>crafted for <span class="highlight">comfort</span>. <span class="heart-icon">♡</span>',
-    desc: 'Explore premium stretchable readymade blouses in various colors and designer finishes, styled for traditional fits.',
-    btnText: 'EXPLORE SHOP'
+    tag: 'FESTIVAL & WEDDING SPECIAL',
+    script: 'Royal Heritage',
+    title: 'Grand Festive Weaves<br><span class="highlight">& Bridal Blouses</span>',
+    desc: 'Radiate timeless allure during weddings and celebrations with our rich zari borders and flawless fits.',
+    btnText: 'SHOP OCCASIONS'
   }
 ];
 
 const occasions = [
-  { id: 1, name: 'Daily Wear', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=400&h=533&q=80', slug: 'womens' },
-  { id: 2, name: 'Office Wear', image: 'https://images.unsplash.com/photo-1608748010899-18f300247112?auto=format&fit=crop&w=400&h=533&q=80', slug: 'womens' },
-  { id: 3, name: 'Wedding Collection', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=400&h=533&q=80', slug: 'womens' },
-  { id: 4, name: 'Festival Collection', image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=400&h=533&q=80', slug: 'womens' },
-  { id: 5, name: 'Kids Collection', image: 'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?auto=format&fit=crop&w=400&h=533&q=80', slug: 'kids' },
-  { id: 6, name: 'New Arrivals', image: 'https://images.unsplash.com/photo-1596783074918-c84cb06531ca?auto=format&fit=crop&w=400&h=533&q=80', slug: 'shop' }
+  { id: 1, name: 'Wedding Collection', image: '/asset/occasion/wedding-Collection.png' },
+  { id: 2, name: 'Wedding Guest', image: '/asset/occasion/wedding-guest.png' },
+  { id: 3, name: 'Festival Collection', image: '/asset/occasion/festival-collection.png' },
+  { id: 4, name: 'Temple Wear', image: '/asset/occasion/temple-collection.png' },
+  { id: 5, name: 'Family Functions', image: '/asset/occasion/family-function.png' },
+  { id: 6, name: 'Office Wear', image: '/asset/occasion/office-wear.png' },
+  { id: 7, name: 'Daily Wear', image: '/asset/occasion/daily-wear.png' },
+  { id: 8, name: 'Party Wear', image: '/asset/occasion/Party-wear.png' },
+  { id: 9, name: 'Traditional Wear', image: '/asset/banner-1.jpeg' }
 ];
 
-const categoriesToShow = computed(() => {
-  const activeCats = categoryStore.categories.filter(c => c.is_active);
-  if (activeCats.length > 0) {
-    return activeCats.slice(0, 6).map(c => ({
-      id: c.id,
-      name: c.name,
-      image: c.image || 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=400&h=533&q=80',
-      link: `/shop?category_id=${c.id}`
-    }));
+const getOccasionDetails = (name) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('wedding collection')) {
+    return { sub: 'Bridal splendour & legacy silk', icon: Sparkles };
+  } else if (normalized.includes('wedding guest')) {
+    return { sub: 'Stand out. Celebrate in style', icon: Users };
+  } else if (normalized.includes('festival collection')) {
+    return { sub: 'Radiate joy in festive prints', icon: Flame };
+  } else if (normalized.includes('temple wear')) {
+    return { sub: 'Divine traditional elegance', icon: Crown };
+  } else if (normalized.includes('family functions')) {
+    return { sub: 'Cherished styles for celebrations', icon: Heart };
+  } else if (normalized.includes('office wear')) {
+    return { sub: 'Sophisticated styling for work', icon: Briefcase };
+  } else if (normalized.includes('daily wear')) {
+    return { sub: 'Graceful comfort for every day', icon: Smile };
+  } else if (normalized.includes('party wear')) {
+    return { sub: 'Sleek silhouettes for the night', icon: Sparkles };
+  } else if (normalized.includes('traditional wear')) {
+    return { sub: 'Timeless heritage & custom drapes', icon: Award };
+  } else {
+    return { sub: "Be the first to wear the season's best", icon: Compass };
   }
+};
+
+const getOccasionIcon = (name) => {
+  return getOccasionDetails(name).icon;
+};
+
+const categoriesToShow = computed(() => {
   return occasions.map(o => ({
     id: o.id,
     name: o.name,
     image: o.image,
-    link: o.slug === 'shop' ? '/shop' : `/shop?category_id=${o.slug === 'womens' ? 6 : 7}`
+    link: `/shop?search=${encodeURIComponent(o.name.replace(' Collection', ''))}`
   }));
 });
 
@@ -900,14 +1058,155 @@ const activityToasts = ref([
   { name: 'Deepa', city: 'Tiruppur', action: 'purchased', item: 'Bridal Lehenga', time: '14m ago' }
 ]);
 
+const featuredProducts = ref([]);
+const newArrivalsProducts = ref([]);
+const bestSellersProducts = ref([]);
+
+const isMobileScreen = ref(false);
+
+const updateScreenSize = () => {
+  isMobileScreen.value = window.innerWidth <= 768;
+};
+
+const visibleFeaturedProducts = computed(() => {
+  return isMobileScreen.value 
+    ? featuredProducts.value.slice(0, 4) 
+    : featuredProducts.value.slice(0, 6);
+});
+
+const visibleNewArrivalsProducts = computed(() => {
+  return isMobileScreen.value 
+    ? newArrivalsProducts.value.slice(0, 4) 
+    : newArrivalsProducts.value.slice(0, 6);
+});
+
+// New and Popular Tabs Section Data
+const tabsContainerRef = ref(null);
+const carouselScrollRef = ref(null);
+const activeTab = ref('NEW_ARRIVALS');
+const tabProducts = ref([]);
+const isTabLoading = ref(false);
+
+const tabs = [
+  { id: 'NEW_ARRIVALS', label: 'New Arrivals', query: { is_new_arrival: 1 } },
+  { id: 'BEST_SELLERS', label: 'Best Sellers', query: { is_bestseller: 1 } },
+  { id: 'TRENDING', label: 'Trending', query: { is_featured: 1 } },
+  { id: 'PREMIUM_COLLECTION', label: 'Premium Collection', query: { search: 'Premium' } },
+  { id: 'DESIGNER', label: 'Designer', query: { search: 'Designer' } },
+  { id: 'EMBROIDERED', label: 'Embroidered', query: { search: 'Embroidered' } },
+  { id: 'MIRROR_WORK', label: 'Mirror Work', query: { search: 'Mirror' } },
+  { id: 'STONE_WORK', label: 'Stone Work', query: { search: 'Stone' } },
+  { id: 'FLORAL_COLLECTION', label: 'Floral Collection', query: { search: 'Floral' } },
+  { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', query: { search: 'Temple' } }
+];
+
+const fetchProductsForTab = async (tabId) => {
+  const selectedTab = tabs.find(t => t.id === tabId);
+  if (!selectedTab) return;
+  
+  isTabLoading.value = true;
+  try {
+    const params = {
+      ...selectedTab.query,
+      per_page: 8
+    };
+    const response = await axios.get('/api/storefront/products', { params });
+    if (response.data && response.data.success && response.data.data.length > 0) {
+      tabProducts.value = response.data.data;
+    } else {
+      const fallbackRes = await axios.get('/api/storefront/products', { params: { per_page: 8 } });
+      if (fallbackRes.data && fallbackRes.data.success) {
+        tabProducts.value = fallbackRes.data.data;
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to load products for tab ${tabId}:`, err);
+    tabProducts.value = bestSellersProducts.value.slice(0, 8);
+  } finally {
+    isTabLoading.value = false;
+  }
+};
+
+const setActiveTab = async (tabId) => {
+  activeTab.value = tabId;
+  await fetchProductsForTab(tabId);
+};
+
+const scrollCarousel = (direction) => {
+  const el = carouselScrollRef.value;
+  if (!el) return;
+  const scrollAmount = el.clientWidth * 0.75;
+  if (direction === 'left') {
+    el.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  } else {
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  }
+};
+
+const getProductColors = (product) => {
+  if (!product.variants || product.variants.length === 0) {
+    return ['Maroon', 'Gold'];
+  }
+  const colors = [...new Set(product.variants.filter(v => v.color).map(v => v.color))];
+  return colors.length > 0 ? colors.slice(0, 4) : ['Maroon', 'Gold'];
+};
+
+const getProductSizes = (product) => {
+  if (!product.variants || product.variants.length === 0) {
+    return ['L', 'XL', 'Free Size'];
+  }
+  const sizes = [...new Set(product.variants.filter(v => v.size).map(v => v.size))];
+  return sizes.length > 0 ? sizes.slice(0, 3) : ['L', 'XL'];
+};
+
+const getColorHex = (colorName) => {
+  const name = colorName.toLowerCase();
+  if (name.includes('maroon') || name.includes('plum') || name.includes('red')) return '#6E1F3A';
+  if (name.includes('gold') || name.includes('zari')) return '#B68D40';
+  if (name.includes('white') || name.includes('cream') || name.includes('ivory')) return '#FAF8F5';
+  if (name.includes('black')) return '#2D2D2D';
+  if (name.includes('navy') || name.includes('blue')) return '#0F172A';
+  if (name.includes('green') || name.includes('olive')) return '#15803d';
+  if (name.includes('pink') || name.includes('peach')) return '#f472b6';
+  return '#B68D40';
+};
+
 const fetchProducts = async () => {
   loading.value = true;
   try {
-    const response = await axios.get('/api/storefront/products', {
-      params: { per_page: 8 }
-    });
-    if (response.data && response.data.success) {
-      products.value = response.data.data;
+    const [featuredRes, newArrivalsRes, bestSellersRes] = await Promise.all([
+      axios.get('/api/storefront/products', { params: { is_featured: 1, per_page: 6 } }),
+      axios.get('/api/storefront/products', { params: { is_new_arrival: 1, per_page: 6 } }),
+      axios.get('/api/storefront/products', { params: { is_bestseller: 1, per_page: 8 } })
+    ]);
+    
+    if (featuredRes.data && featuredRes.data.success) {
+      featuredProducts.value = featuredRes.data.data;
+    }
+    if (newArrivalsRes.data && newArrivalsRes.data.success) {
+      newArrivalsProducts.value = newArrivalsRes.data.data;
+    }
+    if (bestSellersRes.data && bestSellersRes.data.success) {
+      bestSellersProducts.value = bestSellersRes.data.data;
+      products.value = bestSellersRes.data.data;
+    }
+    
+    // Safety Fallback: if any of the custom flag results are empty, fallback to slices of standard products
+    if (featuredProducts.value.length === 0 || newArrivalsProducts.value.length === 0 || bestSellersProducts.value.length === 0) {
+      const fallbackRes = await axios.get('/api/storefront/products', { params: { per_page: 12 } });
+      if (fallbackRes.data && fallbackRes.data.success) {
+        const fbData = fallbackRes.data.data;
+        if (featuredProducts.value.length === 0) {
+          featuredProducts.value = fbData.slice(0, 6);
+        }
+        if (newArrivalsProducts.value.length === 0) {
+          newArrivalsProducts.value = fbData.slice(0, 6);
+        }
+        if (bestSellersProducts.value.length === 0) {
+          bestSellersProducts.value = fbData.slice(2, 6);
+          products.value = fbData.slice(2, 6);
+        }
+      }
     }
   } catch (err) {
     console.error('Failed to load boutique products:', err);
@@ -1052,20 +1351,26 @@ const getPrimaryImage = (product) => {
 };
 
 onMounted(() => {
+  updateScreenSize();
   fetchProducts();
+  fetchProductsForTab('NEW_ARRIVALS');
   loadWishlist();
   runSimulations();
   categoryStore.fetchPublicCategories();
   fetchActiveReels();
+  window.addEventListener('resize', updateScreenSize);
 });
 
 onUnmounted(() => {
   clearInterval(slideInterval);
   clearInterval(visitorInterval);
+  window.removeEventListener('resize', updateScreenSize);
 });
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
 /* ==========================================================================
    Maya Sree Style System
    ========================================================================== */
@@ -1075,19 +1380,573 @@ onUnmounted(() => {
   background-color: #ffffff;
 }
 
+/* ==========================================================================
+   New and Popular Tabs Section
+   ========================================================================== */
+
+/* ==========================================================================
+   New and Popular (The Maya Sree Edit) Tabs Section
+   ========================================================================== */
+.new-popular-section {
+  background-color: #FAF8F5; /* Silk white background */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath d='M9 15c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2zm15 30c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2zm60-15c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2zm15 30c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2zM30 75c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2zm60 15c-2 0-3.9 1.2-4.5 3c-.6 1.8.2 3.8 2 4.4 1.8.6 3.8-.2 4.4-2 .6-1.8-.2-3.8-2-4.4-.3-.1-.6-.2-.9-.2z' fill='%23b68d40' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+  padding: 48px 0;
+  border-top: 1px solid #E8DED2;
+  border-bottom: 1px solid #E8DED2;
+}
+
+/* Edit Header */
+.edit-header {
+  margin-bottom: 16px;
+}
+
+.edit-title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  color: #2F2A26;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-transform: none;
+}
+
+.edit-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #72626a;
+  max-width: 600px;
+  margin: 0 auto 16px;
+  line-height: 1.6;
+}
+
+.edit-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.edit-divider .line {
+  width: 60px;
+  height: 1px;
+  background-color: #D8C7A3;
+}
+
+.edit-divider .diamond {
+  color: #B68D40;
+  font-size: 0.8rem;
+}
+
+.tabs-nav-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.tabs-scroll-container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 5px;
+  max-width: 100%;
+  scrollbar-width: none;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2F2A26;
+  background-color: #ffffff;
+  border: 1px solid #D8C7A3; /* Champagne Gold border */
+  border-radius: 30px; /* 30px radius */
+  padding: 10px 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 2px 8px rgba(182, 141, 64, 0.05);
+}
+
+.tab-btn:hover {
+  background-color: #FAF8F5;
+  border-color: #B68D40;
+  color: #B68D40;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(182, 141, 64, 0.1);
+}
+
+.tab-btn.active {
+  background-color: #6E1F3A; /* Deep maroon */
+  color: #ffffff;
+  border-color: #6E1F3A;
+  box-shadow: 0 8px 20px rgba(110, 31, 58, 0.2);
+}
+
+/* Custom Scrollbar under tabs */
+.tabs-scrollbar-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scrollbar-arrow {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.scrollbar-arrow:hover {
+  color: var(--color-text-primary);
+}
+
+.scrollbar-track {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: #718096;
+  border-radius: 2px;
+  transition: left 0.1s ease-out;
+}
+
+/* Products Carousel Outer Wrapper */
+.carousel-outer-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.products-carousel-scroll {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 10px 24px 10px;
+  scrollbar-width: none;
+  width: 100%;
+}
+
+.products-carousel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-arrow-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #E8DED2;
+  color: #2F2A26;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.carousel-arrow-btn:hover {
+  background-color: #6E1F3A;
+  color: #ffffff;
+  border-color: #6E1F3A;
+  box-shadow: 0 8px 20px rgba(110, 31, 58, 0.15);
+}
+
+.carousel-arrow-btn.left {
+  left: -24px;
+}
+
+.carousel-arrow-btn.right {
+  right: -24px;
+}
+
+@media (max-width: 768px) {
+  .carousel-arrow-btn {
+    display: none;
+  }
+}
+
+/* Luxury Product Card */
+.luxury-product-card {
+  flex: 0 0 290px;
+  background-color: #ffffff;
+  border-radius: 18px; /* 18px rounded corners */
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(47, 42, 38, 0.04);
+  border: 1px solid #E8DED2;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.luxury-product-card:hover {
+  transform: translateY(-8px); /* Card lifts by 8px */
+  box-shadow: 0 15px 35px rgba(110, 31, 58, 0.08); /* soft shadow */
+  border-color: #D8C7A3;
+}
+
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background-color: #FAF8F5;
+}
+
+.luxury-quick-add {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(110, 31, 58, 0.9); /* Deep Maroon with opacity */
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 5;
+}
+
+.card-image-wrapper:hover .luxury-quick-add {
+  transform: translateY(0);
+}
+
+.luxury-quick-add-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #D8C7A3; /* Gold */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.luxury-size-options {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.luxury-size-options span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.luxury-size-options span:hover {
+  background-color: #ffffff;
+  color: #6E1F3A;
+  border-color: #ffffff;
+  transform: scale(1.05);
+}
+
+.luxury-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.luxury-product-card:hover .luxury-product-image {
+  transform: scale(1.05); /* zoom slightly on hover */
+}
+
+.btn-card-wishlist {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #72626a;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-card-wishlist:hover {
+  color: #6E1F3A;
+  background-color: #ffffff;
+  transform: scale(1.1);
+}
+
+.btn-card-wishlist .heart-filled {
+  color: #6E1F3A;
+  fill: #6E1F3A;
+}
+
+.luxury-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #ffffff;
+}
+
+.luxury-badge.new {
+  background-color: #6E1F3A;
+}
+
+.luxury-badge.best {
+  background-color: #B68D40;
+}
+
+.card-details-wrapper {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+.card-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #72626a;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.card-rating-row .stars {
+  color: #B68D40;
+  font-weight: 600;
+}
+
+.luxury-product-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #2F2A26;
+  margin: 0;
+}
+
+.luxury-product-title a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.luxury-product-title a:hover {
+  color: #6E1F3A;
+}
+
+.luxury-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.luxury-price-row .selling-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #6E1F3A;
+}
+
+.luxury-price-row .original-price {
+  font-size: 0.85rem;
+  color: #9c8a94;
+  text-decoration: line-through;
+}
+
+/* Explore Button */
+.explore-btn-wrapper {
+  margin-top: 40px !important;
+  margin-bottom: 12px;
+}
+
+.btn-explore-luxury {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid #B68D40;
+  color: #B68D40;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 12px 30px;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(182, 141, 64, 0.05);
+}
+
+.btn-explore-luxury:hover {
+  background-color: #B68D40;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(182, 141, 64, 0.2);
+}
+
+/* Skeleton loader for transition state */
+.skeleton-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-line.title {
+  width: 80%;
+}
+
+.skeleton-line.price {
+  width: 40%;
+}
+
+@keyframes loading-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.luxury-product-card {
+  animation: tabProductFadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes tabProductFadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .section {
   padding: 60px 0;
 }
 
 .section-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.section-tag {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #B68D40; /* Gold */
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
 }
 
 .section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 2rem;
-  color: var(--color-primary);
-  letter-spacing: 1px;
+  font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+  font-size: 2.75rem;
+  font-weight: 500;
+  color: #6E1F3A; /* Deep Maroon */
+  letter-spacing: 2px;
+  text-transform: none;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.header-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.header-line .line {
+  width: 60px;
+  height: 1px;
+  background-color: #D8C7A3;
+}
+
+.header-line .diamond {
+  color: #B68D40;
+  font-size: 0.8rem;
 }
 
 .text-center {
@@ -1230,21 +2089,26 @@ onUnmounted(() => {
 }
 
 .hero-tag {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e2c286;
+  background-color: var(--color-primary);
+  padding: 6px 16px;
+  border-radius: 20px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 15px;
 }
 
 .hero-script {
   font-family: 'Playfair Display', serif;
-  font-size: 2.5rem;
-  color: var(--color-secondary);
+  font-size: 2.2rem;
+  color: var(--color-primary);
   font-style: italic;
   font-weight: 400;
-  margin-top: -10px;
-  margin-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 
 .hero-title {
@@ -1486,26 +2350,27 @@ onUnmounted(() => {
 /* 6. Shop by Category Section */
 .occasion-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 15px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   padding: 0 var(--spacing-md);
   max-width: 1400px;
   margin: 0 auto;
 }
 
-@media (min-width: 992px) and (max-width: 1200px) {
-  .occasion-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 .occasion-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  aspect-ratio: 4/5;
+  box-shadow: 0 4px 20px rgba(73, 59, 84, 0.08);
+  aspect-ratio: 1.15 / 1;
   background-color: var(--blush-bg);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.occasion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(73, 59, 84, 0.15);
 }
 
 .occasion-img-wrapper {
@@ -1518,48 +2383,88 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.occasion-overlay {
+.occasion-card:hover .occasion-img {
+  transform: scale(1.06);
+}
+
+.occasion-content-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 25px 15px;
-  background: linear-gradient(to top, rgba(74, 14, 46, 0.85) 0%, rgba(74, 14, 46, 0.4) 60%, transparent 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  color: #ffffff;
+  background: #ffffff;
+  padding: 30px 16px 20px 16px;
   text-align: center;
-  height: 60%;
+  border-top: 1px solid rgba(212, 175, 55, 0.35);
+  border-top-left-radius: 50% 16px;
+  border-top-right-radius: 50% 16px;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease;
 }
 
-.occasion-name {
+.occasion-icon-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bca070;
+  box-shadow: 0 4px 12px rgba(73, 59, 84, 0.06);
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.occasion-card:hover .occasion-icon-badge {
+  transform: translate(-50%, -55%) scale(1.05);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+.occasion-title {
   font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  color: var(--color-primary);
+  margin: 0;
   letter-spacing: 0.5px;
 }
 
-.btn-explore {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #f5e1a4;
-  transition: transform 0.2s, color 0.2s;
+.occasion-desc {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  color: #555555;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
 }
 
-.occasion-card:hover .occasion-img {
-  transform: scale(1.08);
+.decor-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
 }
 
-.occasion-card:hover .btn-explore {
-  color: #ffffff;
-  transform: translateX(4px);
+.divider-line {
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.6), transparent);
+}
+
+.divider-diamond {
+  color: rgba(212, 175, 55, 0.8);
+  font-size: 0.5rem;
+  transform: rotate(45deg);
 }
 
 /* 7. Our Story Legacy Section */
@@ -1807,6 +2712,54 @@ onUnmounted(() => {
   display: none;
 }
 
+/* Static Products Grid for Featured & New Arrivals */
+.products-grid-static {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .products-grid-static {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid-static {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 10px;
+  }
+}
+
+/* Featured Grid: 6 columns on desktop (single row), 3 columns on tablet, 2 columns on mobile (2*2 grid) */
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .featured-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 10px;
+  }
+}
+
 .scroll-control {
   position: absolute;
   top: 50%;
@@ -1851,6 +2804,9 @@ onUnmounted(() => {
   transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
   width: 210px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card:hover {
@@ -1976,6 +2932,9 @@ onUnmounted(() => {
 .product-info {
   padding: 15px;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .product-title a {
@@ -2014,6 +2973,8 @@ onUnmounted(() => {
   justify-content: space-between;
   font-size: 0.75rem;
   color: var(--color-text-secondary);
+  margin-top: auto;
+  padding-top: 10px;
 }
 
 .product-rating .stars {
@@ -2979,7 +3940,11 @@ onUnmounted(() => {
   }
   
   .occasion-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .occasion-card {
+    aspect-ratio: 3/4 !important;
   }
   
   .story-grid {
@@ -3161,7 +4126,11 @@ onUnmounted(() => {
   }
   
   .occasion-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .occasion-card {
+    aspect-ratio: 3/4 !important;
   }
   
   .values-grid {
@@ -3318,17 +4287,34 @@ onUnmounted(() => {
     padding: 0 8px;
   }
 
-  .occasion-name {
-    font-size: 0.85rem;
-    margin-bottom: 4px;
+  .occasion-card {
+    aspect-ratio: 3/4 !important;
   }
 
-  .btn-explore {
-    font-size: 0.65rem;
+  .occasion-content-overlay {
+    padding: 16px 4px 8px 4px !important;
+    border-top-left-radius: 50% 12px;
+    border-top-right-radius: 50% 12px;
   }
 
-  .occasion-overlay {
-    padding: 12px 6px;
+  .occasion-icon-badge {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .occasion-icon-badge svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .occasion-title {
+    font-size: 0.8rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .occasion-desc,
+  .decor-divider {
+    display: none !important;
   }
 
   .values-grid {
@@ -3515,5 +4501,68 @@ onUnmounted(() => {
   transform: scale(1.1);
   background: var(--color-primary) !important;
   border-color: var(--color-secondary) !important;
+}
+
+/* Full-Width / Full-Screen Viewport Layout Overrides */
+.storefront-home {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+}
+
+/* Override all centered grid boxes to spread full-screen */
+.storefront-home .hero-grid,
+.storefront-home .story-grid,
+.storefront-home .values-grid,
+.storefront-home .dark-stats-grid,
+.storefront-home .best-sellers-carousel-wrapper,
+.storefront-home .media-reviews-grid,
+.storefront-home .mix-match-grid,
+.storefront-home .social-insider-section .container,
+.storefront-home .newsletter .container,
+.storefront-home .faq-container,
+.storefront-home .reels-container-wrapper,
+.storefront-home .occasion-grid {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 5% !important;
+  padding-right: 5% !important;
+}
+
+/* Ensure subcomponents like hero wrap appropriately under full width */
+@media (min-width: 1025px) {
+  .storefront-home .hero-grid {
+    grid-template-columns: 1.2fr 1fr;
+    padding-top: var(--spacing-lg) !important;
+    padding-bottom: var(--spacing-lg) !important;
+  }
+}
+
+/* Allow reels to spread out nicely */
+.storefront-home .reels-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+}
+
+/* Adapt grids for mobile full width */
+@media (max-width: 768px) {
+  .storefront-home .hero-grid,
+  .storefront-home .story-grid,
+  .storefront-home .values-grid,
+  .storefront-home .dark-stats-grid,
+  .storefront-home .best-sellers-carousel-wrapper,
+  .storefront-home .media-reviews-grid,
+  .storefront-home .mix-match-grid,
+  .storefront-home .social-insider-section .container,
+  .storefront-home .newsletter .container,
+  .storefront-home .faq-container,
+  .storefront-home .reels-container-wrapper,
+  .storefront-home .occasion-grid {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
 }
 </style>

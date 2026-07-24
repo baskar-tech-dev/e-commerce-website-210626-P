@@ -44,6 +44,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/products/{id}', [StorefrontProductController::class, 'show']);
     Route::get('storefront/categories', [StorefrontProductController::class, 'categories']);
     Route::get('storefront/instagram-reels', [\App\Http\Controllers\Api\v1\StorefrontInstagramReelController::class, 'index']);
+    Route::get('storefront/announcements', [\App\Http\Controllers\Api\v1\StorefrontAnnouncementController::class, 'index']);
 });
 
 Route::post('storefront/checkout', [StorefrontCheckoutController::class, 'placeOrder'])

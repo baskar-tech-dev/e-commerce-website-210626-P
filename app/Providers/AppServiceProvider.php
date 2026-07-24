@@ -35,8 +35,12 @@ class AppServiceProvider extends ServiceProvider
         // Subscribe payment activity listener
         \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\LogPaymentActivity::class);
 
-        // Force HTTPS in production mode
-        if (config('app.env') === 'production') {
+        // Force HTTPS in production mode, except when accessing locally via localhost/IP
+        if (
+            config('app.env') === 'production' &&
+            !in_array(request()->getHost(), ['localhost', '127.0.0.1']) &&
+            !filter_var(request()->getHost(), FILTER_VALIDATE_IP)
+        ) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 

@@ -36,7 +36,20 @@ class StorefrontProductController extends Controller
             $query->whereIn('category_id', $categoryIds);
         }
 
+        // Featured Filter
+        if ($request->has('is_featured')) {
+            $query->where('is_featured', filter_var($request->input('is_featured'), FILTER_VALIDATE_BOOLEAN));
+        }
 
+        // New Arrival Filter
+        if ($request->has('is_new_arrival')) {
+            $query->where('is_new_arrival', filter_var($request->input('is_new_arrival'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        // Bestseller Filter
+        if ($request->has('is_bestseller')) {
+            $query->where('is_bestseller', filter_var($request->input('is_bestseller'), FILTER_VALIDATE_BOOLEAN));
+        }
 
         // Price Filter
         if ($request->filled('min_price')) {
