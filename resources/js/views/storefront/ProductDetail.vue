@@ -1,8 +1,15 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loading" style="text-align: center; padding: 6rem;">
-      <div class="stat-card__value" style="font-size: 1.2rem;">Loading streetwear details...</div>
+    <div v-if="loading" class="premium-loading-state">
+      <div class="loading-emblem">
+        <svg viewBox="0 0 60 60" class="loading-lotus" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="26" fill="none" stroke="#B68D40" stroke-width="1.5" stroke-dasharray="6 4" />
+          <circle cx="30" cy="30" r="6" fill="#6E1F3A" />
+        </svg>
+      </div>
+      <p class="loading-brand-text">MAYA SREE</p>
+      <p class="loading-sub-text">Curating your collection…</p>
     </div>
 
     <!-- Product Layout -->
@@ -828,5 +835,55 @@ onMounted(() => {
   color: #94a3b8;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* Premium Loading State */
+.premium-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  background-color: #FAF8F5;
+}
+
+.loading-emblem {
+  animation: spin-slow 3s linear infinite;
+}
+
+.loading-lotus {
+  width: 64px;
+  height: 64px;
+  display: block;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.loading-brand-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #6E1F3A;
+  margin: 0;
+}
+
+.loading-sub-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #B68D40;
+  letter-spacing: 2px;
+  margin: 0;
+  animation: fade-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fade-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
 }
 </style>

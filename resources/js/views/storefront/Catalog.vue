@@ -758,7 +758,32 @@ const fetchFilterMetadata = async () => {
   try {
     const catRes = await axios.get('/api/storefront/categories');
     if (catRes.data && catRes.data.success) {
-      categories.value = catRes.data.data;
+      const rawCats = catRes.data.data || [];
+      
+      // Sort categories so that 'Readymade Blouses' is positioned first
+      rawCats.sort((a, b) => {
+        const aName = a.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const bName = b.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const aIsBlouse = aName === 'readymadeblouses' || aName.includes('readymadeblouse') || aName === 'blouses';
+        const bIsBlouse = bName === 'readymadeblouses' || bName.includes('readymadeblouse') || bName === 'blouses';
+        if (aIsBlouse && !bIsBlouse) return -1;
+        if (!aIsBlouse && bIsBlouse) return 1;
+        return 0;
+      });
+      
+      categories.value = rawCats;
+
+      // Default the active category to blouses if no category_id is pre-selected in route query
+      if (!route.query.category_id) {
+        const blouseCat = categories.value.find(c => {
+          const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return name === 'readymadeblouses' || name.includes('readymadeblouse') || name === 'blouses';
+        });
+        if (blouseCat) {
+          filters.value.category_id = blouseCat.id;
+          fetchProducts(1); // refetch products to target the blouses filter
+        }
+      }
     }
   } catch (err) {
     console.error('Failed to load filter metrics:', err);
@@ -766,9 +791,14 @@ const fetchFilterMetadata = async () => {
 };
 
 const resetFilters = () => {
+  const blouseCat = categories.value.find(c => {
+    const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return name === 'readymadeblouses' || name.includes('readymadeblouse') || name === 'blouses';
+  });
+
   filters.value = {
     search: '',
-    category_id: '',
+    category_id: blouseCat ? blouseCat.id : '',
     min_price: '',
     max_price: '',
     sort_by: 'newest',
@@ -788,6 +818,13 @@ watch(
   (newQuery) => {
     if (newQuery.category_id) {
       filters.value.category_id = newQuery.category_id;
+    } else {
+      // If no category_id is set in query, we default to blouses if metadata is already loaded
+      const blouseCat = categories.value.find(c => {
+        const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return name === 'readymadeblouses' || name.includes('readymadeblouse') || name === 'blouses';
+      });
+      filters.value.category_id = blouseCat ? blouseCat.id : '';
     }
     if (newQuery.search) {
       filters.value.search = newQuery.search;

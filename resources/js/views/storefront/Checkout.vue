@@ -50,41 +50,119 @@
               <div class="checkout-form-row-2">
                 <div class="form-group">
                   <label class="form-label">First Name *</label>
-                  <input type="text" v-model="form.shipping_first_name" class="form-input" required />
+                  <input 
+                    type="text" 
+                    v-model="form.shipping_first_name" 
+                    @blur="validateField('shipping_first_name')"
+                    @input="validateField('shipping_first_name')"
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_first_name }"
+                  />
+                  <span v-if="errors.shipping_first_name" class="form-error-msg">
+                    {{ errors.shipping_first_name }}
+                  </span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Last Name *</label>
-                  <input type="text" v-model="form.shipping_last_name" class="form-input" required />
+                  <input 
+                    type="text" 
+                    v-model="form.shipping_last_name" 
+                    @blur="validateField('shipping_last_name')"
+                    @input="validateField('shipping_last_name')"
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_last_name }"
+                  />
+                  <span v-if="errors.shipping_last_name" class="form-error-msg">
+                    {{ errors.shipping_last_name }}
+                  </span>
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Mobile Number *</label>
-                <input type="text" v-model="form.shipping_phone" placeholder="9876543210" class="form-input" required />
+                <input 
+                  type="text" 
+                  v-model="form.shipping_phone" 
+                  @blur="validateField('shipping_phone')"
+                  @input="validateField('shipping_phone')"
+                  placeholder="9876543210" 
+                  class="form-input" 
+                  :class="{ 'form-input--error': errors.shipping_phone }"
+                />
+                <span v-if="errors.shipping_phone" class="form-error-msg">
+                  {{ errors.shipping_phone }}
+                </span>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Address Line 1 *</label>
-                <input type="text" v-model="form.shipping_address_line_1" placeholder="Flat No, Wing, Building Name" class="form-input" required />
+                <input 
+                  type="text" 
+                  v-model="form.shipping_address_line_1" 
+                  @blur="validateField('shipping_address_line_1')"
+                  @input="validateField('shipping_address_line_1')"
+                  placeholder="Flat No, Wing, Building Name" 
+                  class="form-input" 
+                  :class="{ 'form-input--error': errors.shipping_address_line_1 }"
+                />
+                <span v-if="errors.shipping_address_line_1" class="form-error-msg">
+                  {{ errors.shipping_address_line_1 }}
+                </span>
               </div>
 
               <div class="form-group">
                 <label class="form-label">Address Line 2</label>
-                <input type="text" v-model="form.shipping_address_line_2" placeholder="Street, Area, Landmark" class="form-input" />
+                <input 
+                  type="text" 
+                  v-model="form.shipping_address_line_2" 
+                  placeholder="Street, Area, Landmark" 
+                  class="form-input" 
+                />
               </div>
 
               <div class="checkout-form-row-3">
                 <div class="form-group">
                   <label class="form-label">City *</label>
-                  <input type="text" v-model="form.shipping_city" class="form-input" required />
+                  <input 
+                    type="text" 
+                    v-model="form.shipping_city" 
+                    @blur="validateField('shipping_city')"
+                    @input="validateField('shipping_city')"
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_city }"
+                  />
+                  <span v-if="errors.shipping_city" class="form-error-msg">
+                    {{ errors.shipping_city }}
+                  </span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">State *</label>
-                  <input type="text" v-model="form.shipping_state" class="form-input" required />
+                  <input 
+                    type="text" 
+                    v-model="form.shipping_state" 
+                    @blur="validateField('shipping_state')"
+                    @input="validateField('shipping_state')"
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_state }"
+                  />
+                  <span v-if="errors.shipping_state" class="form-error-msg">
+                    {{ errors.shipping_state }}
+                  </span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Pincode *</label>
-                  <input type="text" v-model="form.shipping_postal_code" placeholder="400001" class="form-input" required />
+                  <input 
+                    type="text" 
+                    v-model="form.shipping_postal_code" 
+                    @blur="validateField('shipping_postal_code')"
+                    @input="validateField('shipping_postal_code')"
+                    placeholder="400001" 
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_postal_code }"
+                  />
+                  <span v-if="errors.shipping_postal_code" class="form-error-msg">
+                    {{ errors.shipping_postal_code }}
+                  </span>
                 </div>
               </div>
             </form>
@@ -204,6 +282,80 @@ const form = ref({
   coupon_code: '',
 });
 
+const errors = ref({
+  shipping_first_name: '',
+  shipping_last_name: '',
+  shipping_phone: '',
+  shipping_address_line_1: '',
+  shipping_city: '',
+  shipping_state: '',
+  shipping_postal_code: ''
+});
+
+const validateField = (fieldName) => {
+  errors.value[fieldName] = '';
+  
+  if (fieldName === 'shipping_first_name') {
+    if (!form.value.shipping_first_name || !form.value.shipping_first_name.trim()) {
+      errors.value.shipping_first_name = 'First name is required';
+    }
+  }
+  
+  if (fieldName === 'shipping_last_name') {
+    if (!form.value.shipping_last_name || !form.value.shipping_last_name.trim()) {
+      errors.value.shipping_last_name = 'Last name is required';
+    }
+  }
+  
+  if (fieldName === 'shipping_phone') {
+    const phone = form.value.shipping_phone ? form.value.shipping_phone.toString().trim() : '';
+    if (!phone) {
+      errors.value.shipping_phone = 'Mobile number is required';
+    } else if (!/^\d{10}$/.test(phone)) {
+      errors.value.shipping_phone = 'Please enter a valid 10-digit mobile number';
+    }
+  }
+  
+  if (fieldName === 'shipping_address_line_1') {
+    if (!form.value.shipping_address_line_1 || !form.value.shipping_address_line_1.trim()) {
+      errors.value.shipping_address_line_1 = 'Address line 1 is required';
+    }
+  }
+  
+  if (fieldName === 'shipping_city') {
+    if (!form.value.shipping_city || !form.value.shipping_city.trim()) {
+      errors.value.shipping_city = 'City is required';
+    }
+  }
+  
+  if (fieldName === 'shipping_state') {
+    if (!form.value.shipping_state || !form.value.shipping_state.trim()) {
+      errors.value.shipping_state = 'State is required';
+    }
+  }
+  
+  if (fieldName === 'shipping_postal_code') {
+    const pin = form.value.shipping_postal_code ? form.value.shipping_postal_code.toString().trim() : '';
+    if (!pin) {
+      errors.value.shipping_postal_code = 'Pincode is required';
+    } else if (!/^\d{6}$/.test(pin)) {
+      errors.value.shipping_postal_code = 'Please enter a valid 6-digit pincode';
+    }
+  }
+};
+
+const validateForm = () => {
+  validateField('shipping_first_name');
+  validateField('shipping_last_name');
+  validateField('shipping_phone');
+  validateField('shipping_address_line_1');
+  validateField('shipping_city');
+  validateField('shipping_state');
+  validateField('shipping_postal_code');
+  
+  return !Object.values(errors.value).some(err => err !== '');
+};
+
 const loadCart = () => {
   try {
     cartItems.value = JSON.parse(localStorage.getItem('vibe_cart_items') || '[]');
@@ -243,6 +395,9 @@ const applyAddress = (addr) => {
   form.value.shipping_city = addr.city || '';
   form.value.shipping_state = addr.state || '';
   form.value.shipping_postal_code = addr.postal_code || '';
+  
+  // Clear all errors
+  Object.keys(errors.value).forEach(k => errors.value[k] = '');
 };
 
 const applySavedAddress = (event) => {
@@ -254,6 +409,8 @@ const applySavedAddress = (event) => {
     form.value.shipping_city = '';
     form.value.shipping_state = '';
     form.value.shipping_postal_code = '';
+    // Clear all errors
+    Object.keys(errors.value).forEach(k => errors.value[k] = '');
     return;
   }
   const match = addressBook.value.find(a => a.id === parseInt(id));
@@ -319,16 +476,13 @@ const submitCheckout = async () => {
   if (cartItems.value.length === 0) return;
   
   // Validation
-  if (
-    !form.value.shipping_first_name || 
-    !form.value.shipping_last_name || 
-    !form.value.shipping_phone || 
-    !form.value.shipping_address_line_1 || 
-    !form.value.shipping_city || 
-    !form.value.shipping_state || 
-    !form.value.shipping_postal_code
-  ) {
-    alert('Please fill out all required shipping fields');
+  if (!validateForm()) {
+    // Focus and scroll the first invalid input field into view
+    const firstError = document.querySelector('.form-input--error');
+    if (firstError) {
+      firstError.focus();
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     return;
   }
 
@@ -489,5 +643,18 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: var(--spacing-sm);
   }
+}
+
+.form-input--error {
+  border-color: #E11D48 !important; /* Soft Red */
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15) !important;
+}
+
+.form-error-msg {
+  color: #E11D48; /* Soft Red */
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
 }
 </style>
