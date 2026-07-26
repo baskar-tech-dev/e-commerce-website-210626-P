@@ -1,10 +1,13 @@
 <template>
-  <div class="storefront-layout" :class="{ 'storefront-layout--announcement-sticky': isAnnouncementSticky }">
+  <div class="storefront-layout" :class="{ 'storefront-layout--announcement-sticky': isAnnouncementSticky && !isScrolled, 'storefront-layout--scrolled': isScrolled }">
     <!-- Brand Splash Screen Overlay -->
     <SplashScreen :show="showSplash" />
 
+    <!-- Luxury Welcome Gift Modal -->
+    <WelcomeGiftModal />
+
     <!-- Top Announcement Bar -->
-    <StorefrontAnnouncementBar @config-loaded="handleAnnouncementConfig" />
+    <StorefrontAnnouncementBar :is-scrolled="isScrolled" @config-loaded="handleAnnouncementConfig" />
 
     <!-- Store Header -->
     <header class="storefront-header">
@@ -344,6 +347,7 @@ import axios from 'axios';
 import { Search, User, Heart, ShoppingBag, MessageCircle, ChevronDown, Home, Store } from 'lucide-vue-next';
 import StorefrontAnnouncementBar from '../components/StorefrontAnnouncementBar.vue';
 import SplashScreen from '../components/SplashScreen.vue';
+import WelcomeGiftModal from '../components/WelcomeGiftModal.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -485,6 +489,13 @@ const handleContextMenu = (e) => {
   e.preventDefault();
 };
 
+const isScrolled = ref(false);
+
+const handleLayoutScroll = () => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  isScrolled.value = scrollTop > 20;
+};
+
 onMounted(() => {
   if (isInitialLoad.value) {
     triggerSplash(3200); // 3.2s cinematic splash sequence on initial load
@@ -496,11 +507,13 @@ onMounted(() => {
   fetchSuggestionProducts();
   window.addEventListener('contextmenu', handleContextMenu);
   window.addEventListener('click', handleClickOutside);
+  window.addEventListener('scroll', handleLayoutScroll, { passive: true });
 });
 
 onUnmounted(() => {
   window.removeEventListener('contextmenu', handleContextMenu);
   window.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('scroll', handleLayoutScroll);
 });
 </script>
 
@@ -540,6 +553,9 @@ onUnmounted(() => {
 }
 .storefront-layout--announcement-sticky .storefront-header {
   top: 40px;
+}
+.storefront-layout--scrolled .storefront-header {
+  top: 0 !important;
 }
 .storefront-header__container {
     max-width: 1400px;

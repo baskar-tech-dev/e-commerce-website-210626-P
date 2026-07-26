@@ -2841,9 +2841,10 @@ onUnmounted(() => {
     border-radius: 6px;
   }
 
-  /* Square image on mobile — cuts card height by 40% vs 3:4 */
+  /* Fixed tall image height on mobile */
   .featured-grid .product-image-container {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: unset;
+    height: 220px;
   }
 
   /* Compact product info */

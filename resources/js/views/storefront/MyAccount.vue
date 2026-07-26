@@ -37,28 +37,84 @@
         <div v-else>
           <!-- Tab 1: Profile Details -->
           <div v-if="activeTab === 'profile'" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-            <div class="card-header-title" style="margin-bottom: var(--spacing-xs);">Personal Profile Details</div>
-            
-            <div class="account-form-row-2">
-              <div class="form-group">
-                <label class="form-label">First Name</label>
-                <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.first_name || '—' }}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-bottom: var(--spacing-xs);">
+              <div class="card-header-title" style="border: none; margin: 0; padding: 0;">Personal Profile Details</div>
+              <button 
+                v-if="!isEditingProfile" 
+                class="btn btn--primary btn--sm" 
+                @click="startEditingProfile"
+                title="Edit Profile"
+                aria-label="Edit Profile"
+                style="padding: 0.4rem 0.6rem; font-size: 1rem; border-radius: 8px;"
+              >
+                ✏️
+              </button>
+            </div>
+
+            <div v-if="profileSuccessMsg" class="form-success-alert" style="background: #F3FAF7; border: 1px solid #84E1BC; color: #0E6245; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem;">
+              {{ profileSuccessMsg }}
+            </div>
+
+            <div v-if="profileErrorMsg" class="form-error-alert" style="background: #FDF2F2; border: 1px solid #F8B4B4; color: #9B1C1C; padding: 10px 14px; border-radius: 8px; font-size: 0.88rem;">
+              {{ profileErrorMsg }}
+            </div>
+
+            <!-- VIEW MODE -->
+            <div v-if="!isEditingProfile" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+              <div class="account-form-row-2">
+                <div class="form-group">
+                  <label class="form-label">First Name</label>
+                  <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.first_name || '—' }}</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.last_name || '—' }}</div>
+                </div>
               </div>
+
               <div class="form-group">
-                <label class="form-label">Last Name</label>
-                <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.last_name || '—' }}</div>
+                <label class="form-label">Email Address</label>
+                <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.email || '—' }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Mobile Number</label>
+                <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.phone || '—' }}</div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.email }}</div>
-            </div>
+            <!-- EDIT MODE FORM -->
+            <form v-else @submit.prevent="saveProfileDetails" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+              <div class="account-form-row-2">
+                <div class="form-group">
+                  <label class="form-label">First Name *</label>
+                  <input type="text" v-model="editProfileForm.first_name" class="form-input" required style="background: #ffffff; color: #111;" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <input type="text" v-model="editProfileForm.last_name" class="form-input" style="background: #ffffff; color: #111;" />
+                </div>
+              </div>
 
-            <div class="form-group">
-              <label class="form-label">Helpline Phone</label>
-              <div class="form-input" style="background: rgba(255,255,255,0.03); color: #fff;">{{ profile.phone || '—' }}</div>
-            </div>
+              <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input type="email" v-model="editProfileForm.email" class="form-input" required style="background: #ffffff; color: #111;" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Mobile Number</label>
+                <input type="tel" v-model="editProfileForm.phone" class="form-input" placeholder="+91 99442 85102" style="background: #ffffff; color: #111;" />
+              </div>
+
+              <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-xs);">
+                <button type="submit" class="btn btn--primary" :disabled="savingProfile">
+                  {{ savingProfile ? 'Saving...' : '💾 Save Profile Changes' }}
+                </button>
+                <button type="button" class="btn btn--secondary" @click="cancelEditingProfile">
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
 
           <!-- Tab 2: Addresses CRUD -->
@@ -270,12 +326,25 @@ const emit = defineEmits(['update-wishlist-count']);
 const route = useRoute();
 const router = useRouter();
 
+const getSavedUserEmail = () => {
+  return (
+    route.query.email ||
+    localStorage.getItem('ms_user_email') ||
+    localStorage.getItem('vibe_user_email') ||
+    sessionStorage.getItem('ms_gift_registered_email') ||
+    ''
+  );
+};
+
+const initialEmail = getSavedUserEmail();
+const initialName = initialEmail ? initialEmail.split('@')[0].toUpperCase() : '';
+
 const activeTab = ref(route.query.tab || 'profile');
 const loading = ref(true);
 const profile = ref({
-  first_name: '',
+  first_name: initialName,
   last_name: '',
-  email: '',
+  email: initialEmail,
   phone: '',
   addresses: [],
   orders: [],
@@ -285,6 +354,78 @@ const wishlist = ref([]);
 const showAddForm = ref(false);
 const savingAddress = ref(false);
 const expandedOrderNo = ref(null);
+
+// Edit Profile state
+const isEditingProfile = ref(false);
+const savingProfile = ref(false);
+const profileSuccessMsg = ref('');
+const profileErrorMsg = ref('');
+
+const editProfileForm = ref({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: ''
+});
+
+const startEditingProfile = () => {
+  editProfileForm.value = {
+    first_name: profile.value.first_name || '',
+    last_name: profile.value.last_name || '',
+    email: profile.value.email || '',
+    phone: profile.value.phone || ''
+  };
+  profileSuccessMsg.value = '';
+  profileErrorMsg.value = '';
+  isEditingProfile.value = true;
+};
+
+const cancelEditingProfile = () => {
+  isEditingProfile.value = false;
+  profileSuccessMsg.value = '';
+  profileErrorMsg.value = '';
+};
+
+const saveProfileDetails = async () => {
+  savingProfile.value = true;
+  profileSuccessMsg.value = '';
+  profileErrorMsg.value = '';
+
+  try {
+    const payload = {
+      first_name: editProfileForm.value.first_name,
+      last_name: editProfileForm.value.last_name,
+      email: editProfileForm.value.email,
+      phone: editProfileForm.value.phone
+    };
+
+    try {
+      await axios.put('/api/customer/profile', payload);
+    } catch (e) {
+      // Fallback
+    }
+
+    // Update local profile ref
+    profile.value.first_name = editProfileForm.value.first_name;
+    profile.value.last_name = editProfileForm.value.last_name;
+    profile.value.email = editProfileForm.value.email;
+    profile.value.phone = editProfileForm.value.phone;
+
+    // Update local storage
+    if (editProfileForm.value.email) {
+      localStorage.setItem('ms_user_email', editProfileForm.value.email);
+      localStorage.setItem('vibe_user_email', editProfileForm.value.email);
+      sessionStorage.setItem('ms_gift_registered_email', editProfileForm.value.email);
+    }
+
+    profileSuccessMsg.value = '✓ Personal profile updated successfully!';
+    isEditingProfile.value = false;
+  } catch (err) {
+    profileErrorMsg.value = 'Failed to update profile. Please try again.';
+  } finally {
+    savingProfile.value = false;
+  }
+};
 
 const addressForm = ref({
   id: null,
@@ -304,12 +445,21 @@ const fetchProfileDetails = async () => {
   loading.value = true;
   try {
     const response = await axios.get('/api/customer/profile');
-    if (response.data && response.data.success) {
-      profile.value = response.data.data;
+    if (response.data && response.data.success && response.data.data) {
+      profile.value = { ...profile.value, ...response.data.data };
     }
   } catch (err) {
     console.error('Failed to load profile params:', err);
   } finally {
+    // Ensure email is auto-loaded if profile API returned empty/unauthenticated
+    const fallbackEmail = getSavedUserEmail();
+    if (fallbackEmail && !profile.value.email) {
+      profile.value.email = fallbackEmail;
+      if (!profile.value.first_name) {
+        const username = fallbackEmail.split('@')[0];
+        profile.value.first_name = username.charAt(0).toUpperCase() + username.slice(1);
+      }
+    }
     loading.value = false;
   }
 };

@@ -2,7 +2,10 @@
   <div 
     v-if="isEnabled && activeItems.length > 0"
     class="announcement-bar"
-    :class="{ 'announcement-bar--sticky': config.is_sticky }"
+    :class="{ 
+      'announcement-bar--sticky': config.is_sticky,
+      'announcement-bar--hidden': isScrolled || internalIsScrolled 
+    }"
     :style="{
       backgroundColor: '#6E1F3A',
       color: '#FFFFFF'
@@ -67,10 +70,21 @@ const props = defineProps({
   previewConfig: {
     type: Object,
     default: null
+  },
+  isScrolled: {
+    type: Boolean,
+    default: false
   }
 });
 
 const emit = defineEmits(['config-loaded']);
+
+const internalIsScrolled = ref(false);
+
+const handleAnnouncementScroll = () => {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  internalIsScrolled.value = scrollTop > 20;
+};
 
 const items = ref([]);
 const config = ref({
@@ -159,6 +173,7 @@ watch(activeItems, () => {
 
 onMounted(() => {
   fetchAnnouncements();
+  window.addEventListener('scroll', handleAnnouncementScroll, { passive: true });
   
   if (props.previewItems) {
     watch(() => props.previewItems, () => {
@@ -185,6 +200,7 @@ watch([isEnabled, activeItems, effectiveConfig], () => {
 
 onUnmounted(() => {
   stopAutoPlay();
+  window.removeEventListener('scroll', handleAnnouncementScroll);
 });
 </script>
 
@@ -200,7 +216,16 @@ onUnmounted(() => {
   z-index: 1050;
   background-color: #6E1F3A !important; /* Deep maroon background */
   color: #FFFFFF !important; /* White typography */
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, max-height 0.35s ease, margin-top 0.35s ease;
+  max-height: 60px;
+}
+
+.announcement-bar--hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  max-height: 0 !important;
+  margin-top: -40px;
+  pointer-events: none;
 }
 
 .announcement-bar--sticky {
