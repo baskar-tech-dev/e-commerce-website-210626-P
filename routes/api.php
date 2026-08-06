@@ -161,5 +161,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::get('settings', [SettingController::class, 'index']);
         Route::post('settings/batch', [SettingController::class, 'updateBatch']);
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+        
+        // Announcement Management
+        Route::patch('announcements/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\AnnouncementController::class, 'toggleActive']);
+        Route::post('announcements/reorder', [\App\Http\Controllers\Api\v1\Admin\AnnouncementController::class, 'reorder']);
+        Route::apiResource('announcements', \App\Http\Controllers\Api\v1\Admin\AnnouncementController::class);
     });
 });

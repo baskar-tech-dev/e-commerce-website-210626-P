@@ -135,10 +135,10 @@
 import { onMounted } from 'vue';
 
 onMounted(() => {
-  document.title = "Privacy Policy - Maya Sree South Indian Fashion";
+  document.title = "Privacy Policy - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
-    metaDescription.setAttribute("content", "Review the Privacy Policy of Maya Sree South Indian Fashion. Learn how we secure, process, and respect your customer information.");
+    metaDescription.setAttribute("content", "Review the Privacy Policy of Maya Sree Fashion. Learn how we secure, process, and respect your customer information.");
   }
 });
 </script>

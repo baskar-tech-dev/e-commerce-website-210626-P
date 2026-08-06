@@ -4,9 +4,10 @@
     <div v-if="orderPlaced" class="glass-panel" style="max-width: 600px; margin: 2rem auto; padding: var(--spacing-xl); text-align: center; border: 1px solid var(--color-success);">
       <span style="font-size: 5rem; display: block; margin-bottom: var(--spacing-md);">🎉</span>
       <h2 style="color: var(--color-success); font-weight: 800; margin-bottom: var(--spacing-xs);">Order Placed Successfully!</h2>
-      <p style="margin-bottom: var(--spacing-lg);">Thank you for shopping with Vibe Clothings. Your order has been registered.</p>
+      <p style="margin-bottom: 0.25rem; font-weight: 600; color: #1e293b;">Thank you for shopping with Maya Sree Fashion!</p>
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: var(--spacing-lg);">Your order has been registered. An order confirmation message along with our unboxing video policy guidelines has been sent to your email and registered phone number via WhatsApp.</p>
       
-      <div style="background: var(--blush-bg); border-radius: 8px; padding: var(--spacing-md); border: 1px solid var(--color-border); margin-bottom: var(--spacing-xl); text-align: left; font-family: monospace; font-size: 0.95rem;">
+      <div style="background: var(--blush-bg); border-radius: 8px; padding: var(--spacing-md); border: 1px solid var(--color-border); margin-bottom: var(--spacing-md); text-align: left; font-family: monospace; font-size: 0.95rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
           <span style="color: var(--color-text-secondary);">Order Number:</span>
           <span style="color: var(--color-text-primary); font-weight: bold;">{{ createdOrderNo }}</span>
@@ -16,6 +17,9 @@
           <span style="color: var(--color-primary); font-weight: bold;">₹{{ createdOrderTotal }}</span>
         </div>
       </div>
+
+      <!-- Order Confirmation Return Policy Notice -->
+      <ReturnPolicyNotice style="margin-bottom: var(--spacing-xl); text-align: left;" />
 
       <div style="display: flex; gap: var(--spacing-md); justify-content: center;">
         <router-link to="/my-account?tab=orders" class="btn btn--primary">📦 Track Order</router-link>
@@ -243,6 +247,14 @@
             >
               {{ submitting ? 'Processing Checkout...' : '🛍️ Place Secure Order' }}
             </button>
+
+            <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 8px; font-size: 0.825rem; color: #475569; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.1rem;">📦</span>
+              <span><strong>Dispatch Time:</strong> 3-5 working days</span>
+            </div>
+
+            <!-- Return Policy Notice -->
+            <ReturnPolicyNotice :compact="true" style="margin-top: 1rem;" />
           </div>
         </div>
       </div>
@@ -255,6 +267,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { usePaymentStore } from '../../stores/payment';
+import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 const router = useRouter();
 const paymentStore = usePaymentStore();
@@ -538,7 +551,7 @@ const submitCheckout = async () => {
         key: rzpData.key_id,
         amount: rzpData.amount,
         currency: rzpData.currency,
-        name: 'Maya Sree South Indian Fashion',
+        name: 'Maya Sree Fashion',
         description: 'Order Payment #' + rzpData.order_number,
         order_id: rzpData.razorpay_order_id,
         handler: async function (paymentResponse) {

@@ -113,9 +113,10 @@ const faqs = [
   { cat: 'shipping', q: 'Do you ship internationally?', a: 'Currently, we only ship within India. We plan to introduce international shipping soon.' },
 
   // Returns
-  { cat: 'returns', q: 'What is your return window?', a: 'We offer a 7-day exchange and return window starting from the delivery date. Custom stitched blouses or customized garments are not eligible for returns.' },
-  { cat: 'returns', q: 'How do I initiate a return or exchange?', a: 'Go to your account dashboard, view the delivered order, select Return/Exchange, pick the item, and submit the reason. We will schedule a pickup within 2 business days.' },
-  { cat: 'returns', q: 'When will I receive my refund?', a: 'Once the returned item is inspected at our Tirupur warehouse, refunds are approved. Prepaid refunds take 5 to 7 business days via Razorpay back to your original source. COD refunds are sent via direct bank transfer.' },
+  { cat: 'returns', q: 'What is your return & replacement policy?', a: 'Returns are accepted ONLY for damaged products. An uninterrupted unboxing video is mandatory to process any return or replacement request. The video must clearly show the package being opened from its sealed condition and the damaged product. Returns without a valid unboxing video will not be accepted.' },
+  { cat: 'returns', q: 'Is an unboxing video mandatory for returns?', a: 'Yes! An uninterrupted, continuous unboxing video showing the outer package being unsealed and opened is strictly required for any return or replacement claim.' },
+  { cat: 'returns', q: 'How do I initiate a return for a damaged item?', a: 'Contact our WhatsApp support team or go to your Account Dashboard > Orders within 48 hours of delivery, attach your uninterrupted unboxing video and photos of the damaged product. Once verified, we will arrange a replacement or refund.' },
+  { cat: 'returns', q: 'When will I receive my refund?', a: 'Once the damaged item is returned and verified at our Tirupur warehouse, refunds are processed within 5 to 7 business days back to your original payment method or bank account.' },
 
   // Custom
   { cat: 'custom', q: 'Do you offer custom blouse stitching?', a: 'Yes! We specialize in ready-made blouses with stretchable fabric and margins to adjust size. For bespoke blouse styling or specific sizing modifications, you can select the sizing variant or message our design team on WhatsApp.' },
@@ -136,7 +137,7 @@ watch(activeCategory, () => {
 });
 
 onMounted(() => {
-  document.title = "FAQs - Maya Sree South Indian Fashion";
+  document.title = "FAQs - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Find answers to frequently asked questions about orders, payments, shipping, returns, and blouse customization at Maya Sree Fashion.");

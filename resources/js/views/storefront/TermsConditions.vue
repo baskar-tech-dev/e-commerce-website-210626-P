@@ -11,7 +11,7 @@
     <section class="hero-section" style="text-align: center; padding: 48px 20px; background: #fffbf5; border-bottom: 1px solid #f3ece3; margin-bottom: 32px;">
       <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 2.5rem; color: #4a0e2e; margin-bottom: 12px; font-weight: 700;">Terms & Conditions</h1>
       <p style="font-family: 'Poppins', sans-serif; font-size: 1rem; color: #64748b; max-width: 650px; margin: 0 auto; line-height: 1.6;">
-        Welcome to Maya Sree South Indian Fashion. Please review the terms, conditions, and regulations governing your usage of our store.
+        Welcome to Maya Sree Fashion. Please review the terms, conditions, and regulations governing your usage of our store.
       </p>
     </section>
 
@@ -117,10 +117,10 @@
 import { onMounted } from 'vue';
 
 onMounted(() => {
-  document.title = "Terms & Conditions - Maya Sree South Indian Fashion";
+  document.title = "Terms & Conditions - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
-    metaDescription.setAttribute("content", "Review the Terms & Conditions of Maya Sree South Indian Fashion. Learn about orders, secure payments, shipping, and user responsibilities.");
+    metaDescription.setAttribute("content", "Review the Terms & Conditions of Maya Sree Fashion. Learn about orders, secure payments, shipping, and user responsibilities.");
   }
 });
 </script>

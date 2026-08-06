@@ -113,6 +113,14 @@
           <button class="btn btn--primary" style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 1.05rem; border-radius: 8px;" @click="goToCheckout">
             Proceed To Checkout ➔
           </button>
+
+          <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 8px; font-size: 0.825rem; color: #475569; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.1rem;">📦</span>
+            <span><strong>Dispatch Time:</strong> 3-5 working days</span>
+          </div>
+
+          <!-- Return Policy Notice -->
+          <ReturnPolicyNotice :compact="true" style="margin-top: 1rem;" />
         </div>
       </div>
     </div>
@@ -123,6 +131,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 const router = useRouter();
 const emit = defineEmits(['update-cart-count']);

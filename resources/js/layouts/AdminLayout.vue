@@ -8,7 +8,7 @@
     <aside :class="['sidebar', { 'sidebar--collapsed': isSidebarCollapsed }]">
       <div class="sidebar__brand">
         <span style="font-size: 1.35rem; display: flex; align-items: center;"><Shirt :size="24" /></span>
-        <span v-if="!isSidebarCollapsed" style="margin-left: 6px;">Vibe</span><span v-if="!isSidebarCollapsed" class="sidebar__brand-accent">Admin</span>
+        <span v-if="!isSidebarCollapsed" style="margin-left: 6px;">FMS</span><span v-if="!isSidebarCollapsed" class="sidebar__brand-accent"> PANEL</span>
       </div>
       
       <nav class="sidebar__nav" style="padding-right: 4px;">
@@ -17,7 +17,7 @@
             {{ groupName }}
           </div>
           
-          <router-link v-for="menu in groupMenus" :key="menu.id" :to="menu.path" class="sidebar__link" active-class="sidebar__link--active" :exact="menu.path === '/admin'" @click="handleMenuClick">
+          <router-link v-for="menu in groupMenus" :key="menu.id" :to="menu.path" class="sidebar__link" active-class="sidebar__link--active" :exact="menu.path === '/admin'" :title="isSidebarCollapsed ? menu.name : ''" @click="handleMenuClick">
             <span class="sidebar__link-icon"><component :is="iconMap[menu.icon]" :size="18" /></span>
             <span class="sidebar__link-text">{{ menu.name }}</span>
           </router-link>
@@ -31,7 +31,7 @@
           <span v-else><ChevronLeft :size="18" /></span>
           <span class="sidebar__link-text" v-if="!isSidebarCollapsed">Collapse</span>
         </a>
-        <span v-if="!isSidebarCollapsed" style="padding-left: 0.5rem;">Admin Portal v1.0</span>
+        <span v-if="!isSidebarCollapsed" style="padding-left: 0.5rem;">FMS PANEL v1.0</span>
       </div>
     </aside>
 

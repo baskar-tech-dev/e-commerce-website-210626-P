@@ -24,7 +24,7 @@
         <div class="splash-logo-wrapper">
           <div class="splash-logo-shimmer"></div>
           <div class="splash-logo-container">
-            <img :src="'/asset/profile/logo.png'" alt="Maya Sree South Indian Fashion Logo" class="splash-logo-img">
+            <img :src="'/asset/profile/logo.png'" alt="Maya Sree Fashion Logo" class="splash-logo-img">
             <!-- Shimmer Light Sweep across Logo -->
             <div class="splash-logo-shimmer-sweep" aria-hidden="true"></div>
           </div>
@@ -32,8 +32,7 @@
 
         <!-- Luxury Editorial Typography -->
         <div class="splash-text-container">
-          <h1 class="splash-brand-name">MAYA SREE</h1>
-          <span class="splash-brand-sub">SOUTH INDIAN FASHION</span>
+          <h1 class="splash-brand-name">MAYA SREE FASHION</h1>
         </div>
 
         <!-- Thin Rose-Gold Expanding Divider Line -->

@@ -141,11 +141,15 @@
         
         <div class="story-content-block">
           <span class="story-tag">OUR STORY</span>
-          <h2 class="story-title">A Mother's Dream That Became A Fashion Legacy <span class="heart-icon">♡</span></h2>
+          <h2 class="story-title">Where Comfort Meets Beauty & Elegance <span class="heart-icon">♡</span></h2>
           <div class="story-body">
-            <p><strong>Maya Sree Fashion</strong> was born from a heartfelt vision by <strong>Mrs. Archana Ayyapparaj</strong> - a meaningful future gift for her child.</p>
-            <p>What began as a mother's dream has grown into a fashion brand built on love, craftsmanship, quality, and purpose.</p>
-            <p>Supported by <strong>India Knit Fashion</strong>, every collection reflects our commitment to comfort, elegance, and timeless style.</p>
+            <p class="story-lead"><strong>Comfort is the foundation of true confidence.</strong></p>
+            <p>At <strong>Maya Sree Fashion</strong>, we believe every woman deserves a blouse that feels as beautiful as it looks. Too often, traditional blouses become restrictive as the day goes on, making comfort something you look forward to only after changing.</p>
+            <p>We chose a different path. Our signature stretchable blouses are thoughtfully crafted to move with your body, offering exceptional comfort from your first step in the morning to your final moment of the day. No tightness. No restrictions. Just effortless freedom that lets you focus on the moments that matter.</p>
+            <blockquote class="story-quote" style="margin: 0.75rem 0; padding: 0.75rem 1rem; border-left: 3px solid #6E1F3A; background: rgba(110, 31, 58, 0.04); font-style: italic; color: #6E1F3A; font-family: 'Playfair Display', serif; font-size: 0.95rem;">
+              "When comfort becomes effortless, beauty shines naturally. When beauty feels effortless, elegance becomes timeless."
+            </blockquote>
+            <p style="font-weight: 700; color: #6E1F3A; font-size: 0.95rem;">Comfort that stays. Beauty that inspires. Elegance that lasts.</p>
           </div>
           <button class="btn-story-read" @click="showStoryModal = true">READ OUR STORY ➔</button>
         </div>
@@ -714,14 +718,26 @@
 
     <!-- Story Modal -->
     <div class="modal" :class="{ active: showStoryModal }" @click.self="showStoryModal = false">
-      <div class="modal-content">
+      <div class="modal-content" style="max-width: 680px; padding: 2rem;">
         <button class="modal-close" @click="showStoryModal = false"><X :size="18" /></button>
-        <div class="modal-header">
-          <h3>Our Legacy - A Mother's Gift</h3>
+        <div class="modal-header" style="border-bottom: 1px solid var(--color-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+          <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #6E1F3A; margin: 0;">Where Comfort Meets Beauty & Elegance</h3>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-top: 4px;">The Maya Sree Fashion Story</span>
         </div>
-        <div class="modal-body">
-          <p>Maya Sree Fashion was founded with a clear dream: to create beautiful, sustainable, and comfortable clothing that celebrates Indian craftsmanship while offering contemporary layouts.</p>
-          <p>Collaborating with local handloom weaving societies and India Knit Fashion, we bring you selected threads stitched by traditional dressmakers, assuring premium material and quality checked finishing.</p>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem; color: #334155; line-height: 1.7; font-size: 0.95rem;">
+          <p><strong>Comfort is the foundation of true confidence.</strong></p>
+          <p>At <strong>Maya Sree Fashion</strong>, we believe every woman deserves a blouse that feels as beautiful as it looks. Too often, traditional blouses become restrictive as the day goes on, making comfort something you look forward to only after changing.</p>
+          <p><strong>We chose a different path.</strong></p>
+          <p>Our signature stretchable blouses are thoughtfully crafted to move with your body, offering exceptional comfort from your first step in the morning to your final moment of the day. No tightness. No restrictions. Just effortless freedom that lets you focus on the moments that matter.</p>
+          <div style="background: rgba(110, 31, 58, 0.04); border-left: 4px solid #6E1F3A; padding: 1rem; border-radius: 0 8px 8px 0; margin: 0.5rem 0;">
+            <p style="margin: 0; font-style: italic; font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #6E1F3A;">
+              "When comfort becomes effortless, beauty shines naturally. When beauty feels effortless, elegance becomes timeless."
+            </p>
+          </div>
+          <p>Because true luxury isn't just about how you look—it's about how you feel, every single moment you wear it.</p>
+          <p style="font-weight: 700; color: #6E1F3A; font-size: 1.05rem; text-align: center; margin-top: 0.5rem; letter-spacing: 0.02em;">
+            Comfort that stays. Beauty that inspires. Elegance that lasts.
+          </p>
         </div>
       </div>
     </div>
@@ -1043,7 +1059,7 @@ const reviews = [
 ];
 
 const faqs = [
-  { question: 'What is your return/exchange policy?', answer: 'We offer a hassle-free 7-day exchange and return policy. Outfits must be unworn, unwashed, and in their original packaging with tags intact. Reverse pick-up is arranged automatically.' },
+  { question: 'What is your return/exchange policy?', answer: 'Returns are accepted ONLY for damaged products. An uninterrupted unboxing video is mandatory to process any return or replacement request. The video must clearly show the package being opened from its sealed condition.' },
   { question: 'How long will my order take to arrive?', answer: 'Standard delivery takes 3 to 5 business days for major metro cities and 5 to 7 business days for other regions across India.' },
   { question: 'Do you offer cash on delivery (COD)?', answer: 'Yes, we offer Cash on Delivery across most pin codes in India for orders below ₹10,000.' },
   { question: 'How do I choose the right size?', answer: 'Please check our detailed Sizing Guide available on every product page. If you are between sizes, we recommend selecting one size up for a more comfortable ethnic wear fit.' },

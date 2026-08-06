@@ -37,6 +37,9 @@
         <!-- Policy Text Details -->
         <main class="glass-panel" style="padding: 32px; border: 1px solid #e2d2ca; border-radius: 12px; background: #ffffff; font-size: 0.95rem;">
           
+          <!-- Primary Return Policy Banner -->
+          <ReturnPolicyNotice style="margin-bottom: 32px;" />
+
           <!-- 1 -->
           <section id="cancellation" style="margin-bottom: 32px;">
             <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">1. Order Cancellations</h2>
@@ -52,15 +55,15 @@
 
           <!-- 2 -->
           <section id="eligibility" style="margin-bottom: 32px;">
-            <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">2. Return Eligibility</h2>
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">2. Return Eligibility (Damaged Products Only)</h2>
             <p style="margin-bottom: 12px;">
-              We offer a **7-day easy exchange/return window** starting from the date of delivery. To be eligible for a return:
+              Returns or replacement requests are accepted <strong>exclusively for damaged products</strong>.
             </p>
             <ul style="padding-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
-              <li>The product must be unused, unwashed, and showing no perfume or wear marks.</li>
-              <li>Original tags, invoice copies, and packaging bags must remain intact.</li>
-              <li>Sarees must not have their fall or edging stitched.</li>
-              <li>Custom stitched items or custom sizing blouses are non-returnable.</li>
+              <li>An <strong>uninterrupted unboxing video is mandatory</strong> for any return or replacement claim.</li>
+              <li>The video must clearly show the outer package being unsealed and opened from its original condition, leading to the inspection of the damaged product.</li>
+              <li>Returns or replacements without a valid, continuous unboxing video will strictly not be entertained.</li>
+              <li>The product must be unused, unwashed, with original tags intact.</li>
             </ul>
           </section>
 
@@ -110,9 +113,10 @@
 
 <script setup>
 import { onMounted } from 'vue';
+import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 onMounted(() => {
-  document.title = "Refund & Cancellation Policy - Maya Sree South Indian Fashion";
+  document.title = "Refund & Cancellation Policy - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Learn about the return window, refund eligibility, exchange policies, and cancellation timelines at Maya Sree Fashion.");

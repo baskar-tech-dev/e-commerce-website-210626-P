@@ -1,5 +1,5 @@
 /**
- * Frontend Content Protection Utility for Maya Sree South Indian Fashion
+ * Frontend Content Protection Utility for Maya Sree Fashion
  */
 
 // Branded toast alert matching the application's aesthetic

@@ -265,11 +265,20 @@
       </form>
     </div>
   </div>
+
+  <!-- Reusable Validation & Error Dialog Box -->
+  <AlertDialog 
+    v-model:isOpen="dialogState.isOpen" 
+    :type="dialogState.type" 
+    :title="dialogState.title" 
+    :message="dialogState.message" 
+  />
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
+import AlertDialog from '../../components/AlertDialog.vue';
 import { 
   Plus, Film, Video, Youtube, ExternalLink, Edit, Trash, 
   UploadCloud, Save, AlertTriangle, CheckCircle 
@@ -285,6 +294,28 @@ const errorMsg = ref(null);
 const successMsg = ref(null);
 const currentId = ref(null);
 const sourceOption = ref('upload');
+
+const dialogState = ref({
+  isOpen: false,
+  type: 'error',
+  title: 'Validation Error',
+  message: ''
+});
+
+const showValidationDialog = (message, title = 'Validation Error', type = 'error') => {
+  dialogState.value = {
+    isOpen: true,
+    type,
+    title,
+    message
+  };
+};
+
+watch(errorMsg, (newVal) => {
+  if (newVal) {
+    showValidationDialog(newVal, 'Validation Error', 'error');
+  }
+});
 
 const form = ref({
   caption: '',
@@ -364,6 +395,12 @@ const handleFileUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Validate type is video
+  if (file.type && !file.type.startsWith('video/')) {
+    errorMsg.value = 'VIDEO UPLOAD FAILED. CHECK FILE TYPE AND FORMAT.';
+    return;
+  }
+
   // Validate size < 50MB
   if (file.size > 50 * 1024 * 1024) {
     errorMsg.value = 'File size exceeds maximum 50MB limit.';
@@ -388,7 +425,7 @@ const handleFileUpload = async (event) => {
       successMsg.value = 'Video uploaded successfully. Save the form to publish.';
     }
   } catch (err) {
-    errorMsg.value = err.response?.data?.message || 'Video upload failed. Check file type and format.';
+    errorMsg.value = err.response?.data?.message || 'VIDEO UPLOAD FAILED. CHECK FILE TYPE AND FORMAT.';
     console.error(err);
   } finally {
     uploading.value = false;
@@ -396,6 +433,16 @@ const handleFileUpload = async (event) => {
 };
 
 const saveReel = async () => {
+  if (sourceOption.value === 'upload' && !form.value.video_url) {
+    errorMsg.value = 'Please select and upload a video file before saving.';
+    return;
+  }
+
+  if (sourceOption.value === 'link' && !form.value.video_url) {
+    errorMsg.value = 'Please enter a valid video link or YouTube URL.';
+    return;
+  }
+
   submitting.value = true;
   errorMsg.value = null;
   successMsg.value = null;

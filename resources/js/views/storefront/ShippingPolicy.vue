@@ -49,8 +49,7 @@
           <section id="processing" style="margin-bottom: 32px;">
             <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">2. Order Processing & Dispatch</h2>
             <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-              <li><strong>Ready-to-Ship Products:</strong> Dispatched from our Tirupur warehouse within **24 to 48 hours** of successful payment confirmation.</li>
-              <li><strong>Custom Stitched / Blouses:</strong> Require **3 to 5 additional business days** for tailoring and custom styling before shipment.</li>
+              <li><strong>Standard Dispatch Time:</strong> 3-5 working days from our Tirupur studio upon successful order confirmation.</li>
               <li>Dispatches are executed daily from Monday to Saturday, excluding national and state holidays.</li>
             </ul>
           </section>
@@ -103,7 +102,7 @@
 import { onMounted } from 'vue';
 
 onMounted(() => {
-  document.title = "Shipping Policy - Maya Sree South Indian Fashion";
+  document.title = "Shipping Policy - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Check shipping costs, delivery times, dispatch windows, and tracking details for orders at Maya Sree Fashion.");

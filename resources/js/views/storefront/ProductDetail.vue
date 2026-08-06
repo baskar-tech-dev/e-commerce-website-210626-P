@@ -124,6 +124,18 @@
             @open-size-guide="triggerSizeGuide"
             @add-to-cart="addToCart"
           />
+
+          <!-- Shipping & Returns Policy Accordion Section -->
+          <div class="product-info-accordion" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            <details class="glass-panel" style="padding: 1rem; border-radius: 12px; border: 1px solid var(--color-border);" open>
+              <summary style="font-weight: 700; color: #6E1F3A; font-family: 'Playfair Display', serif; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <span>🚚 Shipping & Returns Policy</span>
+              </summary>
+              <div style="margin-top: 0.75rem;">
+                <ReturnPolicyNotice />
+              </div>
+            </details>
+          </div>
         </div>
       </div>
 
@@ -216,6 +228,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
+import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 const route = useRoute();
 const router = useRouter();

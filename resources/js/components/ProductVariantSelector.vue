@@ -48,6 +48,31 @@
         🛒 Add to Cart
       </button>
     </div>
+
+    <!-- Dispatch & Delivery Highlights -->
+    <div class="dispatch-highlight-badge">
+      <div class="dispatch-badge-item">
+        <span class="dispatch-icon">📦</span>
+        <div class="dispatch-text-group">
+          <span class="dispatch-title">Dispatch Time</span>
+          <span class="dispatch-value">3-5 working days</span>
+        </div>
+      </div>
+      <div class="dispatch-badge-item">
+        <span class="dispatch-icon">🚚</span>
+        <div class="dispatch-text-group">
+          <span class="dispatch-title">Free Shipping</span>
+          <span class="dispatch-value">Orders above ₹1,999</span>
+        </div>
+      </div>
+      <div class="dispatch-badge-item">
+        <span class="dispatch-icon">🔄</span>
+        <div class="dispatch-text-group">
+          <span class="dispatch-title">Damaged Returns Only</span>
+          <span class="dispatch-value">Unboxing video required</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -194,5 +219,48 @@ const emit = defineEmits([
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.dispatch-highlight-badge {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px dashed #E2D5C8;
+  margin-top: 8px;
+}
+
+.dispatch-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background-color: #FAF5F0;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.dispatch-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.dispatch-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.dispatch-title {
+  font-size: 0.675rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dispatch-value {
+  font-size: 0.8rem;
+  color: #6E1F3A;
+  font-weight: 700;
 }
 </style>

@@ -597,6 +597,11 @@
                 View Details
               </button>
             </div>
+
+            <div style="margin-top: 12px; padding: 8px 12px; background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 8px; font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 8px;">
+              <span>📦</span>
+              <span><strong>Dispatch Time:</strong> 3-5 working days</span>
+            </div>
           </div>
         </div>
       </div>
@@ -993,7 +998,7 @@ const compareProduct = (prod) => {
 };
 
 onMounted(() => {
-  document.title = "Shop - Maya Sree South Indian Fashion";
+  document.title = "Shop - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Explore our premium collections of South Indian sarees, designer kurtis, and stretchable ready-made blouses at Maya Sree Fashion.");

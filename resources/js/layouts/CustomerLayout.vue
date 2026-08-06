@@ -22,8 +22,7 @@
           <router-link to="/" class="logo-link" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
             <img :src="'/asset/profile/logo.png'" alt="Maya Sree Fashion Logo" class="header-logo-img">
             <div class="logo-text">
-              <span class="brand-name">MAYA SREE</span>
-              <span class="brand-sub">SOUTH INDIAN FASHION</span>
+              <span class="brand-name">MAYA SREE FASHION</span>
             </div>
           </router-link>
         </div>
@@ -217,8 +216,7 @@
     <div class="storefront-drawer" :class="{ active: mobileDrawerOpen }">
       <div class="drawer-header">
         <div class="logo-text">
-          <span class="brand-name" style="font-size: 1.15rem;">MAYA SREE</span>
-          <span class="brand-sub" style="font-size: 0.55rem; letter-spacing: 2px;">SOUTH INDIAN FASHION</span>
+          <span class="brand-name" style="font-size: 1.15rem;">MAYA SREE FASHION</span>
         </div>
         <button class="drawer-close" @click="mobileDrawerOpen = false">✕</button>
       </div>
@@ -285,8 +283,7 @@
         <div class="storefront-footer__col">
           <div class="storefront-logo" style="margin-bottom: var(--spacing-sm);">
             <div class="logo-text">
-              <span class="brand-name" style="color: #fff;">MAYA SREE</span>
-              <span class="brand-sub" style="color: var(--color-secondary);">SOUTH INDIAN FASHION</span>
+              <span class="brand-name" style="color: #fff;">MAYA SREE FASHION</span>
             </div>
           </div>
           <p style="color: #c9b1bd; font-size: 0.85rem; line-height: 1.6;">
@@ -467,7 +464,7 @@ const executeSearch = () => {
 };
 
 const alertAboutUs = () => {
-  alert('Maya Sree South Indian Fashion - Premium traditional clothing since 2021. Designed and crafted in Tirupur, Tamil Nadu.');
+  alert('Maya Sree Fashion - Premium traditional clothing since 2021. Designed and crafted in Tirupur, Tamil Nadu.');
 };
 
 const subscribeNewsletter = () => {
@@ -601,42 +598,42 @@ onUnmounted(() => {
 /* Search Bar */
 .search-bar-container {
     flex: 1;
-    max-width: 600px;
+    max-width: 440px;
     margin: 0 var(--spacing-md);
     position: relative;
 }
 .search-form {
     display: flex;
     align-items: center;
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 40px;
-    padding: 3px 6px;
+    border: 1px solid rgba(17, 17, 17, 0.6);
+    border-radius: 30px;
+    padding: 2px 4px;
     width: 100%;
     background-color: #FAF5F0 !important;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .search-form:focus-within {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(73, 59, 84, 0.08);
+    box-shadow: 0 0 0 3px rgba(110, 31, 58, 0.1);
 }
 .search-input {
     flex: 1;
     border: none;
-    padding: 12px 24px;
-    font-size: 0.95rem;
+    padding: 6px 14px;
+    font-size: 0.825rem;
     background: transparent;
     outline: none;
     font-family: 'Poppins', sans-serif;
     color: var(--color-text-primary);
 }
 .search-input::placeholder {
-    color: rgba(73, 59, 84, 0.5);
-    font-size: 0.9rem;
+    color: rgba(73, 59, 84, 0.55);
+    font-size: 0.8rem;
 }
 .search-btn {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background-color: #FAF5F0;
     border: 1.5px solid #111111;
@@ -651,12 +648,12 @@ onUnmounted(() => {
 }
 .search-btn:hover {
     background-color: #EDE4DC;
-    transform: scale(1.02);
+    transform: scale(1.04);
 }
 .search-btn svg {
     color: #111111;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
 }
 
 /* Suggestions dropdown styles */
@@ -1352,15 +1349,15 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     background-color: #FAF5F0 !important;
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 40px;
-    padding: 3px 6px;
+    border: 1px solid rgba(17, 17, 17, 0.6);
+    border-radius: 30px;
+    padding: 2px 4px;
     width: 100%;
-    height: 48px;
+    height: 38px;
   }
   .mobile-search-form .search-btn {
-    width: 38px;
-    height: 38px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background-color: #FAF5F0;
     border: 1.5px solid #111111;

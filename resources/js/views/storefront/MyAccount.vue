@@ -615,7 +615,7 @@ const retryPayment = async (order) => {
       key: rzpData.key_id,
       amount: rzpData.amount,
       currency: rzpData.currency,
-      name: 'Maya Sree South Indian Fashion',
+      name: 'Maya Sree Fashion',
       description: 'Order Payment #' + rzpData.order_number,
       order_id: rzpData.razorpay_order_id,
       handler: async function (paymentResponse) {

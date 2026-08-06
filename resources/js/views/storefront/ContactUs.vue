@@ -355,7 +355,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 // SEO Setup
 onMounted(() => {
-  document.title = "Contact Us - Maya Sree South Indian Fashion";
+  document.title = "Contact Us - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Get in touch with Maya Sree Fashion. Send a message, find our address in Tirupur, or connect instantly via WhatsApp.");

@@ -47,27 +47,27 @@
       <section class="about-section our-story reveal">
         <div class="our-story__content">
           <span class="section-tag section-tag--center">Our Story</span>
-          <h2 class="section-title text-center">The Dream of a Mother, The Trust of a Family</h2>
+          <h2 class="section-title text-center">Where Comfort Meets Beauty & Elegance</h2>
           
           <div class="story-timeline">
             <div class="story-card">
-              <h3 class="story-card__title">A Gift for Tomorrow</h3>
+              <h3 class="story-card__title">Comfort is the Foundation</h3>
               <p class="story-card__text">
-                Maya Sree Fashion was founded by Mrs. Archana Ayyapparaj. It began not just as a business, but as a heartfelt gift to her child—a legacy built on love, purpose, and the timeless beauty of textiles.
+                Comfort is the foundation of true confidence. At Maya Sree Fashion, we believe every woman deserves a blouse that feels as beautiful as it looks. Too often, traditional blouses become restrictive as the day goes on, making comfort something you look forward to only after changing.
               </p>
             </div>
             
             <div class="story-card">
-              <h3 class="story-card__title">Tirupur & Erode's Textile Soul</h3>
+              <h3 class="story-card__title">We Chose a Different Path</h3>
               <p class="story-card__text">
-                Rooted in Erode and Tirupur, the textile capitals of South Indian fashion, our brand bloomed from a small home boutique into an international destination for premium ethnic wear.
+                Our signature stretchable blouses are thoughtfully crafted to move with your body, offering exceptional comfort from your first step in the morning to your final moment of the day. No tightness. No restrictions. Just effortless freedom that lets you focus on the moments that matter.
               </p>
             </div>
             
             <div class="story-card">
-              <h3 class="story-card__title">Backed by Global Standards</h3>
+              <h3 class="story-card__title">Timeless Beauty & Elegance</h3>
               <p class="story-card__text">
-                To bring this dream to life with uncompromising quality, we are backed by <strong>India Knit Fashion</strong>, an industry-leading apparel sourcing and export company. This partnership ensures every single stitch meets rigorous quality and manufacturing standards.
+                When comfort becomes effortless, beauty shines naturally. When beauty feels effortless, elegance becomes timeless. Because true luxury isn't just about how you look—it's about how you feel, every single moment you wear it. Comfort that stays. Beauty that inspires. Elegance that lasts.
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@
       <!-- 9. Final CTA -->
       <section class="about-section final-cta reveal">
         <div class="cta-banner">
-          <h2 class="cta-banner__title">Ready to Experience Premium South Indian Fashion?</h2>
+          <h2 class="cta-banner__title">Ready to Experience Maya Sree Fashion?</h2>
           <p class="cta-banner__subtitle">
             Explore our signature collection of stretchable readymade blouses, heritage sarees, and comfortable everyday wear.
           </p>
@@ -210,10 +210,10 @@ import { Target, Compass } from 'lucide-vue-next';
 let revealOnScroll;
 
 onMounted(() => {
-  document.title = "About Us - Maya Sree South Indian Fashion";
+  document.title = "About Us - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
-    metaDescription.setAttribute("content", "Discover the story, mission, values, and cultural heritage of Maya Sree South Indian Fashion, based in Tirupur.");
+    metaDescription.setAttribute("content", "Discover the story, mission, values, and cultural heritage of Maya Sree Fashion, based in Tirupur.");
   }
 
   // Simple Scroll Reveal Animation logic
