@@ -25,7 +25,7 @@
             "
         >
             <button
-                v-for="tab in ['general', 'payment', 'email', 'announcement']"
+                v-for="tab in ['general', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews']"
                 :key="tab"
                 type="button"
                 @click="activeTab = tab"
@@ -44,6 +44,12 @@
                 <span v-else-if="tab === 'email'">✉️ Notifications (SMTP)</span>
                 <span v-else-if="tab === 'announcement'"
                     >📢 Announcement Ticker</span
+                >
+                <span v-else-if="tab === 'welcome_gift'"
+                    >🎁 Welcome Gift Modal</span
+                >
+                <span v-else-if="tab === 'reviews'"
+                    >⭐ Product Reviews</span
                 >
             </button>
         </div>
@@ -195,7 +201,7 @@
                         </span>
                     </div>
 
-                    <!-- Razorpay Active -->
+                    <!-- Cashfree Payments Active -->
                     <div
                         style="
                             background: rgba(255, 255, 255, 0.02);
@@ -226,9 +232,9 @@
                             >
                                 <input
                                     type="checkbox"
-                                    v-model="settings.payment.razorpay_active"
+                                    v-model="settings.payment.cashfree_active"
                                 />
-                                Razorpay Payment Gateway API
+                                Cashfree Payments Gateway API
                             </label>
                             <span
                                 style="
@@ -237,36 +243,50 @@
                                     margin-left: 1.5rem;
                                 "
                             >
-                                Enables online credit/debit card, netbanking,
-                                and UPI checkout options.
+                                Enables online Credit/Debit Card, NetBanking,
+                                and UPI checkout options via Cashfree.
                             </span>
                         </div>
 
-                        <!-- Razorpay Config Inputs -->
+                        <!-- Cashfree Config Inputs -->
                         <div
-                            v-if="settings.payment.razorpay_active"
+                            v-if="settings.payment.cashfree_active"
                             class="responsive-grid-1-1"
                             style="gap: var(--spacing-md); margin-left: 1.5rem"
                         >
                             <div class="form-group">
                                 <label class="form-label"
-                                    >Razorpay Key ID *</label
+                                    >Environment *</label
                                 >
-                                <input
-                                    type="text"
-                                    v-model="settings.payment.razorpay_key"
+                                <select
+                                    v-model="settings.payment.cashfree_environment"
                                     class="form-input"
-                                    required
-                                />
+                                >
+                                    <option value="sandbox">Sandbox (Testing)</option>
+                                    <option value="production">Production (Live)</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label"
-                                    >Razorpay Key Secret *</label
+                                    >Cashfree App ID *</label
+                                >
+                                <input
+                                    type="text"
+                                    v-model="settings.payment.cashfree_app_id"
+                                    class="form-input"
+                                    placeholder="e.g. TEST123456..."
+                                    required
+                                />
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label"
+                                    >Cashfree Secret Key *</label
                                 >
                                 <input
                                     type="password"
-                                    v-model="settings.payment.razorpay_secret"
+                                    v-model="settings.payment.cashfree_secret_key"
                                     class="form-input"
+                                    placeholder="Enter Cashfree Secret Key"
                                     required
                                 />
                             </div>
@@ -979,6 +999,189 @@
                     </div>
                 </div>
 
+                <!-- Tab 5: Welcome Gift Modal Settings -->
+                <div
+                    v-if="activeTab === 'welcome_gift'"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-md);
+                    "
+                >
+                    <div
+                        class="card-header-title"
+                        style="margin-bottom: var(--spacing-xs)"
+                    >
+                        🎁 Welcome Gift Modal & Offer Configuration
+                    </div>
+
+                    <!-- Enable/Disable Toggle Box -->
+                    <div
+                        style="
+                            background: rgba(255, 255, 255, 0.02);
+                            border: 1px solid var(--color-border);
+                            border-radius: 8px;
+                            padding: var(--spacing-md);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            gap: var(--spacing-md);
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                    color: #1e293b;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                    user-select: none;
+                                    font-size: 1.05rem;
+                                "
+                            >
+                                <input
+                                    type="checkbox"
+                                    v-model="settings.welcome_gift.is_enabled"
+                                    style="width: 18px; height: 18px; cursor: pointer;"
+                                />
+                                Enable Welcome Gift Popup
+                            </label>
+                            <span style="font-size: 0.8rem; color: var(--color-text-muted); margin-left: 1.6rem;">
+                                Toggles the interactive 3D gift box modal on the storefront homepage when visitors scroll.
+                            </span>
+                        </div>
+
+                        <span
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                fontSize: '0.82rem',
+                                fontWeight: 'bold',
+                                backgroundColor: settings.welcome_gift.is_enabled ? '#ecfdf5' : '#fef2f2',
+                                color: settings.welcome_gift.is_enabled ? '#047857' : '#b91c1c',
+                                border: settings.welcome_gift.is_enabled ? '1px solid #a7f3d0' : '1px solid #fecaca'
+                            }"
+                        >
+                            {{ settings.welcome_gift.is_enabled ? '🟢 Popup Active' : '🔴 Popup Disabled' }}
+                        </span>
+                    </div>
+
+                    <!-- Offer Code Choice Selection -->
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: bold;">
+                                Select Offer / Coupon Code *
+                            </label>
+                            <select
+                                v-model="settings.welcome_gift.coupon_code"
+                                class="form-input"
+                                @change="onCouponSelect"
+                            >
+                                <option v-for="c in availableCoupons" :key="c.id" :value="c.code">
+                                    {{ c.code }} — {{ c.name }} ({{ c.type === 'percentage' ? c.value + '% OFF' : (c.type === 'flat' ? '₹' + c.value + ' OFF' : 'Free Shipping') }})
+                                </option>
+                                <option value="WELCOME10">WELCOME10 — Welcome 10% OFF</option>
+                                <option value="FIRST20">FIRST20 — 20% OFF First Order</option>
+                            </select>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                Choose which discount code is revealed when customers open their welcome gift.
+                            </span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: bold;">
+                                Active Offer Code (Value) *
+                            </label>
+                            <input
+                                type="text"
+                                v-model="settings.welcome_gift.coupon_code"
+                                class="form-input"
+                                style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"
+                                placeholder="e.g. WELCOME10"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Headline & Subtitle Text Config -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: bold;">
+                            Discount Headline Text *
+                        </label>
+                        <input
+                            type="text"
+                            v-model="settings.welcome_gift.discount_text"
+                            class="form-input"
+                            placeholder="e.g. Enjoy 10% OFF Your First Order"
+                            required
+                        />
+                    </div>
+
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div class="form-group">
+                            <label class="form-label">Modal Main Title</label>
+                            <input
+                                type="text"
+                                v-model="settings.welcome_gift.title"
+                                class="form-input"
+                                placeholder="A Special Gift Awaits You"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Modal Subtitle</label>
+                            <input
+                                type="text"
+                                v-model="settings.welcome_gift.subtitle"
+                                class="form-input"
+                                placeholder="Every new member deserves a warm welcome."
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Live Interactive Card Preview -->
+                    <div style="margin-top: var(--spacing-sm);">
+                        <label class="form-label" style="font-weight: bold;">
+                            ✨ Live Storefront Preview (Unsaved Changes)
+                        </label>
+                        <div
+                            style="
+                                border: 1px solid var(--color-border);
+                                border-radius: 16px;
+                                padding: 24px;
+                                background: #FCFAF7;
+                                max-width: 420px;
+                                margin: 0 auto;
+                                text-align: center;
+                                box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+                                position: relative;
+                            "
+                        >
+                            <div style="font-size: 0.7rem; font-weight: 700; color: #C8A15A; letter-spacing: 1.5px; text-transform: uppercase;">
+                                EXCLUSIVE MEMBER PERK
+                            </div>
+                            <h3 style="font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2D2D2D; margin: 4px 0 6px 0;">
+                                {{ settings.welcome_gift.title || 'A Special Gift Awaits You' }}
+                            </h3>
+                            <p style="font-size: 0.8rem; color: #6B6B6B; margin: 0 0 16px 0;">
+                                {{ settings.welcome_gift.subtitle || 'Every new member deserves a warm welcome.' }}
+                            </p>
+
+                            <!-- Coupon Reveal Mock Box -->
+                            <div style="background: #ffffff; border: 1.5px dashed #C8A15A; border-radius: 12px; padding: 14px;">
+                                <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px;">WELCOME GIFT</div>
+                                <h4 style="font-size: 1.05rem; margin: 4px 0; color: #2D2D2D;">🎉 {{ settings.welcome_gift.discount_text || 'Enjoy 10% OFF Your First Order' }}</h4>
+                                <div style="background: #111111; color: #C8A15A; display: inline-block; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; margin-top: 6px; letter-spacing: 1px;">
+                                    CODE: {{ settings.welcome_gift.coupon_code || 'WELCOME10' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Add / Edit Modal -->
                 <div
                     v-if="modal.isOpen"
@@ -1086,6 +1289,96 @@
                     </div>
                 </div>
 
+                <!-- Tab 6: Product Reviews Settings -->
+                <div
+                    v-if="activeTab === 'reviews'"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-md);
+                    "
+                >
+                    <div
+                        class="card-header-title"
+                        style="margin-bottom: var(--spacing-xs)"
+                    >
+                        Product Review & Rating Controls
+                    </div>
+
+                    <!-- Eligibility Section -->
+                    <div style="font-weight: bold; color: #6E1F3A; font-size: 1.05rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-top: 0.5rem;">
+                        Eligibility & Purchase Enforcement
+                    </div>
+
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.login_required" style="width: 18px; height: 18px;" />
+                                Require Customer Login
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Guest users cannot submit reviews.</span>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.verified_purchase_required" style="width: 18px; height: 18px;" />
+                                Require Verified Purchase
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Customer must have purchased the specific product in an order.</span>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.delivered_order_required" style="width: 18px; height: 18px;" />
+                                Require Delivered Order
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Order must be marked as delivered before review submission.</span>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.one_review_per_product" style="width: 18px; height: 18px;" />
+                                One Review Per Customer
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Restrict each customer to one review per product.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: bold;">Review Window (Days)</label>
+                        <select v-model.number="settings.reviews.review_window_days" class="form-input">
+                            <option :value="0">No Restriction (Unlimited)</option>
+                            <option :value="7">7 Days after delivery</option>
+                            <option :value="15">15 Days after delivery</option>
+                            <option :value="30">30 Days after delivery</option>
+                            <option :value="60">60 Days after delivery</option>
+                        </select>
+                    </div>
+
+                    <!-- Moderation & Photo Limits -->
+                    <div style="font-weight: bold; color: #6E1F3A; font-size: 1.05rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-top: 1rem;">
+                        Moderation & Photos
+                    </div>
+
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.admin_approval_required" style="width: 18px; height: 18px;" />
+                                Require Admin Approval (Moderation)
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">New reviews enter pending queue until approved by admin.</span>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--spacing-md); display: flex; flex-direction: column; gap: 0.25rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b; font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" v-model="settings.reviews.customer_images_allowed" style="width: 18px; height: 18px;" />
+                                Allow Customer Photos
+                            </label>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Customers can attach compressed photos to reviews.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div
                     style="
@@ -1163,9 +1456,10 @@ const settings = ref({
     },
     payment: {
         cod_active: true,
-        razorpay_active: false,
-        razorpay_key: "",
-        razorpay_secret: "",
+        cashfree_active: false,
+        cashfree_app_id: "",
+        cashfree_secret_key: "",
+        cashfree_environment: "sandbox",
     },
     email: {
         smtp_host: "",
@@ -1185,7 +1479,54 @@ const settings = ref({
             is_sticky: true,
         },
     },
+    welcome_gift: {
+        is_enabled: true,
+        coupon_code: "WELCOME10",
+        discount_text: "Enjoy 10% OFF Your First Order",
+        title: "A Special Gift Awaits You",
+        subtitle: "Every new member deserves a warm welcome.",
+    },
+    reviews: {
+        login_required: true,
+        verified_purchase_required: true,
+        delivered_order_required: true,
+        one_review_per_product: true,
+        review_window_days: 0,
+        admin_approval_required: true,
+        customer_editing_allowed: true,
+        customer_deletion_allowed: true,
+        customer_images_allowed: true,
+        max_images_per_review: 4,
+        max_image_size_kb: 200,
+    },
 });
+
+const availableCoupons = ref([]);
+const fetchCoupons = async () => {
+    try {
+        const response = await axios.get("/api/admin/coupons");
+        if (response.data && response.data.data) {
+            availableCoupons.value = response.data.data;
+        }
+    } catch (err) {
+        console.error("Failed to load coupons list:", err);
+    }
+};
+
+const onCouponSelect = () => {
+    const selected = availableCoupons.value.find(
+        (c) => c.code === settings.value.welcome_gift.coupon_code
+    );
+    if (selected) {
+        if (selected.type === "percentage") {
+            settings.value.welcome_gift.discount_text = `Enjoy ${selected.value}% OFF Your First Order`;
+        } else if (selected.type === "flat") {
+            settings.value.welcome_gift.discount_text = `Enjoy Flat ₹${selected.value} OFF Your First Order`;
+        } else if (selected.type === "free_shipping") {
+            settings.value.welcome_gift.discount_text = "Enjoy Free Shipping On Your First Order";
+        }
+    }
+};
 
 const fetchAnnouncementsList = async () => {
     try {
@@ -1299,7 +1640,8 @@ const fetchSettings = async () => {
                     ...settings.value.payment,
                     ...data.payment,
                     cod_active: filterBool(data.payment.cod_active),
-                    razorpay_active: filterBool(data.payment.razorpay_active),
+                    cashfree_active: filterBool(data.payment.cashfree_active),
+                    cashfree_environment: data.payment.cashfree_environment || "sandbox",
                 };
             }
             if (data.email)
@@ -1318,6 +1660,18 @@ const fetchSettings = async () => {
                     background_color: data.announcement.config.background_color || "#6E1F3A",
                     text_color: data.announcement.config.text_color || "#FFFFFF",
                     is_sticky: data.announcement.config.is_sticky !== false,
+                };
+            }
+
+            if (data.welcome_gift) {
+                settings.value.welcome_gift = {
+                    ...settings.value.welcome_gift,
+                    ...data.welcome_gift,
+                    is_enabled: filterBool(data.welcome_gift.is_enabled),
+                    coupon_code: data.welcome_gift.coupon_code || "WELCOME10",
+                    discount_text: data.welcome_gift.discount_text || "Enjoy 10% OFF Your First Order",
+                    title: data.welcome_gift.title || "A Special Gift Awaits You",
+                    subtitle: data.welcome_gift.subtitle || "Every new member deserves a warm welcome.",
                 };
             }
         }
@@ -1343,13 +1697,17 @@ const saveSettings = async () => {
                 payment: {
                     ...settings.value.payment,
                     cod_active: settings.value.payment.cod_active ? "1" : "0",
-                    razorpay_active: settings.value.payment.razorpay_active
+                    cashfree_active: settings.value.payment.cashfree_active
                         ? "1"
                         : "0",
                 },
                 email: { ...settings.value.email },
                 announcement: {
                     config: { ...settings.value.announcement.config },
+                },
+                welcome_gift: {
+                    ...settings.value.welcome_gift,
+                    is_enabled: settings.value.welcome_gift.is_enabled ? "1" : "0",
                 },
             },
         };
@@ -1376,5 +1734,6 @@ const saveSettings = async () => {
 onMounted(() => {
     fetchSettings();
     fetchAnnouncementsList();
+    fetchCoupons();
 });
 </script>

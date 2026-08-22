@@ -37,6 +37,8 @@ class SettingController extends Controller
                 $type = null;
                 if ($group === 'announcement') {
                     $type = 'json';
+                } elseif ($group === 'welcome_gift' && $key === 'is_enabled') {
+                    $type = 'boolean';
                 }
                 Setting::set($key, $value, $group, $type);
             }

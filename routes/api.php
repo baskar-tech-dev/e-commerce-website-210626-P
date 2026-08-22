@@ -23,20 +23,57 @@ use App\Http\Controllers\Api\v1\Admin\PermissionController;
 use App\Http\Controllers\Api\v1\Admin\SettingController;
 use App\Http\Controllers\Api\v1\Admin\AuditLogController;
 use App\Http\Controllers\Api\v1\Admin\MenuController;
+use App\Http\Controllers\Api\v1\Admin\ColorController;
+use App\Http\Controllers\Api\v1\Admin\SizeGroupController;
+use App\Http\Controllers\Api\v1\Admin\SizeController;
 use App\Http\Controllers\Api\v1\StorefrontProductController;
+use App\Http\Controllers\Api\v1\ProductReviewController;
 use App\Http\Controllers\Api\v1\StorefrontCheckoutController;
 use App\Http\Controllers\Api\v1\CustomerProfileController;
 use App\Http\Controllers\Api\v1\AuthController;
+use App\Http\Controllers\Api\v1\WishlistController;
 use App\Http\Controllers\Api\v1\ThemeController;
 
 Route::get('/theme/active', [ThemeController::class, 'getActiveTheme']);
 
+// Customer Auth Routes (Public)
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
-Route::get('/user', function (Request $request) {
-    return $request->user()->load('roles');
-})->middleware('auth:sanctum');
+// Authenticated Customer & User Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    Route::get('/user', function (Request $request) {
+        return $request->user()->load('roles');
+    });
+    Route::get('/auth/user', function (Request $request) {
+        return response()->json([
+            'success' => true,
+            'user' => $request->user()->load(['roles', 'customerProfile']),
+        ]);
+    });
+
+    // Customer Account Profile & Addresses
+    Route::get('customer/profile', [CustomerProfileController::class, 'getProfile']);
+    Route::put('customer/profile', [CustomerProfileController::class, 'updateProfile']);
+    Route::post('customer/addresses', [CustomerProfileController::class, 'updateAddress']);
+    Route::delete('customer/addresses/{id}', [CustomerProfileController::class, 'deleteAddress']);
+
+    // Customer Orders
+    Route::get('customer/orders', [CustomerProfileController::class, 'getOrders']);
+    Route::get('customer/orders/{id}', [CustomerProfileController::class, 'getOrderDetails']);
+
+    // Customer Wishlist
+    Route::get('customer/wishlist', [WishlistController::class, 'index']);
+    Route::post('customer/wishlist', [WishlistController::class, 'store']);
+    Route::delete('customer/wishlist/{product}', [WishlistController::class, 'destroy']);
+    Route::post('customer/wishlist/merge', [WishlistController::class, 'merge']);
+});
 
 // Public Storefront routes
 Route::middleware('throttle:public_api')->group(function () {
@@ -45,6 +82,20 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/categories', [StorefrontProductController::class, 'categories']);
     Route::get('storefront/instagram-reels', [\App\Http\Controllers\Api\v1\StorefrontInstagramReelController::class, 'index']);
     Route::get('storefront/announcements', [\App\Http\Controllers\Api\v1\StorefrontAnnouncementController::class, 'index']);
+    Route::get('storefront/welcome-gift', [\App\Http\Controllers\Api\v1\StorefrontWelcomeGiftController::class, 'index']);
+    Route::get('storefront/indian-states', [StorefrontCheckoutController::class, 'getIndianStates']);
+
+    // Public Product Reviews
+    Route::get('products/{product}/reviews', [ProductReviewController::class, 'index']);
+    Route::get('products/{product}/review-eligibility', [ProductReviewController::class, 'eligibility']);
+});
+
+// Authenticated Customer Reviews
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('products/{product}/reviews', [ProductReviewController::class, 'store']);
+    Route::put('reviews/{review}', [ProductReviewController::class, 'update']);
+    Route::delete('reviews/{review}', [ProductReviewController::class, 'destroy']);
+    Route::post('reviews/{review}/helpful', [ProductReviewController::class, 'toggleHelpful']);
 });
 
 Route::post('storefront/checkout', [StorefrontCheckoutController::class, 'placeOrder'])
@@ -74,21 +125,23 @@ Route::get('storefront/coupons/{code}', function ($code) {
     ]);
 })->middleware('throttle:coupon_api');
 
-// Customer Profile routes
-Route::middleware('throttle:authenticated_api')->group(function () {
-    Route::get('customer/profile', [CustomerProfileController::class, 'getProfile']);
-    Route::post('customer/addresses', [CustomerProfileController::class, 'updateAddress']);
-    Route::delete('customer/addresses/{id}', [CustomerProfileController::class, 'deleteAddress']);
-});
-
-// Payment Integration routes
-Route::middleware(['auth:sanctum', 'throttle:payment_api'])->group(function () {
+// Payment Integration routes (Cashfree Payments)
+Route::middleware(['throttle:payment_api'])->group(function () {
+    Route::post('payment/cashfree/create', [\App\Http\Controllers\Api\v1\PaymentController::class, 'createOrder']);
     Route::post('payment/create-order', [\App\Http\Controllers\Api\v1\PaymentController::class, 'createOrder']);
+
+    Route::post('payment/cashfree/verify', [\App\Http\Controllers\Api\v1\PaymentController::class, 'verify']);
     Route::post('payment/verify', [\App\Http\Controllers\Api\v1\PaymentController::class, 'verify']);
+
+    Route::post('payment/cashfree/cancel', [\App\Http\Controllers\Api\v1\PaymentController::class, 'cancel']);
     Route::post('payment/cancel', [\App\Http\Controllers\Api\v1\PaymentController::class, 'cancel']);
+
+    Route::get('payment/cashfree/status/{order}', [\App\Http\Controllers\Api\v1\PaymentController::class, 'status']);
+    Route::get('payment/status/{order}', [\App\Http\Controllers\Api\v1\PaymentController::class, 'status']);
 });
 
-// Public Webhook route
+// Public Cashfree Webhook routes
+Route::post('payment/cashfree/webhook', [\App\Http\Controllers\Api\v1\PaymentWebhookController::class, 'handleWebhook']);
 Route::post('payment/webhook', [\App\Http\Controllers\Api\v1\PaymentWebhookController::class, 'handleWebhook']);
 
 Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->group(function () {
@@ -100,6 +153,15 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::apiResource('categories', CategoryController::class);
         Route::apiResource('tags', TagController::class);
         Route::apiResource('products', ProductController::class);
+
+        // Color & Size Masters
+        Route::get('colors/active', [ColorController::class, 'activeList']);
+        Route::apiResource('colors', ColorController::class);
+
+        Route::get('size-groups/active', [SizeGroupController::class, 'activeList']);
+        Route::apiResource('size-groups', SizeGroupController::class);
+
+        Route::apiResource('sizes', SizeController::class);
         
         // Media Management
         Route::post('media/upload', [\App\Http\Controllers\Api\v1\Admin\MediaController::class, 'upload']);
@@ -109,6 +171,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::get('inventory', [InventoryController::class, 'index']);
         Route::post('inventory/adjust', [InventoryController::class, 'adjust']);
         Route::get('inventory/ledger', [InventoryController::class, 'ledger']);
+        Route::get('inventory/product-matrix/{id}', [InventoryController::class, 'productMatrix']);
+        Route::post('inventory/bulk-matrix-update', [InventoryController::class, 'bulkMatrixUpdate']);
+        Route::get('inventory/export-template/{id}', [InventoryController::class, 'exportTemplate']);
+        Route::post('inventory/import-csv', [InventoryController::class, 'importCsv']);
         
         Route::post('purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive']);
         Route::apiResource('purchase-orders', PurchaseOrderController::class);
@@ -122,10 +188,17 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         // Instagram Reels & YouTube Videos
         Route::apiResource('instagram-reels', \App\Http\Controllers\Api\v1\Admin\InstagramReelController::class);
         Route::post('instagram-reels/upload', [\App\Http\Controllers\Api\v1\Admin\InstagramReelController::class, 'uploadVideo']);
+
+        // Admin Review Moderation
+        Route::get('reviews', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'index']);
+        Route::get('reviews/{id}', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'show']);
+        Route::patch('reviews/{id}/status', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'updateStatus']);
+        Route::delete('reviews/{id}', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'destroy']);
     });
 
     // Order Management (requires 'manage_orders')
     Route::middleware('permission:manage_orders')->group(function () {
+        Route::get('orders/statuses', [OrderController::class, 'statuses']);
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus']);
         Route::put('orders/{id}/shipping', [OrderController::class, 'updateShipping']);
         Route::post('orders/{id}/notes', [OrderController::class, 'addAdminNote']);
@@ -135,6 +208,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::post('returns/{id}/notes', [ReturnController::class, 'addAdminNote']);
         Route::post('returns/{id}/refund', [ReturnController::class, 'processRefund']);
         Route::apiResource('returns', ReturnController::class)->only(['index', 'show']);
+
+        // Courier Management
+        Route::get('couriers/active', [\App\Http\Controllers\Api\v1\Admin\CourierController::class, 'activeList']);
+        Route::patch('couriers/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\CourierController::class, 'toggleActive']);
+        Route::apiResource('couriers', \App\Http\Controllers\Api\v1\Admin\CourierController::class);
     });
 
     // User & Customer Management (requires 'manage_users')

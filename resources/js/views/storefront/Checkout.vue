@@ -34,6 +34,18 @@
       <div class="checkout-layout-grid">
         <!-- Left: Form details -->
         <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+          <!-- Progressive Auth Banner for Guests -->
+          <div v-if="!authStore.isAuthenticated" class="glass-panel checkout-auth-banner" style="padding: var(--spacing-md); background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.35); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <strong style="color: var(--color-primary); font-size: 0.95rem; display: block; margin-bottom: 2px;">⚡ Express Checkout with Maya Sree Account</strong>
+              <span style="font-size: 0.82rem; color: #555;">Sign in or create an account to save addresses and track your orders.</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button type="button" class="btn btn--primary btn--sm" @click="authStore.openAuthModal('login', 'checkout')">Sign In</button>
+              <button type="button" class="btn btn--secondary btn--sm" @click="authStore.openAuthModal('register', 'checkout')">Create Account</button>
+            </div>
+          </div>
+
           <!-- Step 1: Shipping Details -->
           <div class="glass-panel" style="padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-md);">
             <div class="card-header-title" style="margin-bottom: var(--spacing-xs); border: none; padding-bottom: 0;">1. Delivery Address</div>
@@ -141,14 +153,17 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">State *</label>
-                  <input 
-                    type="text" 
+                  <select 
                     v-model="form.shipping_state" 
-                    @blur="validateField('shipping_state')"
-                    @input="validateField('shipping_state')"
+                    @change="validateField('shipping_state')"
                     class="form-input" 
                     :class="{ 'form-input--error': errors.shipping_state }"
-                  />
+                  >
+                    <option value="" disabled>-- Select State / UT --</option>
+                    <option v-for="st in indianStates" :key="st" :value="st">
+                      {{ st }}
+                    </option>
+                  </select>
                   <span v-if="errors.shipping_state" class="form-error-msg">
                     {{ errors.shipping_state }}
                   </span>
@@ -185,14 +200,14 @@
 
               <!-- Online option -->
               <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: 6px; background: var(--blush-bg);">
-                <input type="radio" value="razorpay" v-model="form.payment_method" style="cursor: pointer;" />
-                💳 Secure Online Checkout (Credit/Debit Card)
+                <input type="radio" value="online" v-model="form.payment_method" style="cursor: pointer;" />
+                💳 Secure Online Checkout (Cards, NetBanking, Wallets)
               </label>
 
               <!-- UPI option -->
               <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: 6px; background: var(--blush-bg);">
                 <input type="radio" value="upi" v-model="form.payment_method" style="cursor: pointer;" />
-                📲 UPI (Google Pay, PhonePe, Paytm, etc.)
+                📲 Instant UPI (Google Pay, PhonePe, Paytm, BHIM)
               </label>
             </div>
           </div>
@@ -263,14 +278,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { usePaymentStore } from '../../stores/payment';
+import { useAuthStore } from '../../stores/auth';
+import { useIndianStates } from '../../constants/indianStates';
 import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 const router = useRouter();
 const paymentStore = usePaymentStore();
+const authStore = useAuthStore();
+const { indianStates, fetchIndianStates, normalizeState } = useIndianStates();
 const emit = defineEmits(['update-cart-count']);
 
 const cartItems = ref([]);
@@ -289,7 +308,7 @@ const form = ref({
   shipping_address_line_1: '',
   shipping_address_line_2: '',
   shipping_city: '',
-  shipping_state: '',
+  shipping_state: 'Tamil Nadu',
   shipping_postal_code: '',
   payment_method: 'cod',
   coupon_code: '',
@@ -378,6 +397,7 @@ const loadCart = () => {
 };
 
 const fetchAddresses = async () => {
+  if (!authStore.isAuthenticated) return;
   try {
     const response = await axios.get('/api/customer/profile');
     if (response.data && response.data.success) {
@@ -399,6 +419,12 @@ const fetchAddresses = async () => {
   }
 };
 
+watch(() => authStore.isAuthenticated, (isAuth) => {
+  if (isAuth) {
+    fetchAddresses();
+  }
+});
+
 const applyAddress = (addr) => {
   form.value.shipping_first_name = addr.first_name || '';
   form.value.shipping_last_name = addr.last_name || '';
@@ -406,7 +432,7 @@ const applyAddress = (addr) => {
   form.value.shipping_address_line_1 = addr.address_line_1 || '';
   form.value.shipping_address_line_2 = addr.address_line_2 || '';
   form.value.shipping_city = addr.city || '';
-  form.value.shipping_state = addr.state || '';
+  form.value.shipping_state = normalizeState(addr.state || 'Tamil Nadu');
   form.value.shipping_postal_code = addr.postal_code || '';
   
   // Clear all errors
@@ -420,7 +446,7 @@ const applySavedAddress = (event) => {
     form.value.shipping_address_line_1 = '';
     form.value.shipping_address_line_2 = '';
     form.value.shipping_city = '';
-    form.value.shipping_state = '';
+    form.value.shipping_state = 'Tamil Nadu';
     form.value.shipping_postal_code = '';
     // Clear all errors
     Object.keys(errors.value).forEach(k => errors.value[k] = '');
@@ -470,14 +496,14 @@ const grandTotal = computed(() => {
   return subtotal.value - discount.value + shipping.value;
 });
 
-const loadRazorpayScript = () => {
+const loadCashfreeScript = () => {
   return new Promise((resolve) => {
-    if (window.Razorpay) {
+    if (window.Cashfree) {
       resolve(true);
       return;
     }
     const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
     script.async = true;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
@@ -518,6 +544,14 @@ const submitCheckout = async () => {
       createdOrderNo.value = response.data.data.order_number;
       createdOrderTotal.value = response.data.data.grand_total;
 
+      // Automatically log in the customer session if access_token is returned
+      if (response.data.access_token && response.data.user) {
+        authStore.token = response.data.access_token;
+        authStore.user = response.data.user;
+        localStorage.setItem('auth_token', response.data.access_token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
+      }
+
       // If COD, complete order immediately
       if (form.value.payment_method.toLowerCase() === 'cod') {
         orderPlaced.value = true;
@@ -529,86 +563,79 @@ const submitCheckout = async () => {
         return;
       }
 
-      // 2. Razorpay Online Payment Flow
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        alert('Failed to load Razorpay Payment Gateway script. Please check your connection.');
+      // 2. Cashfree Online Payment Flow
+      const scriptLoaded = await loadCashfreeScript();
+      if (!scriptLoaded || !window.Cashfree) {
+        alert('Failed to load Cashfree Payment Gateway SDK. Please check your internet connection.');
         localSubmitting.value = false;
         return;
       }
 
-      // Create Razorpay Order using PaymentStore
-      let rzpData;
+      // Create Cashfree Payment Session using PaymentStore
+      let cfData;
       try {
-        rzpData = await paymentStore.createRazorpayOrder(localOrderId);
+        cfData = await paymentStore.createPaymentSession(localOrderId);
       } catch (err) {
-        alert(err.response?.data?.message || err.message || 'Failed to initiate Razorpay order.');
+        alert(err.response?.data?.message || err.message || 'Failed to initiate Cashfree payment session.');
         localSubmitting.value = false;
         return;
       }
 
-      const options = {
-        key: rzpData.key_id,
-        amount: rzpData.amount,
-        currency: rzpData.currency,
-        name: 'Maya Sree Fashion',
-        description: 'Order Payment #' + rzpData.order_number,
-        order_id: rzpData.razorpay_order_id,
-        handler: async function (paymentResponse) {
+      if (!cfData.payment_session_id) {
+        alert('Payment session could not be established. Please try again.');
+        localSubmitting.value = false;
+        return;
+      }
+
+      const cashfree = window.Cashfree({
+        mode: cfData.environment === 'production' ? 'production' : 'sandbox',
+      });
+
+      const checkoutOptions = {
+        paymentSessionId: cfData.payment_session_id,
+        redirectTarget: '_modal',
+      };
+
+      cashfree.checkout(checkoutOptions).then(async (result) => {
+        if (result.error) {
+          console.warn('Cashfree payment interaction dropped or failed:', result.error);
+          try {
+            await paymentStore.cancelPayment(localOrderId, result.error.message || 'Payment modal dismissed by user');
+          } catch (e) {
+            console.error('Cancellation sync error:', e);
+          }
+          alert(result.error.message || 'Payment cancelled or dismissed.');
+          localSubmitting.value = false;
+          return;
+        }
+
+        if (result.paymentDetails || result.redirect) {
           localSubmitting.value = true;
           try {
-            // Verify signature on backend using PaymentStore
+            // Verify payment status server-side
             const verifyResponse = await paymentStore.verifyPayment({
               order_id: localOrderId,
-              razorpay_order_id: paymentResponse.razorpay_order_id,
-              razorpay_payment_id: paymentResponse.razorpay_payment_id,
-              razorpay_signature: paymentResponse.razorpay_signature,
+              cashfree_order_id: cfData.order_id || cfData.order_number,
             });
 
-            if (verifyResponse.success) {
+            if (verifyResponse && verifyResponse.success) {
               orderPlaced.value = true;
-              // Clear cart
               localStorage.removeItem('vibe_cart_items');
               localStorage.removeItem('vibe_applied_coupon');
               emit('update-cart-count');
             } else {
-              alert('Payment verification failed.');
+              alert('Payment verification could not be confirmed automatically. Please check your order history.');
+              router.push('/my-account?tab=orders');
             }
           } catch (err) {
             console.error('Payment verification failed:', err);
-            alert(err.response?.data?.message || err.message || 'Payment verification failed. Please try again.');
+            alert(err.response?.data?.message || err.message || 'Payment verification failed. Please check your order history.');
+            router.push('/my-account?tab=orders');
           } finally {
             localSubmitting.value = false;
           }
-        },
-        prefill: {
-          name: rzpData.customer.name,
-          contact: rzpData.customer.phone,
-          email: rzpData.customer.email,
-          method: form.value.payment_method === 'upi' ? 'upi' : undefined,
-        },
-        theme: {
-          color: '#2d051c', // Deep Maroon
-        },
-        modal: {
-          ondismiss: async function () {
-            localSubmitting.value = true;
-            try {
-              // Send cancellation to release stock using PaymentStore
-              await paymentStore.cancelPayment(localOrderId, 'Payment modal dismissed by user');
-              alert('Payment cancelled. Your order has been registered as Cancelled.');
-              router.push('/my-account?tab=orders');
-            } catch (err) {
-              console.error('Cancellation error:', err);
-            } finally {
-              localSubmitting.value = false;
-            }
-          }
         }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      });
     }
   } catch (err) {
     console.error('Checkout failed:', err);
@@ -621,6 +648,7 @@ onMounted(() => {
   loadCart();
   fetchAddresses();
   calculateDiscount();
+  fetchIndianStates();
 });
 </script>
 

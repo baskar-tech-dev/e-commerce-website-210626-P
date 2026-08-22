@@ -345,9 +345,9 @@ class DatabaseSeeder extends Seeder
             // Create Payment record
             Payment::create([
                 'order_id' => $order->id,
-                'gateway' => $order->payment_method === 'cod' ? 'cod' : 'razorpay',
-                'gateway_payment_id' => $order->payment_status === 'paid' ? 'pay_' . Str::random(14) : null,
-                'gateway_order_id' => $order->payment_status === 'paid' ? 'order_' . Str::random(14) : null,
+                'gateway' => $order->payment_method === 'cod' ? 'cod' : 'cashfree',
+                'gateway_payment_id' => $order->payment_status === 'paid' ? 'cf_pay_' . Str::random(14) : null,
+                'gateway_order_id' => $order->payment_status === 'paid' ? 'cf_order_' . Str::random(14) : null,
                 'method' => $order->payment_method,
                 'amount' => $order->grand_total,
                 'status' => $order->payment_status === 'paid' ? 'captured' : 'pending',
@@ -407,6 +407,24 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
             'starts_at' => now()->subDays(2),
             'expires_at' => now()->addDays(15),
+        ]);
+
+        Coupon::create([
+            'code' => 'WELCOME10',
+            'name' => 'Welcome Member Discount',
+            'description' => 'Get 10% off on your first order.',
+            'type' => 'percentage',
+            'value' => 10.00,
+            'max_discount' => 500.00,
+            'min_order_value' => 0.00,
+            'max_uses_total' => null,
+            'max_uses_per_user' => 1,
+            'first_order_only' => true,
+            'is_auto_apply' => false,
+            'is_combinable' => false,
+            'is_active' => true,
+            'starts_at' => now()->subDays(10),
+            'expires_at' => now()->addDays(365),
         ]);
 
         Coupon::create([
@@ -568,9 +586,10 @@ class DatabaseSeeder extends Seeder
         Setting::create(['group' => 'general', 'key' => 'store_address', 'value' => '123 MG Road, Mumbai, India', 'type' => 'text']);
 
         Setting::create(['group' => 'payment', 'key' => 'cod_active', 'value' => '1', 'type' => 'boolean']);
-        Setting::create(['group' => 'payment', 'key' => 'razorpay_active', 'value' => '0', 'type' => 'boolean']);
-        Setting::create(['group' => 'payment', 'key' => 'razorpay_key', 'value' => 'rzp_test_key', 'type' => 'text']);
-        Setting::create(['group' => 'payment', 'key' => 'razorpay_secret', 'value' => 'rzp_test_secret', 'type' => 'text']);
+        Setting::create(['group' => 'payment', 'key' => 'cashfree_active', 'value' => '1', 'type' => 'boolean']);
+        Setting::create(['group' => 'payment', 'key' => 'cashfree_app_id', 'value' => 'TEST_CF_APP_ID', 'type' => 'text']);
+        Setting::create(['group' => 'payment', 'key' => 'cashfree_secret_key', 'value' => 'TEST_CF_SECRET_KEY', 'type' => 'text']);
+        Setting::create(['group' => 'payment', 'key' => 'cashfree_environment', 'value' => 'sandbox', 'type' => 'text']);
 
         Setting::create(['group' => 'email', 'key' => 'smtp_host', 'value' => 'smtp.mailtrap.io', 'type' => 'text']);
         Setting::create(['group' => 'email', 'key' => 'smtp_port', 'value' => '2525', 'type' => 'text']);
@@ -578,6 +597,12 @@ class DatabaseSeeder extends Seeder
         Setting::create(['group' => 'email', 'key' => 'smtp_password', 'value' => 'mailtrap_pass', 'type' => 'text']);
         Setting::create(['group' => 'email', 'key' => 'sender_name', 'value' => 'Maya Sree Fashion', 'type' => 'text']);
         Setting::create(['group' => 'email', 'key' => 'sender_email', 'value' => 'noreply@vibe.com', 'type' => 'text']);
+
+        Setting::create(['group' => 'welcome_gift', 'key' => 'is_enabled', 'value' => '1', 'type' => 'boolean']);
+        Setting::create(['group' => 'welcome_gift', 'key' => 'coupon_code', 'value' => 'WELCOME10', 'type' => 'text']);
+        Setting::create(['group' => 'welcome_gift', 'key' => 'discount_text', 'value' => 'Enjoy 10% OFF Your First Order', 'type' => 'text']);
+        Setting::create(['group' => 'welcome_gift', 'key' => 'title', 'value' => 'A Special Gift Awaits You', 'type' => 'text']);
+        Setting::create(['group' => 'welcome_gift', 'key' => 'subtitle', 'value' => 'Every new member deserves a warm welcome.', 'type' => 'text']);
 
         // 14. Create Sample Audit Logs
         $sampleProd = Product::first();

@@ -25,8 +25,8 @@
           <div v-if="stage === 'box' || stage === 'opening'" class="gift-box-stage">
             <div class="gift-header-text">
               <span class="gift-welcome-tag">Exclusive Member Perk</span>
-              <h2 id="gift-modal-title" class="gift-title">A Special Gift Awaits You</h2>
-              <p class="gift-subtitle">Every new member deserves a warm welcome.</p>
+              <h2 id="gift-modal-title" class="gift-title">{{ giftConfig.title || 'A Special Gift Awaits You' }}</h2>
+              <p class="gift-subtitle">{{ giftConfig.subtitle || 'Every new member deserves a warm welcome.' }}</p>
             </div>
 
             <!-- 3D Ivory Gift Box Container (Clickable) -->
@@ -73,10 +73,10 @@
                     <div class="coupon-border">
                       <span class="coupon-badge">WELCOME GIFT</span>
                       <h3 class="coupon-title">🎉 Congratulations!</h3>
-                      <p class="coupon-discount">Enjoy 10% OFF Your First Order</p>
+                      <p class="coupon-discount">{{ giftConfig.discount_text || 'Enjoy 10% OFF Your First Order' }}</p>
                       <div class="coupon-code-box">
                         <span class="code-label">PROMO CODE:</span>
-                        <strong class="code-value">WELCOME10</strong>
+                        <strong class="code-value">{{ giftConfig.coupon_code || 'WELCOME10' }}</strong>
                       </div>
                     </div>
                   </div>
@@ -103,8 +103,8 @@
               <div class="signup-coupon-banner">
                 <span class="banner-icon">🎁</span>
                 <div class="banner-text">
-                  <strong>10% OFF Coupon Unlocked!</strong>
-                  <span>Code: <strong>WELCOME10</strong> automatically applied</span>
+                  <strong>{{ giftConfig.discount_text || 'Welcome Offer Unlocked!' }}</strong>
+                  <span>Code: <strong>{{ giftConfig.coupon_code || 'WELCOME10' }}</strong> automatically applied</span>
                 </div>
               </div>
 
@@ -218,6 +218,28 @@ const router = useRouter();
 const showFloatingIcon = ref(false);
 const isModalOpen = ref(false);
 const stage = ref('box'); // 'box' -> 'opening' -> 'signup'
+
+const giftConfig = ref({
+  is_enabled: true,
+  coupon_code: 'WELCOME10',
+  discount_text: 'Enjoy 10% OFF Your First Order',
+  title: 'A Special Gift Awaits You',
+  subtitle: 'Every new member deserves a warm welcome.'
+});
+
+const fetchGiftConfig = async () => {
+  try {
+    const response = await axios.get('/api/storefront/welcome-gift');
+    if (response.data && response.data.success && response.data.data) {
+      giftConfig.value = {
+        ...giftConfig.value,
+        ...response.data.data
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load storefront welcome gift config:', e);
+  }
+};
 
 const isRibbonUntied = ref(false);
 const isLidOpen = ref(false);
@@ -394,6 +416,11 @@ const activateGiftExperience = () => {
 
 // Trigger logic
 const checkTriggerConditions = () => {
+  // Check if disabled by store admin
+  if (giftConfig.value.is_enabled === false) {
+    return;
+  }
+
   // Only trigger on homepage or root URL
   const path = route.path;
   if (path !== '/' && path !== '' && route.name !== 'storefront.home') {
@@ -504,22 +531,24 @@ const handleSignup = async () => {
   localStorage.setItem('vibe_user_email', registeredEmail);
   sessionStorage.setItem('ms_gift_registered_email', registeredEmail);
 
+  const activeCoupon = giftConfig.value.coupon_code || 'WELCOME10';
+
   try {
     // Attempt registration endpoint
     const response = await axios.post('/api/auth/register', {
       email: registeredEmail,
       password: form.value.password,
-      coupon: 'WELCOME10'
+      coupon: activeCoupon
     });
 
     if (response.data && response.data.success) {
-      successMessage.value = '🎉 Account created successfully! Redirecting to your account dashboard...';
+      successMessage.value = `🎉 Account created successfully! Promo code ${activeCoupon} applied. Redirecting...`;
     } else {
-      successMessage.value = '🎉 Welcome to Maya Sree! Your 10% discount is saved. Loading your profile...';
+      successMessage.value = `🎉 Welcome to Maya Sree! Your discount (${activeCoupon}) is saved. Loading your profile...`;
     }
   } catch (err) {
     // Fallback friendly success message
-    successMessage.value = '🎉 Welcome to Maya Sree! Your account has been created and your 10% discount is active!';
+    successMessage.value = `🎉 Welcome to Maya Sree! Your account has been created and promo code ${activeCoupon} is active!`;
   } finally {
     isSubmitting.value = false;
     setTimeout(() => {
@@ -529,7 +558,8 @@ const handleSignup = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchGiftConfig();
   // Delay check so splash screen isn't interrupted
   setTimeout(() => {
     checkTriggerConditions();

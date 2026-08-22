@@ -532,11 +532,11 @@ Every stock movement is recorded as a ledger entry:
 
 | Method | Provider | Type |
 |--------|----------|------|
-| UPI | Razorpay | Online |
-| Credit Card | Razorpay / Stripe | Online |
-| Debit Card | Razorpay / Stripe | Online |
-| Net Banking | Razorpay | Online |
-| Wallets (Paytm, PhonePe) | Razorpay | Online |
+| UPI | Cashfree Payments | Online |
+| Credit Card | Cashfree Payments | Online |
+| Debit Card | Cashfree Payments | Online |
+| Net Banking | Cashfree Payments | Online |
+| Wallets (Paytm, PhonePe) | Cashfree Payments | Online |
 | Cash on Delivery (COD) | Internal | Offline |
 | Store Wallet | Internal | Online |
 

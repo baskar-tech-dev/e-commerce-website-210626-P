@@ -89,7 +89,7 @@ class OrderController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $order = Order::with(['user', 'items.variant.product', 'statusHistory.changedByUser'])->find($id);
+            $order = Order::with(['user', 'items.variant.product', 'statusHistory.changedByUser', 'payments'])->find($id);
 
             if (!$order) {
                 return response()->json([
@@ -117,10 +117,24 @@ class OrderController extends Controller
     /**
      * Update order status.
      */
+    /**
+     * Get all 9 official order statuses metadata.
+     */
+    public function statuses(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => array_values(Order::STATUSES),
+        ]);
+    }
+
+    /**
+     * Update order status.
+     */
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:pending,confirmed,processing,shipped,delivered,cancelled,returned',
+            'status' => 'required|string|in:order_placed,order_confirmed,processing,ready_to_ship,shipped,delivered,cancelled,returned,refunded,pending,confirmed',
             'comment' => 'nullable|string|max:500',
         ]);
 
@@ -136,38 +150,49 @@ class OrderController extends Controller
                     ], 404);
                 }
 
-                $fromStatus = $order->status;
-                $toStatus = $validated['status'];
+                $fromStatus = $order->normalizeStatus($order->status);
+                $toStatus = $order->normalizeStatus($validated['status']);
 
                 if ($fromStatus === $toStatus) {
                     return response()->json([
                         'success' => true,
-                        'message' => 'Order status is already ' . $toStatus,
+                        'message' => 'Order status is already ' . ($order->status_label ?: $toStatus),
                         'data' => $order
                     ]);
                 }
 
-                // Transition checks
+                // 9 Status Transition Rules
                 $validTransitions = [
-                    'pending' => ['confirmed', 'cancelled'],
-                    'confirmed' => ['processing', 'cancelled'],
-                    'processing' => ['shipped', 'cancelled'],
-                    'shipped' => ['delivered'],
-                    'delivered' => ['returned'],
-                    'cancelled' => [],
-                    'returned' => [],
+                    'order_placed' => ['order_confirmed', 'processing', 'cancelled'],
+                    'order_confirmed' => ['processing', 'ready_to_ship', 'cancelled'],
+                    'processing' => ['ready_to_ship', 'shipped', 'cancelled'],
+                    'ready_to_ship' => ['shipped', 'cancelled'],
+                    'shipped' => ['delivered', 'returned', 'cancelled'],
+                    'delivered' => ['returned', 'refunded'],
+                    'returned' => ['refunded'],
+                    'cancelled' => ['refunded'],
+                    'refunded' => [],
                 ];
 
-                if (!in_array($toStatus, $validTransitions[$fromStatus] ?? [])) {
+                $allowed = $validTransitions[$fromStatus] ?? [];
+                
+                // Allow admin override if requested or in transition table
+                if (!in_array($toStatus, $allowed) && !$request->boolean('force_override')) {
+                    $allowedLabels = array_map(function ($s) {
+                        return Order::STATUSES[$s]['label'] ?? $s;
+                    }, $allowed);
+                    $allowedText = !empty($allowedLabels) ? implode(', ', $allowedLabels) : 'None (Terminal state)';
+
                     return response()->json([
                         'success' => false,
-                        'message' => "Invalid status transition from '{$fromStatus}' to '{$toStatus}'.",
+                        'message' => "Cannot transition from '{$order->status_label}' to '" . (Order::STATUSES[$toStatus]['label'] ?? $toStatus) . "'. Allowed next steps: {$allowedText}.",
+                        'allowed_transitions' => $allowed,
                         'error_code' => 'INVALID_TRANSITION'
                     ], 400);
                 }
 
-                // If transition is processing/shipped, we subtract stock
-                if (($toStatus === 'processing' || $toStatus === 'shipped') && in_array($fromStatus, ['pending', 'confirmed'])) {
+                // If transition is processing/ready_to_ship/shipped, we subtract stock if from placed/confirmed
+                if (in_array($toStatus, ['processing', 'ready_to_ship', 'shipped']) && in_array($fromStatus, ['order_placed', 'order_confirmed', 'pending', 'confirmed'])) {
                     $userId = auth()->id();
                     foreach ($order->items as $item) {
                         $this->inventoryService->postLedgerEntry(
@@ -184,8 +209,8 @@ class OrderController extends Controller
                     }
                 }
 
-                // If transition is cancelled, we return stock if it was already processed
-                if ($toStatus === 'cancelled' && in_array($fromStatus, ['processing', 'shipped', 'delivered'])) {
+                // If transition is cancelled or returned, we return stock if it was already in processing/shipped/delivered
+                if (in_array($toStatus, ['cancelled', 'returned']) && in_array($fromStatus, ['processing', 'ready_to_ship', 'shipped', 'delivered'])) {
                     $userId = auth()->id();
                     foreach ($order->items as $item) {
                         $this->inventoryService->postLedgerEntry(
@@ -196,11 +221,13 @@ class OrderController extends Controller
                             null,
                             'Order',
                             $order->id,
-                            "Stock return for cancelled order #{$order->order_number}",
+                            "Stock return for {$toStatus} order #{$order->order_number}",
                             $userId
                         );
                     }
-                    $order->cancelled_at = now();
+                    if ($toStatus === 'cancelled') {
+                        $order->cancelled_at = now();
+                    }
                 }
 
                 if ($toStatus === 'shipped') {
@@ -209,7 +236,13 @@ class OrderController extends Controller
 
                 if ($toStatus === 'delivered') {
                     $order->delivered_at = now();
-                    $order->payment_status = 'paid';
+                    if ($order->payment_method === 'cod') {
+                        $order->payment_status = 'paid';
+                    }
+                }
+
+                if ($toStatus === 'refunded') {
+                    $order->payment_status = 'refunded';
                 }
 
                 $order->status = $toStatus;
@@ -246,9 +279,14 @@ class OrderController extends Controller
     public function updateShipping(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
+            'courier_id' => 'nullable|exists:couriers,id',
             'courier_name' => 'required|string|max:100',
             'tracking_number' => 'required|string|max:100',
+            'courier_tracking_url' => 'nullable|string|max:500',
+            'courier_contact_number' => 'nullable|string|max:50',
+            'courier_person_name' => 'nullable|string|max:100',
             'estimated_delivery_at' => 'nullable|date',
+            'shipped_at' => 'nullable|date',
         ]);
 
         try {
@@ -262,12 +300,37 @@ class OrderController extends Controller
                 ], 404);
             }
 
+            $order->courier_id = $validated['courier_id'] ?? null;
             $order->courier_name = $validated['courier_name'];
             $order->tracking_number = $validated['tracking_number'];
+            $order->courier_contact_number = $validated['courier_contact_number'] ?? null;
+            $order->courier_person_name = $validated['courier_person_name'] ?? null;
+
+            // Resolve tracking URL if template exists and direct url not manually given
+            if (!empty($validated['courier_tracking_url'])) {
+                $order->courier_tracking_url = $validated['courier_tracking_url'];
+            } elseif (!empty($order->courier_id)) {
+                $courier = \App\Models\Courier::find($order->courier_id);
+                if ($courier) {
+                    $order->courier_tracking_url = $courier->generateTrackingUrl($validated['tracking_number']);
+                    if (empty($order->courier_contact_number)) {
+                        $order->courier_contact_number = $courier->contact_number;
+                    }
+                    if (empty($order->courier_person_name)) {
+                        $order->courier_person_name = $courier->contact_person;
+                    }
+                }
+            }
+
             if (isset($validated['estimated_delivery_at'])) {
                 $order->estimated_delivery_at = $validated['estimated_delivery_at'];
             }
+            if (isset($validated['shipped_at'])) {
+                $order->shipped_at = $validated['shipped_at'];
+            }
+
             $order->save();
+            $order->load(['courier']);
 
             return response()->json([
                 'success' => true,

@@ -35,10 +35,11 @@ return [
         ],
     ],
 
-    'razorpay' => [
-        'key_id' => env('RAZORPAY_KEY_ID'),
-        'key_secret' => env('RAZORPAY_KEY_SECRET'),
-        'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
+    'cashfree' => [
+        'app_id' => env('CASHFREE_APP_ID'),
+        'secret_key' => env('CASHFREE_SECRET_KEY'),
+        'environment' => env('CASHFREE_ENVIRONMENT', 'sandbox'),
+        'api_version' => env('CASHFREE_API_VERSION', '2023-08-01'),
     ],
 
 ];

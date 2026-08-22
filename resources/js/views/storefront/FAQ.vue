@@ -103,8 +103,8 @@ const faqs = [
   { cat: 'orders', q: 'How do I check my order status?', a: 'Log into your Customer Dashboard and select the My Orders tab. You will see real-time updates (Pending, Confirmed, Shipped, Delivered) and tracking numbers.' },
 
   // Payments
-  { cat: 'payments', q: 'What payment options do you support?', a: 'We support all major payment options via Razorpay, including Credit/Debit Cards (Visa, MasterCard, RuPay), UPI (GPay, PhonePe, Paytm), Net Banking, and Wallets. Cash on Delivery (COD) is also available for select pin codes.' },
-  { cat: 'payments', q: 'Is it safe to pay online here?', a: 'Absolutely. We do not store any card credentials on our servers. All transactions are handled securely by Razorpay using high-grade SSL encryption and PCI-DSS standards.' },
+  { cat: 'payments', q: 'What payment options do you support?', a: 'We support all major payment options via Cashfree Payments, including Credit/Debit Cards (Visa, MasterCard, RuPay), Instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Wallets. Cash on Delivery (COD) is also available for select pin codes.' },
+  { cat: 'payments', q: 'Is it safe to pay online here?', a: 'Absolutely. We do not store any card credentials on our servers. All transactions are handled securely by Cashfree Payments using high-grade 256-bit SSL encryption and PCI-DSS Level 1 compliant standards.' },
   { cat: 'payments', q: 'What happens if my transaction fails but my money is deducted?', a: 'This is usually held in the bank network and automatically returned to your original payment source within 24 to 48 hours. You can contact support if the amount is not returned.' },
 
   // Shipping

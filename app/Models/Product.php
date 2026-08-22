@@ -38,6 +38,7 @@ class Product extends Model
         'is_bestseller',
         'is_returnable',
         'return_window_days',
+        'reviews_enabled',
         'avg_rating',
         'total_reviews',
         'total_sold',
@@ -52,6 +53,7 @@ class Product extends Model
         'is_new_arrival' => 'boolean',
         'is_bestseller' => 'boolean',
         'is_returnable' => 'boolean',
+        'reviews_enabled' => 'boolean',
         'return_window_days' => 'integer',
         'avg_rating' => 'decimal:2',
         'total_reviews' => 'integer',
@@ -108,5 +110,34 @@ class Product extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class);
+    }
+
+    /**
+     * All reviews for this product.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    /**
+     * Approved reviews for public display.
+     */
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class)->where('status', 'approved');
+    }
+
+    /**
+     * Recalculate average rating and total approved review count.
+     */
+    public function recalculateRating(): void
+    {
+        $approvedCount = $this->approvedReviews()->count();
+        $avgRating = $approvedCount > 0 ? (float) $this->approvedReviews()->avg('rating') : 0.00;
+
+        $this->avg_rating = round($avgRating, 2);
+        $this->total_reviews = $approvedCount;
+        $this->save();
     }
 }

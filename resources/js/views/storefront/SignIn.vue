@@ -65,10 +65,14 @@ const form = ref({
 
 const handleLogin = async () => {
   try {
-    await authStore.login({ email: form.value.email, password: form.value.password });
-    router.push('/admin');
+    const user = await authStore.login({ email: form.value.email, password: form.value.password });
+    if (user?.roles?.length || user?.role_id === 1) {
+      router.push('/admin');
+    } else {
+      router.push('/my-account');
+    }
   } catch (e) {
-    // Error is handled in the store and displayed via authStore.error
+    // Error is handled in store
   }
 };
 </script>

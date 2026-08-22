@@ -116,6 +116,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the wishlist items for the user.
+     */
+    public function wishlist(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    /**
      * Get the direct role associated with the user.
      */
     public function role(): BelongsTo

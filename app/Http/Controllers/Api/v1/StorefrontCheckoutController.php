@@ -57,7 +57,56 @@ class StorefrontCheckoutController extends Controller
         $validated['shipping_state'] = strip_tags($validated['shipping_state']);
         $validated['shipping_postal_code'] = strip_tags($validated['shipping_postal_code']);
 
-        $userId = auth()->id() ?? User::first()->id;
+        $user = auth()->user();
+        if (!$user) {
+            $phone = $validated['shipping_phone'];
+            $user = User::where('phone', $phone)->first();
+            if (!$user) {
+                $customerRole = \App\Models\Role::where('name', 'customer')->orWhere('name', 'Customer')->first();
+                $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+                $guestEmail = 'customer_' . ($cleanPhone ?: time()) . '@mayasree.com';
+                $user = User::create([
+                    'uuid' => (string) Str::uuid(),
+                    'first_name' => $validated['shipping_first_name'],
+                    'last_name' => $validated['shipping_last_name'],
+                    'name' => trim("{$validated['shipping_first_name']} {$validated['shipping_last_name']}"),
+                    'email' => $guestEmail,
+                    'phone' => $phone,
+                    'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)),
+                    'role_id' => $customerRole?->id,
+                    'is_active' => true,
+                ]);
+                \App\Models\CustomerProfile::firstOrCreate([
+                    'user_id' => $user->id,
+                ], [
+                    'total_orders' => 0,
+                    'total_spent' => 0.00,
+                ]);
+            }
+        }
+        $userId = $user->id;
+
+        // Auto-save guest address into user address book
+        try {
+            \App\Models\Address::firstOrCreate([
+                'user_id' => $user->id,
+                'address_line_1' => $validated['shipping_address_line_1'],
+                'postal_code' => $validated['shipping_postal_code'],
+            ], [
+                'label' => 'Home',
+                'first_name' => $validated['shipping_first_name'],
+                'last_name' => $validated['shipping_last_name'],
+                'phone' => $validated['shipping_phone'],
+                'address_line_2' => $validated['shipping_address_line_2'] ?? null,
+                'city' => $validated['shipping_city'],
+                'state' => $validated['shipping_state'],
+                'country' => 'IN',
+                'is_default_shipping' => true,
+                'is_default_billing' => true,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("Failed to auto-save guest address: " . $e->getMessage());
+        }
 
         // Idempotency check: prevent duplicate submissions within 15 seconds
         $itemsSerialized = json_encode($validated['items']);
@@ -176,7 +225,7 @@ class StorefrontCheckoutController extends Controller
                 'uuid' => (string) Str::uuid(),
                 'order_number' => $orderNumber,
                 'user_id' => $userId,
-                'status' => 'pending',
+                'status' => Order::STATUS_ORDER_PLACED,
                 'payment_status' => 'pending',
                 'payment_method' => $validated['payment_method'],
                 'subtotal' => $subtotal,
@@ -268,9 +317,14 @@ class StorefrontCheckoutController extends Controller
 
             DB::commit();
 
+            // Create login token for the user so they are authenticated automatically
+            $token = $user->createToken('auth_token')->plainTextToken;
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order placed successfully',
+                'access_token' => $token,
+                'user' => $user->load(['roles', 'customerProfile']),
                 'data' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
@@ -289,5 +343,52 @@ class StorefrontCheckoutController extends Controller
                 'message' => 'Order placement failed: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function getIndianStates(): JsonResponse
+    {
+        $states = [
+            'Tamil Nadu',
+            'Kerala',
+            'Karnataka',
+            'Andhra Pradesh',
+            'Telangana',
+            'Puducherry',
+            'Arunachal Pradesh',
+            'Assam',
+            'Bihar',
+            'Chhattisgarh',
+            'Goa',
+            'Gujarat',
+            'Haryana',
+            'Himachal Pradesh',
+            'Jharkhand',
+            'Madhya Pradesh',
+            'Maharashtra',
+            'Manipur',
+            'Meghalaya',
+            'Mizoram',
+            'Nagaland',
+            'Odisha',
+            'Punjab',
+            'Rajasthan',
+            'Sikkim',
+            'Tripura',
+            'Uttar Pradesh',
+            'Uttarakhand',
+            'West Bengal',
+            'Andaman and Nicobar Islands',
+            'Chandigarh',
+            'Dadra and Nagar Haveli and Daman and Diu',
+            'Delhi (NCT)',
+            'Jammu and Kashmir',
+            'Ladakh',
+            'Lakshadweep',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $states,
+        ]);
     }
 }

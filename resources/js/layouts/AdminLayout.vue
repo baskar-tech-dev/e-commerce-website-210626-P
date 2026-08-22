@@ -44,12 +44,6 @@
           <button @click="toggleSidebar" class="admin-header__icon-btn" style="font-size: 1.1rem; background: none; border: none; cursor: pointer;">
             <MenuIcon :size="20" />
           </button>
-          
-          <div class="admin-header__search-wrap">
-            <span class="admin-header__search-icon" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;"><Search :size="16" /></span>
-            <input type="text" class="admin-header__search-input" placeholder="Search for anything..." />
-            <span class="admin-header__search-badge">⌘ K</span>
-          </div>
         </div>
         
         <div class="admin-header__actions" style="display: flex; align-items: center; gap: var(--spacing-md);">
@@ -72,8 +66,9 @@
           
           <!-- User info with Dropdown -->
           <div class="admin-header__user" style="position: relative; margin-left: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer; user-select: none;" @click="showDropdown = !showDropdown">
-            <div class="admin-header__avatar" style="width: 36px; height: 36px; font-size: 0.95rem; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-              {{ userInitials }}
+            <div class="admin-header__avatar" style="width: 36px; height: 36px; font-size: 0.95rem; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; overflow: hidden;">
+              <img v-if="authStore.user?.avatar" :src="authStore.user.avatar" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+              <span v-else>{{ userInitials }}</span>
             </div>
             <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.2;">
               <span class="admin-header__username" style="font-weight: 600; font-size: 0.9rem;">{{ authStore.user?.name || 'User' }}</span>
@@ -110,13 +105,13 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useMenuStore } from '@/stores/menu';
 import { 
-  Shirt, ChevronRight, ChevronLeft, Menu as MenuIcon, Search, Bell, MessageSquare, Maximize,
+  Shirt, ChevronRight, ChevronLeft, Menu as MenuIcon, Bell, MessageSquare, Maximize,
   LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings,
-  ChevronDown, LogOut, Film
+  ChevronDown, LogOut, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck
 } from 'lucide-vue-next';
 
 const iconMap = markRaw({
-  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film
+  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck
 });
 
 const authStore = useAuthStore();

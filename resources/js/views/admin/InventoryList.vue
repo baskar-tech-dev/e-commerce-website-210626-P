@@ -4,24 +4,34 @@
       <h1 class="admin-page__title">Stock Control & Ledger</h1>
       <span class="admin-page__subtitle">Monitor stock levels, execute adjustments, and view double-entry audits.</span>
     </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <router-link to="/admin/stock-entry" class="btn btn--primary" style="border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-sm);">
+        ⚡ Quick Stock Matrix Entry
+      </router-link>
+    </div>
   </div>
 
   <!-- Tabs Navigation -->
-  <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem;">
-    <button 
-      class="btn" 
-      :class="activeView === 'stock' ? 'btn--primary' : 'btn--secondary'"
-      @click="setView('stock')"
-    >
-      📦 Current Stock Levels
-    </button>
-    <button 
-      class="btn" 
-      :class="activeView === 'ledger' ? 'btn--primary' : 'btn--secondary'"
-      @click="setView('ledger')"
-    >
-      📜 Audit Ledger History
-    </button>
+  <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.75rem;">
+      <button 
+        class="btn" 
+        :class="activeView === 'stock' ? 'btn--primary' : 'btn--secondary'"
+        @click="setView('stock')"
+      >
+        📦 Current Stock Levels
+      </button>
+      <button 
+        class="btn" 
+        :class="activeView === 'ledger' ? 'btn--primary' : 'btn--secondary'"
+        @click="setView('ledger')"
+      >
+        📜 Audit Ledger History
+      </button>
+    </div>
+    <router-link to="/admin/stock-entry" class="btn btn--outline-gold btn--sm" style="border-radius: 20px; font-weight: 600;">
+      ⚡ Product Color & Size Matrix Upload ➔
+    </router-link>
   </div>
 
   <!-- Tab 1: Current Stock Levels -->
@@ -293,16 +303,16 @@
 
   <!-- Stock Adjustment Modal -->
   <div v-if="showAdjustModal" class="modal-overlay" @click.self="closeAdjustModal">
-    <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-container" style="max-width: 520px;">
       <div class="modal-header">
         <h3 class="modal-title">Manual Stock Adjustment</h3>
         <button class="modal-close" @click="closeAdjustModal">&times;</button>
       </div>
       <form @submit.prevent="submitAdjustment">
         <div class="modal-body">
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
-            <div style="font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 0.25rem;">PRODUCT SKU</div>
-            <div style="font-weight: bold; color: #1e293b; font-size: 1rem;">{{ selectedVariant?.sku }}</div>
+          <div style="background: var(--blush-bg); border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+            <div style="font-size: 0.75rem; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.25rem;">PRODUCT SKU</div>
+            <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem; word-break: break-all;">{{ selectedVariant?.sku }}</div>
             <div style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.25rem;">{{ selectedVariant?.product?.name }}</div>
             <div style="font-size: 0.85rem; color: var(--color-text-primary); margin-top: 0.5rem;">
               Current Stock Level: <strong>{{ selectedVariant?.stock_quantity }}</strong> units
@@ -328,7 +338,7 @@
             <input type="text" v-model="adjustForm.reason" class="form-input" placeholder="e.g. Supplier sample, stock take correction..." required />
           </div>
 
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Additional Notes</label>
             <textarea v-model="adjustForm.notes" class="form-textarea" rows="3" placeholder="Notes..."></textarea>
           </div>

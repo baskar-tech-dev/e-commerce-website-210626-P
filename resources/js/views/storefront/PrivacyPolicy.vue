@@ -60,7 +60,7 @@
             <p style="margin-bottom: 12px;">We process your data to fulfill business obligations, including:</p>
             <ul style="padding-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
               <li>Registering your orders, calculating exact totals, and shipping products.</li>
-              <li>Processing payments through secure integrated gateways (e.g., Razorpay).</li>
+              <li>Processing payments through secure integrated gateways (e.g., Cashfree Payments).</li>
               <li>Verifying webhook callback payloads to mark orders as paid.</li>
               <li>Sending transaction alerts, order status logs, and newsletter updates (if subscribed).</li>
               <li>Preventing checkout abuse, duplicate payments, and security threats.</li>
@@ -88,7 +88,7 @@
               <li>Enforcing secure HTTPS transport protocols throughout the entire portal.</li>
               <li>Sanitizing user inputs on checkout to block database injections and cross-site scripting (XSS).</li>
               <li>Excluding raw passwords or credentials from audit logs and webhook payloads.</li>
-              <li>Storing card details or credentials only on PCI-compliant payment gateways (Razorpay).</li>
+              <li>Storing card details or credentials only on PCI-compliant payment gateways (Cashfree Payments).</li>
             </ul>
           </section>
 
@@ -99,7 +99,7 @@
               We share minimal data with trusted partners to operate our store:
             </p>
             <ul style="padding-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
-              <li><strong>Razorpay:</strong> To process secure payments. Transaction details, order totals, and customer emails are passed to facilitate payments.</li>
+              <li><strong>Cashfree Payments:</strong> To process secure payments. Transaction details, order totals, and customer contact information are passed securely to facilitate payments.</li>
               <li><strong>Shipping Partners (e.g., Delhivery):</strong> To deliver physical orders to your shipping address.</li>
             </ul>
           </section>

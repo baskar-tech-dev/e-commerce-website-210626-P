@@ -6,6 +6,9 @@
     <!-- Luxury Welcome Gift Modal -->
     <WelcomeGiftModal />
 
+    <!-- Unified Customer Auth Modal -->
+    <AuthModal />
+
     <!-- Top Announcement Bar -->
     <StorefrontAnnouncementBar :is-scrolled="isScrolled" @config-loaded="handleAnnouncementConfig" />
 
@@ -92,10 +95,53 @@
 
         <!-- Header Action Icons -->
         <div class="header-actions">
-          <router-link to="/my-account" class="action-item" title="Account">
-            <User :size="18" />
-            <span>Account</span>
-          </router-link>
+          <div 
+            class="header-account-wrapper" 
+            @mouseenter="showAccountDropdown = true" 
+            @mouseleave="showAccountDropdown = false"
+          >
+            <div class="action-item" @click="handleAccountClick" style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <div v-if="authStore.user?.avatar" style="width: 22px; height: 22px; border-radius: 50%; overflow: hidden; border: 1.5px solid #6E1F3A; flex-shrink: 0;">
+                <img :src="authStore.user.avatar" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+              <User v-else :size="18" />
+              <span>{{ authStore.isAuthenticated ? authStore.userName : 'Account' }}</span>
+            </div>
+
+            <!-- Account Dropdown Menu -->
+            <div v-if="showAccountDropdown" class="account-dropdown-menu">
+              <template v-if="!authStore.isAuthenticated">
+                <div class="account-dropdown-header">
+                  <h4>Welcome to Maya Sree</h4>
+                  <p>Sign in to access your account & orders</p>
+                </div>
+                <div class="account-dropdown-actions">
+                  <button type="button" class="btn-dropdown-primary" @click="openAuthModal('login')">Sign In</button>
+                  <button type="button" class="btn-dropdown-secondary" @click="openAuthModal('register')">Create Account</button>
+                </div>
+              </template>
+              <template v-else>
+                <div class="account-dropdown-header" style="display: flex; align-items: center; gap: 10px;">
+                  <div v-if="authStore.user?.avatar" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #6E1F3A; flex-shrink: 0;">
+                    <img :src="authStore.user.avatar" alt="User Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+                  </div>
+                  <div>
+                    <h4 style="margin: 0;">Hello, {{ authStore.userName }}</h4>
+                    <p style="font-size: 0.75rem; color: #888; margin: 0;">{{ authStore.user?.email }}</p>
+                  </div>
+                </div>
+                <ul class="account-dropdown-list">
+                  <li><router-link to="/my-account?tab=profile" @click="showAccountDropdown = false">👤 Personal Profile</router-link></li>
+                  <li><router-link to="/my-account?tab=orders" @click="showAccountDropdown = false">📦 My Orders</router-link></li>
+                  <li><router-link to="/my-account?tab=wishlist" @click="showAccountDropdown = false">❤️ My Wishlist</router-link></li>
+                  <li><router-link to="/my-account?tab=reviews" @click="showAccountDropdown = false">⭐ My Reviews</router-link></li>
+                  <li><router-link to="/my-account?tab=addresses" @click="showAccountDropdown = false">📍 Address Book</router-link></li>
+                  <li class="dropdown-divider"></li>
+                  <li><button type="button" class="logout-btn-link" @click="handleLogout">🚪 Sign Out</button></li>
+                </ul>
+              </template>
+            </div>
+          </div>
 
           <router-link to="/my-account?tab=wishlist" class="action-item" title="Wishlist">
             <div class="cart-icon-wrapper">
@@ -345,9 +391,33 @@ import { Search, User, Heart, ShoppingBag, MessageCircle, ChevronDown, Home, Sto
 import StorefrontAnnouncementBar from '../components/StorefrontAnnouncementBar.vue';
 import SplashScreen from '../components/SplashScreen.vue';
 import WelcomeGiftModal from '../components/WelcomeGiftModal.vue';
+import AuthModal from '../components/AuthModal.vue';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
+
+const showAccountDropdown = ref(false);
+
+const openAuthModal = (tab = 'login') => {
+  showAccountDropdown.value = false;
+  authStore.openAuthModal(tab);
+};
+
+const handleAccountClick = () => {
+  if (authStore.isAuthenticated) {
+    router.push('/my-account');
+  } else {
+    openAuthModal('login');
+  }
+};
+
+const handleLogout = async () => {
+  showAccountDropdown.value = false;
+  await authStore.logout();
+  router.push('/');
+};
 
 const isHomePage = computed(() => {
   return route.name === 'storefront.home' || route.path === '/';
@@ -498,6 +568,9 @@ onMounted(() => {
     triggerSplash(3200); // 3.2s cinematic splash sequence on initial load
     isInitialLoad.value = false;
   }
+  if (authStore.token) {
+    authStore.fetchUser();
+  }
   getCartCount();
   getWishlistCount();
   fetchCategories();
@@ -568,6 +641,117 @@ onUnmounted(() => {
     align-items: center;
     gap: 12px;
 }
+
+/* Header Account Wrapper & Dropdown */
+.header-account-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.account-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 240px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(74, 25, 54, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    padding: 1rem;
+    z-index: 1100;
+    animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.account-dropdown-header {
+    border-bottom: 1px solid #f0e6eb;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.6rem;
+    text-align: left;
+}
+.account-dropdown-header h4 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin: 0 0 2px 0;
+}
+.account-dropdown-header p {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.78rem;
+    color: #666666;
+    margin: 0;
+}
+.account-dropdown-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.btn-dropdown-primary {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-dropdown-primary:hover {
+    background: #361126;
+}
+.btn-dropdown-secondary {
+    width: 100%;
+    padding: 0.5rem;
+    background: #faf5f0;
+    color: var(--color-primary);
+    border: 1px solid rgba(74, 25, 54, 0.2);
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-dropdown-secondary:hover {
+    background: #f0e6eb;
+}
+.account-dropdown-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.account-dropdown-list li a,
+.logout-btn-link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+    color: var(--color-text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.825rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+    box-sizing: border-box;
+}
+.account-dropdown-list li a:hover,
+.logout-btn-link:hover {
+    background-color: #faf5f0;
+    color: var(--color-primary);
+}
+.dropdown-divider {
+    height: 1px;
+    background-color: #f0e6eb;
+    margin: 0.3rem 0;
+}
 .header-logo-img {
     height: 48px;
     width: 48px;
@@ -634,26 +818,26 @@ onUnmounted(() => {
 .search-btn {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    background-color: #FAF5F0;
-    border: 1.5px solid #111111;
+    background: transparent;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease;
     margin-left: auto;
-    padding: 0;
+    padding: 0 4px 0 0;
     flex-shrink: 0;
 }
 .search-btn:hover {
-    background-color: #EDE4DC;
-    transform: scale(1.04);
+    background: transparent;
+    transform: scale(1.1);
+    opacity: 0.8;
 }
 .search-btn svg {
     color: #111111;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 /* Suggestions dropdown styles */
@@ -1358,9 +1542,9 @@ onUnmounted(() => {
   .mobile-search-form .search-btn {
     width: 30px;
     height: 30px;
-    border-radius: 50%;
-    background-color: #FAF5F0;
-    border: 1.5px solid #111111;
+    background: transparent;
+    border: none;
+    border-radius: 0;
   }
   .search-suggestions-dropdown--mobile {
     width: calc(100% - 32px) !important;

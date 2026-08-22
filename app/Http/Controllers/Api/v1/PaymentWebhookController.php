@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Services\RazorpayService;
+use App\Services\CashfreePaymentService;
 use App\Services\InventoryService;
 use App\Repositories\PaymentRepositoryInterface;
 use App\Events\WebhookReceivedEvent;
@@ -16,117 +16,126 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Exception;
 
 class PaymentWebhookController extends Controller
 {
-    protected $razorpayService;
-    protected $inventoryService;
-    protected $paymentRepository;
+    protected CashfreePaymentService $cashfreeService;
+    protected InventoryService $inventoryService;
+    protected PaymentRepositoryInterface $paymentRepository;
 
     public function __construct(
-        RazorpayService $razorpayService,
+        CashfreePaymentService $cashfreeService,
         InventoryService $inventoryService,
         PaymentRepositoryInterface $paymentRepository
     ) {
-        $this->razorpayService = $razorpayService;
+        $this->cashfreeService = $cashfreeService;
         $this->inventoryService = $inventoryService;
         $this->paymentRepository = $paymentRepository;
     }
 
     /**
-     * Handle incoming Razorpay Webhook.
+     * Handle incoming Cashfree Webhook.
      */
     public function handleWebhook(Request $request): JsonResponse
     {
-        $signature = $request->header('X-Razorpay-Signature');
-        $payload = $request->getContent();
+        $signature = $request->header('x-webhook-signature') ?? $request->header('X-Webhook-Signature');
+        $timestamp = $request->header('x-webhook-timestamp') ?? $request->header('X-Webhook-Timestamp');
+        $rawPayload = $request->getContent();
 
-        if (empty($signature)) {
-            Log::warning("Webhook Failed: Missing signature header.");
-            return response()->json(['message' => 'Missing signature'], 400);
+        if (empty($signature) || empty($timestamp)) {
+            Log::warning("Cashfree Webhook Failed: Missing signature or timestamp header.");
+            return response()->json(['message' => 'Missing signature or timestamp header'], 400);
         }
 
-        // 1. Verify webhook signature
-        $isValid = $this->razorpayService->verifyWebhookSignature($payload, $signature);
+        // 1. Verify Cashfree webhook signature
+        $isValid = $this->cashfreeService->verifyWebhookSignature($rawPayload, $signature, $timestamp);
         if (!$isValid) {
-            Log::warning("Webhook Failed: Signature mismatch.");
-            return response()->json(['message' => 'Invalid signature'], 400);
+            Log::warning("Cashfree Webhook Failed: Signature verification failed.");
+            return response()->json(['message' => 'Invalid webhook signature'], 400);
         }
 
-        Log::info("Webhook Verified: Signature matched.");
+        Log::info("Cashfree Webhook Verified: Signature matched.");
 
         $data = $request->all();
-        $event = $data['event'] ?? '';
+        $eventType = strtoupper($data['type'] ?? ($data['event'] ?? ''));
 
         // Dispatch WebhookReceivedEvent
-        event(new WebhookReceivedEvent($event, $data));
+        event(new WebhookReceivedEvent($eventType, $data));
 
         try {
-            switch ($event) {
-                case 'order.paid':
-                case 'payment.captured':
+            switch ($eventType) {
+                case 'PAYMENT_SUCCESS_WEBHOOK':
+                case 'PAYMENT_CAPTURED':
+                case 'ORDER_PAID':
                     return $this->handlePaymentSuccess($data);
 
-                case 'payment.authorized':
-                    return $this->handlePaymentAuthorized($data);
-
-                case 'payment.failed':
+                case 'PAYMENT_FAILED_WEBHOOK':
+                case 'PAYMENT_USER_DROPPED_WEBHOOK':
+                case 'PAYMENT_FAILED':
                     return $this->handlePaymentFailure($data);
 
-                case 'refund.processed':
+                case 'REFUND_STATUS_WEBHOOK':
+                case 'REFUND_PROCESSED':
                     return $this->handleRefundProcessed($data);
 
                 default:
-                    Log::info("Unhandled Razorpay webhook event: {$event}");
+                    Log::info("Unhandled Cashfree webhook event type: {$eventType}");
                     return response()->json(['message' => 'Event unhandled']);
             }
         } catch (Exception $e) {
-            Log::error("Error processing Razorpay webhook event {$event}: " . $e->getMessage());
-            return response()->json(['message' => 'Internal server error'], 500);
+            Log::error("Error processing Cashfree webhook event {$eventType}: " . $e->getMessage());
+            return response()->json(['message' => 'Internal server error processing webhook'], 500);
         }
     }
 
     /**
-     * Handle order.paid or payment.captured webhook event.
+     * Handle PAYMENT_SUCCESS_WEBHOOK event.
      */
     protected function handlePaymentSuccess(array $data): JsonResponse
     {
-        $orderPayload = $data['payload']['order']['entity'] ?? null;
-        $paymentPayload = $data['payload']['payment']['entity'] ?? null;
+        $orderData = $data['data']['order'] ?? ($data['payload']['order']['entity'] ?? null);
+        $paymentData = $data['data']['payment'] ?? ($data['payload']['payment']['entity'] ?? null);
 
-        if (!$orderPayload || !$paymentPayload) {
-            return response()->json(['message' => 'Malformed payload data'], 400);
+        if (!$orderData || !$paymentData) {
+            return response()->json(['message' => 'Malformed webhook payload structure'], 400);
         }
 
-        $razorpayOrderId = $orderPayload['id'];
-        $razorpayPaymentId = $paymentPayload['id'];
-        $receipt = $orderPayload['receipt'];
-        $method = $paymentPayload['method'] ?? 'online';
+        $orderNumber = $orderData['order_id'] ?? null;
+        $cfPaymentId = (string) ($paymentData['cf_payment_id'] ?? ($paymentData['id'] ?? ''));
+        $paymentMethod = $paymentData['payment_group'] ?? ($paymentData['method'] ?? 'online');
+        $paidAmount = (float) ($paymentData['payment_amount'] ?? ($paymentData['amount'] ?? 0));
 
-        // Find order by receipt number (VIBE-...) or by gateway_order_id in payments table
-        $order = Order::where('order_number', $receipt)->first();
+        // Locate order in database
+        $order = Order::where('order_number', $orderNumber)->first();
         if (!$order) {
-            $paymentRecord = $this->paymentRepository->findByGatewayOrderId($razorpayOrderId);
+            $paymentRecord = $this->paymentRepository->findByGatewayOrderId($orderNumber);
             if ($paymentRecord) {
                 $order = Order::find($paymentRecord->order_id);
             }
         }
 
         if (!$order) {
-            Log::warning("Order not found for Razorpay webhook: Receipt {$receipt}, Razorpay Order {$razorpayOrderId}");
+            Log::warning("Order not found for Cashfree webhook: Order ID {$orderNumber}");
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        // Idempotency check: If order is already paid, do nothing (Ignore duplicate webhook deliveries)
+        // Idempotency check: If order is already paid, do nothing
         if ($order->payment_status === 'paid') {
-            Log::info("Order #{$order->order_number} is already marked as Paid. Skipping webhook handler.");
+            Log::info("Order #{$order->order_number} is already marked as Paid. Skipping duplicate webhook.");
             return response()->json(['message' => 'Payment already processed']);
+        }
+
+        // Validate payment amount matches expected order amount
+        if (abs($paidAmount - (float) $order->grand_total) > 0.05) {
+            Log::error("Webhook payment amount mismatch for Order #{$order->order_number}. Order total: {$order->grand_total}, Paid: {$paidAmount}");
+            return response()->json(['message' => 'Payment amount mismatch'], 400);
         }
 
         DB::beginTransaction();
         try {
-            // lock order for update
+            // Lock order for update
             $order = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->payment_status === 'paid') {
@@ -137,28 +146,28 @@ class PaymentWebhookController extends Controller
             // Update order status
             $order->payment_status = 'paid';
             $order->status = 'processing';
-            $order->payment_gateway = 'razorpay';
-            $order->razorpay_order_id = $razorpayOrderId;
-            $order->razorpay_payment_id = $razorpayPaymentId;
+            $order->payment_gateway = 'cashfree';
+            $order->gateway_order_id = $orderNumber;
+            $order->gateway_payment_id = $cfPaymentId;
             $order->payment_response = $data;
             $order->paid_at = now();
             $order->save();
 
-            // Update payment record using repository
+            // Update payment record in repository
             $payment = $this->paymentRepository->updateOrCreatePayment(
                 [
                     'order_id' => $order->id,
-                    'gateway_order_id' => $razorpayOrderId,
+                    'gateway_order_id' => $orderNumber,
                 ],
                 [
-                    'gateway' => 'razorpay',
-                    'gateway_payment_id' => $razorpayPaymentId,
+                    'gateway' => 'cashfree',
+                    'gateway_payment_id' => $cfPaymentId,
                     'amount' => $order->grand_total,
                     'currency' => $order->currency ?? 'INR',
                     'status' => 'captured',
                     'paid_at' => now(),
                     'gateway_response' => $data,
-                    'method' => $method,
+                    'method' => $paymentMethod,
                 ]
             );
 
@@ -175,9 +184,9 @@ class PaymentWebhookController extends Controller
             }
 
             DB::commit();
-            Log::info("Webhook successfully processed order.paid for Order #{$order->order_number}");
+            Log::info("Webhook successfully captured PAYMENT_SUCCESS for Order #{$order->order_number}");
 
-            // Dispatch PaymentVerified event (which writes the "Payment Verified" log)
+            // Dispatch PaymentVerified event
             event(new PaymentVerified($order, $payment));
 
             return response()->json(['message' => 'Payment processed successfully']);
@@ -190,92 +199,35 @@ class PaymentWebhookController extends Controller
     }
 
     /**
-     * Handle payment.authorized webhook event.
-     */
-    protected function handlePaymentAuthorized(array $data): JsonResponse
-    {
-        $paymentPayload = $data['payload']['payment']['entity'] ?? null;
-        if (!$paymentPayload) {
-            return response()->json(['message' => 'Malformed payment payload'], 400);
-        }
-
-        $razorpayOrderId = $paymentPayload['order_id'] ?? null;
-        $razorpayPaymentId = $paymentPayload['id'];
-
-        if (!$razorpayOrderId) {
-            return response()->json(['message' => 'No order ID linked to payment'], 400);
-        }
-
-        $paymentRecord = $this->paymentRepository->findByGatewayOrderId($razorpayOrderId);
-        if (!$paymentRecord) {
-            return response()->json(['message' => 'Payment intent not found'], 404);
-        }
-
-        $order = Order::find($paymentRecord->order_id);
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        DB::beginTransaction();
-        try {
-            $order = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
-
-            // Update payment record to authorized if not already captured/paid
-            if ($paymentRecord->status !== 'captured') {
-                $paymentRecord = $this->paymentRepository->updateOrCreatePayment(
-                    [
-                        'id' => $paymentRecord->id,
-                    ],
-                    [
-                        'status' => 'authorized',
-                        'gateway_payment_id' => $razorpayPaymentId,
-                        'gateway_response' => $data,
-                    ]
-                );
-            }
-
-            DB::commit();
-            Log::info("Webhook successfully processed payment.authorized for Order #{$order->order_number}");
-
-            return response()->json(['message' => 'Payment authorized status captured']);
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error("Failed to process payment.authorized webhook for Order #{$order->order_number}: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Handle payment.failed webhook event.
+     * Handle PAYMENT_FAILED_WEBHOOK and PAYMENT_USER_DROPPED_WEBHOOK events.
      */
     protected function handlePaymentFailure(array $data): JsonResponse
     {
-        $paymentPayload = $data['payload']['payment']['entity'] ?? null;
-        if (!$paymentPayload) {
-            return response()->json(['message' => 'Malformed payment payload'], 400);
+        $orderData = $data['data']['order'] ?? ($data['payload']['order']['entity'] ?? null);
+        $paymentData = $data['data']['payment'] ?? ($data['payload']['payment']['entity'] ?? null);
+
+        $orderNumber = $orderData['order_id'] ?? null;
+        $failureReason = $paymentData['payment_message'] ?? ($paymentData['error_details']['error_description'] ?? 'Payment failed or dropped');
+
+        if (!$orderNumber) {
+            return response()->json(['message' => 'No order ID in webhook payload'], 400);
         }
 
-        $razorpayOrderId = $paymentPayload['order_id'] ?? null;
-        $failureReason = $paymentPayload['error_description'] ?? 'Payment failed';
-
-        if (!$razorpayOrderId) {
-            return response()->json(['message' => 'No order ID linked to payment'], 400);
+        $order = Order::where('order_number', $orderNumber)->first();
+        if (!$order) {
+            $paymentRecord = $this->paymentRepository->findByGatewayOrderId($orderNumber);
+            if ($paymentRecord) {
+                $order = Order::find($paymentRecord->order_id);
+            }
         }
 
-        // Find payment record
-        $paymentRecord = $this->paymentRepository->findByGatewayOrderId($razorpayOrderId);
-        if (!$paymentRecord) {
-            return response()->json(['message' => 'Payment intent not found'], 404);
-        }
-
-        $order = Order::find($paymentRecord->order_id);
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        // If order is already paid/failed, do not mark it failed again
+        // If order is already paid or failed, do not mutate state
         if ($order->payment_status === 'paid' || $order->payment_status === 'failed') {
-            return response()->json(['message' => 'Order already processed, ignoring failure webhook']);
+            return response()->json(['message' => 'Order already processed, skipping failure webhook']);
         }
 
         DB::beginTransaction();
@@ -284,7 +236,7 @@ class PaymentWebhookController extends Controller
 
             if ($order->payment_status === 'paid' || $order->payment_status === 'failed') {
                 DB::commit();
-                return response()->json(['message' => 'Order already processed, ignoring failure webhook']);
+                return response()->json(['message' => 'Order already processed, skipping failure webhook']);
             }
 
             $order->payment_status = 'failed';
@@ -293,11 +245,22 @@ class PaymentWebhookController extends Controller
             $order->cancelled_at = now();
             $order->save();
 
-            // Update payment record status
-            $paymentRecord->status = 'failed';
-            $paymentRecord->failure_reason = $failureReason;
-            $paymentRecord->gateway_response = $data;
-            $paymentRecord->save();
+            // Update payment record
+            $paymentRecord = $this->paymentRepository->updateOrCreatePayment(
+                [
+                    'order_id' => $order->id,
+                    'gateway_order_id' => $orderNumber,
+                ],
+                [
+                    'gateway' => 'cashfree',
+                    'amount' => $order->grand_total,
+                    'currency' => $order->currency ?? 'INR',
+                    'status' => 'failed',
+                    'failure_reason' => $failureReason,
+                    'gateway_response' => $data,
+                    'method' => $paymentData['payment_group'] ?? 'online',
+                ]
+            );
 
             // Release stock reservation
             foreach ($order->items as $item) {
@@ -323,7 +286,7 @@ class PaymentWebhookController extends Controller
 
             DB::commit();
 
-            // Dispatch PaymentFailedEvent (which logs "Payment Failed")
+            // Dispatch PaymentFailedEvent
             event(new PaymentFailedEvent($order, $paymentRecord, $failureReason));
 
             return response()->json(['message' => 'Failure status captured']);
@@ -336,26 +299,34 @@ class PaymentWebhookController extends Controller
     }
 
     /**
-     * Handle refund.processed webhook event.
+     * Handle REFUND_STATUS_WEBHOOK event.
      */
     protected function handleRefundProcessed(array $data): JsonResponse
     {
-        $refundPayload = $data['payload']['refund']['entity'] ?? null;
-        $paymentPayload = $data['payload']['payment']['entity'] ?? null;
+        $refundData = $data['data']['refund'] ?? ($data['payload']['refund']['entity'] ?? null);
+        $paymentData = $data['data']['payment'] ?? ($data['payload']['payment']['entity'] ?? null);
+        $orderData = $data['data']['order'] ?? ($data['payload']['order']['entity'] ?? null);
 
-        if (!$refundPayload || !$paymentPayload) {
-            return response()->json(['message' => 'Malformed refund payload'], 400);
+        if (!$refundData) {
+            return response()->json(['message' => 'Malformed refund webhook payload'], 400);
         }
 
-        $razorpayPaymentId = $paymentPayload['id'];
-        $razorpayRefundId = $refundPayload['id'];
-        $refundAmount = $refundPayload['amount'] / 100; // paise to INR
-        $reason = $refundPayload['notes']['reason'] ?? $refundPayload['reason'] ?? 'Refund processed via Razorpay Webhook';
+        $cfRefundId = (string) ($refundData['cf_refund_id'] ?? ($refundData['refund_id'] ?? ''));
+        $cfPaymentId = (string) ($paymentData['cf_payment_id'] ?? '');
+        $refundAmount = (float) ($refundData['refund_amount'] ?? ($refundData['amount'] ?? 0));
+        $reason = $refundData['refund_note'] ?? ($refundData['reason'] ?? 'Refund processed via Cashfree Webhook');
 
-        // Find the payment record
-        $payment = $this->paymentRepository->findByGatewayPaymentId($razorpayPaymentId);
+        $payment = null;
+        if (!empty($cfPaymentId)) {
+            $payment = $this->paymentRepository->findByGatewayPaymentId($cfPaymentId);
+        }
+
+        if (!$payment && !empty($orderData['order_id'])) {
+            $payment = $this->paymentRepository->findByGatewayOrderId($orderData['order_id']);
+        }
+
         if (!$payment) {
-            Log::warning("Payment not found for Razorpay refund webhook: Payment {$razorpayPaymentId}");
+            Log::warning("Payment not found for Cashfree refund webhook: Payment {$cfPaymentId}");
             return response()->json(['message' => 'Payment not found'], 404);
         }
 
@@ -380,10 +351,10 @@ class PaymentWebhookController extends Controller
             // Create or update refund record
             Refund::updateOrCreate(
                 [
-                    'gateway_refund_id' => $razorpayRefundId,
+                    'gateway_refund_id' => $cfRefundId,
                 ],
                 [
-                    'uuid' => (string) \Illuminate\Support\Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
                     'amount' => $refundAmount,
@@ -396,7 +367,7 @@ class PaymentWebhookController extends Controller
 
             DB::commit();
 
-            Log::info("Refund: Refund successfully processed for Order #{$order->order_number}, Amount: ₹{$refundAmount}");
+            Log::info("Refund: Cashfree refund successfully processed for Order #{$order->order_number}, Amount: ₹{$refundAmount}");
 
             return response()->json(['message' => 'Refund processed successfully']);
         } catch (Exception $e) {

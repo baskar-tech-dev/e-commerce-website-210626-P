@@ -421,8 +421,13 @@
 
                 <!-- Rating Row at bottom -->
                 <div class="card-rating-row">
-                  <span class="stars"><Star :size="12" class="star-filled inline" /> 4.8</span>
-                  <span class="rating-count">({{ Math.floor(Math.random() * 30) + 15 }})</span>
+                  <template v-if="product.total_reviews > 0">
+                    <span class="stars"><Star :size="12" class="star-filled inline" /> {{ Number(product.avg_rating || 0).toFixed(1) }}</span>
+                    <span class="rating-count">({{ product.total_reviews }})</span>
+                  </template>
+                  <template v-else>
+                    <span class="rating-count" style="color: #9C8A94;">No reviews yet</span>
+                  </template>
                   <span class="product-live-view"><Eye :size="12" /> {{ Math.floor(Math.random() * 15) + 10 }} viewing</span>
                 </div>
               </div>
@@ -891,9 +896,12 @@ import {
   Crown
 } from 'lucide-vue-next';
 
+import { useAuthStore } from '../../stores/auth';
+
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 
 const categoryStore = useCategoryStore();
+const authStore = useAuthStore();
 
 const products = ref([]);
 const loading = ref(true);
@@ -1272,10 +1280,17 @@ const isInWishlist = (id) => {
   return wishlist.value.some(item => item.id === id);
 };
 
-const toggleWishlist = (product) => {
+const toggleWishlist = async (product) => {
   const index = wishlist.value.findIndex(item => item.id === product.id);
+  const isAdding = index < 0;
+
   if (index >= 0) {
     wishlist.value.splice(index, 1);
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.delete(`/api/customer/wishlist/${product.uuid || product.id}`);
+      } catch (err) {}
+    }
   } else {
     wishlist.value.push({
       id: product.id,
@@ -1284,9 +1299,20 @@ const toggleWishlist = (product) => {
       selling_price: product.selling_price,
       image: getPrimaryImage(product)
     });
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.post('/api/customer/wishlist', { product_id: product.id });
+      } catch (err) {}
+    }
   }
+
   localStorage.setItem('vibe_wishlist_items', JSON.stringify(wishlist.value));
   emit('update-wishlist-count');
+
+  // Progressive auth trigger: Prompt guest to create account when adding a wishlist item
+  if (isAdding && !authStore.isAuthenticated) {
+    authStore.openAuthModal('register', 'wishlist');
+  }
 };
 
 // Quick Add
@@ -1315,7 +1341,11 @@ const quickAdd = (product, size) => {
     }
     localStorage.setItem('vibe_cart_items', JSON.stringify(cartItems));
     emit('update-cart-count');
-    alert(`✓ Added ${product.name} (Size: ${size}) to Cart successfully.`);
+
+    // Progressive auth trigger: Prompt guest user to create account when adding to cart
+    if (!authStore.isAuthenticated) {
+      authStore.openAuthModal('register', 'cart');
+    }
   } catch (err) {
     console.error('Failed to quick add to cart:', err);
   }

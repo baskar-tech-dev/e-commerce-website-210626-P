@@ -2,7 +2,7 @@
   <div class="admin-page__header">
     <div class="admin-page__title-section">
       <h1 class="admin-page__title">Orders List</h1>
-      <span class="admin-page__subtitle">Track and dispatch customer purchases.</span>
+      <span class="admin-page__subtitle">Track, process, pack, and dispatch customer purchases through the 9-stage lifecycle.</span>
     </div>
     <div class="admin-header__actions">
       <button @click="showStats = !showStats" class="btn btn--secondary btn--sm">
@@ -18,16 +18,16 @@
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">{{ pagination.total }}</div>
     </div>
     <div class="stat-card-new">
-      <div class="stat-card__title">Pending Confirmations</div>
-      <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-warning);">{{ statusCounts.pending }}</div>
+      <div class="stat-card__title">Order Placed / Pending</div>
+      <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-warning);">{{ statusCounts.order_placed }}</div>
+    </div>
+    <div class="stat-card-new">
+      <div class="stat-card__title">Processing & Ready</div>
+      <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-primary);">{{ statusCounts.processing }}</div>
     </div>
     <div class="stat-card-new">
       <div class="stat-card__title">Delivered Orders</div>
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-success);">{{ statusCounts.delivered }}</div>
-    </div>
-    <div class="stat-card-new">
-      <div class="stat-card__title">Cancelled Orders</div>
-      <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-danger);">{{ statusCounts.cancelled }}</div>
     </div>
   </div>
 
@@ -40,7 +40,7 @@
           type="text" 
           v-model="filters.search" 
           @input="debounceSearch"
-          placeholder="Search by Order #, customer name or email..." 
+          placeholder="Search by Order #, customer name, email or phone..." 
           class="form-input" 
           style="padding-left: 2rem;" 
         />
@@ -48,30 +48,50 @@
       </div>
 
       <!-- Filters Dropdowns -->
-      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+      <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap; align-items: center;">
         <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
-          <label style="font-size: 0.8rem; color: var(--color-text-muted);">Status:</label>
-          <select v-model="filters.status" @change="fetchOrders(1)" class="form-input" style="width: 130px; padding: 0.25rem var(--spacing-md);">
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+          <label style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Status:</label>
+          <select v-model="filters.status" @change="fetchOrders(1)" class="form-input" style="min-width: 170px; padding: 0.25rem var(--spacing-md); font-weight: 500;">
+            <option value="">All Statuses (9 Stages)</option>
+            <option v-for="st in statusDefinitions" :key="st.code" :value="st.code">
+              {{ st.step }}. {{ st.label }}
+            </option>
           </select>
         </div>
 
         <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
-          <label style="font-size: 0.8rem; color: var(--color-text-muted);">Payment:</label>
+          <label style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Payment:</label>
           <select v-model="filters.payment_status" @change="fetchOrders(1)" class="form-input" style="width: 140px; padding: 0.25rem var(--spacing-md);">
             <option value="">All Payments</option>
             <option value="pending">Pending</option>
             <option value="paid">Paid</option>
             <option value="failed">Failed</option>
+            <option value="refunded">Refunded</option>
           </select>
         </div>
       </div>
+    </div>
+
+    <!-- Quick Status Filter Pills -->
+    <div style="display: flex; gap: 0.4rem; margin-top: 0.75rem; overflow-x: auto; padding-top: 0.5rem; border-top: 1px dashed var(--color-border);">
+      <button 
+        type="button" 
+        :class="['btn btn--sm', !filters.status ? 'btn--primary' : 'btn--secondary']"
+        @click="filters.status = ''; fetchOrders(1)"
+        style="border-radius: 14px; height: 26px; font-size: 0.75rem; padding: 0 10px; white-space: nowrap;"
+      >
+        All
+      </button>
+      <button 
+        v-for="st in statusDefinitions" 
+        :key="st.code"
+        type="button" 
+        :class="['btn btn--sm', filters.status === st.code ? 'btn--primary' : 'btn--secondary']"
+        @click="filters.status = st.code; fetchOrders(1)"
+        style="border-radius: 14px; height: 26px; font-size: 0.75rem; padding: 0 10px; white-space: nowrap;"
+      >
+        <span>{{ st.icon }} {{ st.label }}</span>
+      </button>
     </div>
   </div>
 
@@ -106,7 +126,7 @@
         <div class="mdc-footer">
           <div class="mdc-badges">
             <span :class="['badge', getStatusBadgeClass(order.status)]">
-              {{ order.status }}
+              {{ getStatusLabel(order.status) }}
             </span>
             <div style="display: flex; align-items: center; gap: 4px;">
               <span :class="['badge', getPaymentBadgeClass(order.payment_status)]">
@@ -118,7 +138,7 @@
             </div>
           </div>
           <router-link :to="`/admin/orders/${order.id}`" class="btn btn--secondary btn--sm">
-            View
+            View Details
           </router-link>
         </div>
       </div>
@@ -159,7 +179,7 @@
           <td>{{ order.total_items }} {{ order.total_items === 1 ? 'item' : 'items' }}</td>
           <td style="font-weight: bold; color: #1e293b;">₹{{ parseFloat(order.grand_total).toFixed(2) }}</td>
           <td>
-            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem;">
+            <div style="display: flex; align-items: center; justify-content: flex-start; gap: 0.25rem;">
               <span :class="['badge', getPaymentBadgeClass(order.payment_status)]">
                 {{ order.payment_status }}
               </span>
@@ -169,8 +189,8 @@
             </div>
           </td>
           <td>
-            <span :class="['badge', getStatusBadgeClass(order.status)]">
-              {{ order.status }}
+            <span :class="['badge', getStatusBadgeClass(order.status)]" style="font-weight: 600; font-size: 0.78rem;">
+              {{ getStatusLabel(order.status) }}
             </span>
           </td>
           <td style="text-align: right;">
@@ -182,32 +202,32 @@
           </td>
         </tr>
         <tr v-if="orders.length === 0">
-          <td colspan="8" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
-            No customer orders matching the active filters were found.
+          <td colspan="8" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
+            No customer orders matching the selected filter criteria.
           </td>
         </tr>
       </tbody>
     </table>
 
     <!-- Pagination Controls -->
-    <div v-if="pagination.last_page > 1" style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md); border-top: 1px solid var(--color-border);">
-      <span style="font-size: 0.8rem; color: var(--color-text-muted);">
-        Showing Page {{ pagination.current_page }} of {{ pagination.last_page }}
-      </span>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--color-border); background: rgba(0,0,0,0.01);">
+      <div style="font-size: 0.85rem; color: var(--color-text-muted);">
+        Showing page <strong>{{ pagination.current_page }}</strong> of <strong>{{ pagination.last_page }}</strong> (Total: {{ pagination.total }} orders)
+      </div>
       <div style="display: flex; gap: var(--spacing-sm);">
         <button 
           class="btn btn--secondary btn--sm" 
           :disabled="pagination.current_page === 1"
           @click="fetchOrders(pagination.current_page - 1)"
         >
-          Previous
+          ◀️ Prev
         </button>
         <button 
           class="btn btn--secondary btn--sm" 
           :disabled="pagination.current_page === pagination.last_page"
           @click="fetchOrders(pagination.current_page + 1)"
         >
-          Next
+          Next ▶️
         </button>
       </div>
     </div>
@@ -215,37 +235,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 
 const showStats = ref(true);
-const orders = ref([]);
 const loading = ref(true);
 const errorMsg = ref('');
 
-const filters = ref({
+const orders = ref([]);
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  per_page: 15,
+  total: 0,
+});
+
+const statusCounts = ref({
+  order_placed: 0,
+  processing: 0,
+  delivered: 0,
+});
+
+const filters = reactive({
   search: '',
   status: '',
   payment_status: '',
 });
 
-const pagination = ref({
-  current_page: 1,
-  last_page: 1,
-  total: 0,
-});
+// Official 9 Order Status Definitions
+const statusDefinitions = [
+  { step: 1, code: 'order_placed', label: 'Order Placed', meaning: 'Customer successfully placed the order', badge: 'badge--warning', icon: '📝' },
+  { step: 2, code: 'order_confirmed', label: 'Order Confirmed', meaning: 'Admin accepted/confirmed the order', badge: 'badge--primary', icon: '✓' },
+  { step: 3, code: 'processing', label: 'Processing', meaning: 'Order is being prepared', badge: 'badge--secondary', icon: '⚙️' },
+  { step: 4, code: 'ready_to_ship', label: 'Ready to Ship', meaning: 'Product is packed and ready', badge: 'badge--secondary', icon: '📦' },
+  { step: 5, code: 'shipped', label: 'Shipped', meaning: 'Order handed over to courier', badge: 'badge--warning', icon: '🚚' },
+  { step: 6, code: 'delivered', label: 'Delivered', meaning: 'Customer received the order', badge: 'badge--success', icon: '🎉' },
+  { step: 7, code: 'cancelled', label: 'Cancelled', meaning: 'Order was cancelled', badge: 'badge--danger', icon: '✕' },
+  { step: 8, code: 'returned', label: 'Returned', meaning: 'Product was returned', badge: 'badge--danger', icon: '↩' },
+  { step: 9, code: 'refunded', label: 'Refunded', meaning: 'Refund completed', badge: 'badge--secondary', icon: '💰' },
+];
 
-const statusCounts = ref({
-  pending: 0,
-  delivered: 0,
-  cancelled: 0,
-});
-
-let searchTimeout = null;
-
+let debounceTimeout = null;
 const debounceSearch = () => {
-  if (searchTimeout) clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
+  clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(() => {
     fetchOrders(1);
   }, 350);
 };
@@ -253,20 +286,20 @@ const debounceSearch = () => {
 const fetchOrders = async (page = 1) => {
   loading.value = true;
   try {
-    const response = await axios.get('/api/admin/orders', {
-      params: {
-        page,
-        status: filters.value.status,
-        payment_status: filters.value.payment_status,
-        search: filters.value.search,
-      }
-    });
+    const params = {
+      page: page,
+      search: filters.search,
+      status: filters.status,
+      payment_status: filters.payment_status,
+    };
 
+    const response = await axios.get('/api/admin/orders', { params });
     if (response.data && response.data.success) {
       orders.value = response.data.data;
       pagination.value = {
         current_page: response.data.meta.current_page,
         last_page: response.data.meta.last_page,
+        per_page: response.data.meta.per_page,
         total: response.data.meta.total,
       };
     }
@@ -280,18 +313,12 @@ const fetchOrders = async (page = 1) => {
 
 const fetchKPIs = async () => {
   try {
-    const response = await axios.get('/api/admin/dashboard/stats');
-    if (response.data && response.data.success) {
-      // Fetch statuses via another quick call or aggregate from seeder
-      // We can count items in orders locally or request dashboard stats
-      // Let's populate status counts from a lightweight count
-      const allRes = await axios.get('/api/admin/orders', { params: { per_page: 100 } });
-      if (allRes.data && allRes.data.success) {
-        const list = allRes.data.data;
-        statusCounts.value.pending = list.filter(o => o.status === 'pending').length;
-        statusCounts.value.delivered = list.filter(o => o.status === 'delivered').length;
-        statusCounts.value.cancelled = list.filter(o => o.status === 'cancelled').length;
-      }
+    const allRes = await axios.get('/api/admin/orders', { params: { per_page: 100 } });
+    if (allRes.data && allRes.data.success) {
+      const list = allRes.data.data;
+      statusCounts.value.order_placed = list.filter(o => o.status === 'order_placed' || o.status === 'pending').length;
+      statusCounts.value.processing = list.filter(o => ['processing', 'ready_to_ship', 'order_confirmed', 'confirmed'].includes(o.status)).length;
+      statusCounts.value.delivered = list.filter(o => o.status === 'delivered').length;
     }
   } catch (e) {
     console.error('Failed to load status summaries:', e);
@@ -309,24 +336,26 @@ const formatDate = (dateString) => {
   });
 };
 
+const getStatusLabel = (status) => {
+  const norm = status === 'pending' ? 'order_placed' : (status === 'confirmed' ? 'order_confirmed' : status);
+  const def = statusDefinitions.find(s => s.code === norm);
+  return def ? `${def.icon} ${def.label}` : (status || '').toUpperCase();
+};
+
 const getStatusBadgeClass = (status) => {
-  switch (status) {
-    case 'pending': return 'badge--warning';
-    case 'confirmed': return 'badge--secondary';
-    case 'processing': return 'badge--secondary';
-    case 'shipped': return 'badge--secondary';
-    case 'delivered': return 'badge--success';
-    case 'cancelled': return 'badge--danger';
-    default: return '';
-  }
+  const norm = status === 'pending' ? 'order_placed' : (status === 'confirmed' ? 'order_confirmed' : status);
+  const def = statusDefinitions.find(s => s.code === norm);
+  return def ? def.badge : 'badge--secondary';
 };
 
 const getPaymentBadgeClass = (status) => {
   switch (status) {
     case 'pending': return 'badge--warning';
-    case 'paid': return 'badge--success';
+    case 'paid':
+    case 'captured': return 'badge--success';
     case 'failed': return 'badge--danger';
-    default: return '';
+    case 'refunded': return 'badge--secondary';
+    default: return 'badge--secondary';
   }
 };
 

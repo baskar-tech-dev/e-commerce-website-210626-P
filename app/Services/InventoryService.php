@@ -250,4 +250,189 @@ class InventoryService
             ]);
         });
     }
+
+    /**
+     * Get structured Color x Size stock matrix for a product.
+     */
+    public function getProductStockMatrix(int $productId): array
+    {
+        $product = \App\Models\Product::with(['category:id,name', 'images', 'variants'])->find($productId);
+        if (!$product) {
+            throw new Exception("Product with ID {$productId} not found.");
+        }
+
+        $variants = $product->variants;
+        $colorMap = [];
+        $sizes = [];
+        $matrix = [];
+
+        // Preload Color master for accurate hex codes
+        $masterColors = \App\Models\Color::pluck('code', 'name')->toArray();
+
+        foreach ($variants as $v) {
+            $color = trim($v->color ?: 'Standard');
+            $size = trim($v->size ?: 'One Size');
+
+            if (!isset($colorMap[$color])) {
+                $code = $v->color_code ?: ($masterColors[$color] ?? '#4A0E2E');
+                $colorMap[$color] = [
+                    'name' => $color,
+                    'code' => $code,
+                ];
+            }
+
+            if (!in_array($size, $sizes)) {
+                $sizes[] = $size;
+            }
+
+            if (!isset($matrix[$color])) {
+                $matrix[$color] = [];
+            }
+
+            $matrix[$color][$size] = [
+                'variant_id' => $v->id,
+                'sku' => $v->sku,
+                'color' => $color,
+                'color_code' => $colorMap[$color]['code'],
+                'size' => $size,
+                'stock_quantity' => (int) $v->stock_quantity,
+                'reserved_quantity' => (int) $v->reserved_quantity,
+                'low_stock_threshold' => (int) $v->low_stock_threshold,
+            ];
+        }
+
+        $primaryImage = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
+
+        return [
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'category_name' => $product->category?->name ?? 'Uncategorized',
+                'primary_image_url' => $primaryImage?->url ?? $primaryImage?->thumbnail_url ?? null,
+                'total_stock' => (int) $variants->sum('stock_quantity'),
+                'total_reserved' => (int) $variants->sum('reserved_quantity'),
+                'variants_count' => $variants->count(),
+            ],
+            'colors' => array_values($colorMap),
+            'sizes' => $sizes,
+            'variants' => $variants,
+            'matrix' => $matrix,
+        ];
+    }
+
+    /**
+     * Bulk update stock across matrix cells for a product.
+     *
+     * @param int $productId
+     * @param string $mode 'set' | 'add' | 'subtract'
+     * @param string $reason
+     * @param string|null $notes
+     * @param array $items Array of ['variant_id' => int, 'quantity' => int]
+     * @param int|null $userId
+     * @return array
+     * @throws Exception
+     */
+    public function bulkUpdateMatrixStock(
+        int $productId,
+        string $mode,
+        string $reason,
+        ?string $notes,
+        array $items,
+        ?int $userId = null
+    ): array {
+        if (!in_array($mode, ['set', 'add', 'subtract'])) {
+            throw new Exception("Invalid update mode: {$mode}. Must be set, add, or subtract.");
+        }
+
+        return DB::transaction(function () use ($productId, $mode, $reason, $notes, $items, $userId) {
+            $product = \App\Models\Product::find($productId);
+            if (!$product) {
+                throw new Exception("Product #{$productId} not found.");
+            }
+
+            $updatedCount = 0;
+            $totalDelta = 0;
+            $updatedVariants = [];
+
+            foreach ($items as $item) {
+                $variantId = (int) ($item['variant_id'] ?? 0);
+                if (!$variantId) continue;
+
+                $qty = (int) ($item['quantity'] ?? 0);
+
+                $variant = ProductVariant::lockForUpdate()->where('product_id', $productId)->find($variantId);
+                if (!$variant) continue;
+
+                $stockBefore = (int) $variant->stock_quantity;
+                $stockAfter = $stockBefore;
+                $delta = 0;
+                $direction = 'IN';
+
+                if ($mode === 'set') {
+                    $targetStock = max(0, $qty);
+                    $delta = $targetStock - $stockBefore;
+                    $stockAfter = $targetStock;
+                    $direction = $delta >= 0 ? 'IN' : 'OUT';
+                } elseif ($mode === 'add') {
+                    if ($qty <= 0) continue;
+                    $delta = $qty;
+                    $stockAfter = $stockBefore + $qty;
+                    $direction = 'IN';
+                } elseif ($mode === 'subtract') {
+                    if ($qty <= 0) continue;
+                    $delta = -$qty;
+                    $stockAfter = max(0, $stockBefore - $qty);
+                    $direction = 'OUT';
+                }
+
+                if ($stockBefore === $stockAfter && $mode === 'set') {
+                    // No change in quantity
+                    continue;
+                }
+
+                // Update variant
+                $variant->stock_quantity = $stockAfter;
+                $variant->save();
+
+                // Post audit ledger entry
+                $auditNote = trim("Bulk Matrix ({$mode}): {$reason}. " . ($notes ?? ''));
+                InventoryLedger::create([
+                    'product_variant_id' => $variant->id,
+                    'type' => 'ADJUSTMENT',
+                    'direction' => $direction,
+                    'quantity' => abs($delta),
+                    'reference_type' => 'BULK_STOCK_ENTRY',
+                    'reference_id' => $productId,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'notes' => $auditNote,
+                    'created_by' => $userId,
+                ]);
+
+                $updatedCount++;
+                $totalDelta += $delta;
+                $updatedVariants[] = [
+                    'id' => $variant->id,
+                    'sku' => $variant->sku,
+                    'color' => $variant->color,
+                    'size' => $variant->size,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'delta' => $delta,
+                ];
+            }
+
+            // Recalculate total product stock
+            $newTotalStock = (int) ProductVariant::where('product_id', $productId)->sum('stock_quantity');
+
+            return [
+                'success' => true,
+                'updated_count' => $updatedCount,
+                'total_delta' => $totalDelta,
+                'new_total_stock' => $newTotalStock,
+                'updated_variants' => $updatedVariants,
+            ];
+        });
+    }
 }

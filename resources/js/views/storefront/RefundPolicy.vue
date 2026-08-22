@@ -48,7 +48,7 @@
             </p>
             <ul style="padding-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
               <li>Navigate to your **Customer Dashboard > My Orders** and click Cancel (available for pending orders).</li>
-              <li>If the order has already been paid via Razorpay, our backend automatically initiates the cancellation event, decrements the active coupon's `times_used` counter, deletes the `coupon_usage` record, and returns the reserved stock back to the ledger.</li>
+              <li>If the order has already been paid online, our backend automatically initiates the cancellation event, decrements the active coupon's `times_used` counter, deletes the `coupon_usage` record, and returns the reserved stock back to the ledger.</li>
               <li>Once an order is shipped, cancellation requests cannot be accepted.</li>
             </ul>
           </section>
@@ -92,7 +92,7 @@
           <section id="methods" style="margin-bottom: 32px;">
             <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">5. Refund Methods</h2>
             <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-              <li><strong>Prepaid Transactions:</strong> Refunds are processed directly back to the original credit/debit card, UPI account, or net banking wallet via Razorpay.</li>
+              <li><strong>Prepaid Transactions:</strong> Refunds are processed directly back to the original credit/debit card, UPI account, or net banking wallet via Cashfree Payments.</li>
               <li><strong>Cash on Delivery (COD) Transactions:</strong> Our team will contact you to collect bank details or UPI IDs to execute a direct bank transfer, or provide store credit.</li>
             </ul>
           </section>

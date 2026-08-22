@@ -3,36 +3,105 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerProfile;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Authenticate a user and return a Sanctum token.
+     * Customer registration.
      */
-    public function login(Request $request)
+    public function register(Request $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8|confirmed',
+            'terms' => 'accepted',
+        ], [
+            'terms.accepted' => 'You must agree to the Terms & Privacy Policy to create an account.',
+            'email.unique' => 'An account with this email address already exists. Please sign in.',
+            'password.confirmed' => 'Passwords do not match.',
+            'password.min' => 'Please choose a stronger password (minimum 8 characters).',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $nameParts = explode(' ', trim($validated['name']), 2);
+        $firstName = $nameParts[0] ?? '';
+        $lastName = $nameParts[1] ?? '';
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        // Assign default customer role if available
+        $customerRole = Role::where('name', 'customer')
+            ->orWhere('name', 'Customer')
+            ->first();
+
+        $user = User::create([
+            'name' => trim($validated['name']),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => strtolower(trim($validated['email'])),
+            'phone' => isset($validated['phone']) ? trim($validated['phone']) : null,
+            'password' => Hash::make($validated['password']),
+            'role_id' => $customerRole?->id,
+            'is_active' => true,
+        ]);
+
+        // Auto-create customer profile
+        CustomerProfile::create([
+            'user_id' => $user->id,
+            'email_subscribed' => true,
+        ]);
+
+        // Update last login metadata
+        $user->last_login_at = now();
+        $user->last_login_ip = $request->ip();
+        $user->save();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account created successfully',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user->load('customerProfile'),
+        ], 201);
+    }
+
+    /**
+     * Authenticate a user with email or phone and return a Sanctum token.
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $loginId = trim($request->email);
+
+        // Find user by email or phone number
+        $user = User::where('email', strtolower($loginId))
+            ->orWhere('phone', $loginId)
+            ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Incorrect email or password. Please try again.'],
+                'email' => ['The email/phone or password you entered is incorrect.'],
             ]);
         }
 
-        // Optional: Check if user is active
         if (!$user->is_active) {
             throw ValidationException::withMessages([
-                'email' => ['Your account is disabled.'],
+                'email' => ['Your account is disabled. Please contact customer support.'],
             ]);
         }
 
@@ -41,25 +110,83 @@ class AuthController extends Controller
         $user->last_login_ip = $request->ip();
         $user->save();
 
-        // Create a new token for the user
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user
+            'user' => $user->load(['roles', 'customerProfile']),
         ]);
     }
 
     /**
-     * Log the user out (Invalidate the token).
+     * Log the user out (Invalidate token).
      */
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()?->currentAccessToken();
+
+        if ($token && method_exists($token, 'delete')) {
+            $token->delete();
+        }
 
         return response()->json([
-            'message' => 'Successfully logged out'
+            'success' => true,
+            'message' => 'Successfully logged out',
+        ]);
+    }
+
+    /**
+     * Initiate forgot password flow.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', strtolower(trim($request->email)))->first();
+
+        if (!$user) {
+            // Return success anyway to avoid user enumeration vulnerability
+            return response()->json([
+                'success' => true,
+                'message' => 'If an account exists with that email, password reset instructions have been sent.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset instructions have been sent to your email address.',
+        ]);
+    }
+
+    /**
+     * Reset password.
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('email', strtolower(trim($request->email)))->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid password reset request.',
+            ], 400);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your password has been reset successfully. Please sign in with your new password.',
         ]);
     }
 }

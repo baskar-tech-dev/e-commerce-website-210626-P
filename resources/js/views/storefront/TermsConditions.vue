@@ -68,7 +68,7 @@
               All orders are subject to stock availability. When you check out, order totals and coupon discount eligibility are automatically recalculated and verified on our server side to ensure transactional security.
             </p>
             <p>
-              We integrate with **Razorpay** to process credit cards, debit cards, UPI, net banking, and wallets securely. Payments are processed in real-time. We reserve the right to cancel any orders placed with fraudulent intent or showing double payment codes.
+              We integrate with **Cashfree Payments** to process credit cards, debit cards, UPI, net banking, and wallets securely. Payments are processed in real-time. We reserve the right to cancel any orders placed with fraudulent intent or showing double payment codes.
             </p>
           </section>
 

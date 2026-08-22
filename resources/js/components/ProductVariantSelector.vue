@@ -134,27 +134,27 @@ const emit = defineEmits([
 .product-variant-selector-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Generous 24px spacing between sections conforming to 8px spacing grid */
+  gap: 12px; /* Compact 12px spacing between sections */
   background-color: #FFFDF9; /* Warm White */
   border: 1px solid #E8DDD3; /* Border color */
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 14px 16px;
   font-family: 'Poppins', sans-serif;
 }
 
 @media (max-width: 480px) {
   .product-variant-selector-wrapper {
-    padding: 16px;
-    gap: 20px;
-    border-radius: 12px;
+    padding: 12px;
+    gap: 10px;
+    border-radius: 10px;
   }
 }
 
 .actions-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 @media (max-width: 480px) {
@@ -171,8 +171,8 @@ const emit = defineEmits([
 
 .boutique-add-to-cart-btn {
   flex: 1;
-  height: 48px; /* Touch friendly height target */
-  border-radius: 12px;
+  height: 44px; /* Touch friendly height target */
+  border-radius: 8px;
   background-color: #5B163A; /* Maroon primary */
   color: #FFFDF9;
   border: none;
@@ -184,14 +184,14 @@ const emit = defineEmits([
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(91, 22, 58, 0.12);
+  box-shadow: 0 3px 10px rgba(91, 22, 58, 0.12);
   transition: all 200ms ease;
 }
 
 .boutique-add-to-cart-btn:hover:not(:disabled) {
   background-color: #4a0e2e;
-  transform: translateY(-2px); /* Slight lift */
-  box-shadow: 0 8px 20px rgba(91, 22, 58, 0.2);
+  transform: translateY(-1px); /* Slight lift */
+  box-shadow: 0 6px 16px rgba(91, 22, 58, 0.18);
 }
 
 .boutique-add-to-cart-btn:active:not(:disabled) {
@@ -207,7 +207,7 @@ const emit = defineEmits([
 
 .add-to-cart-helper-text {
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #dc2626; /* Warning soft red */
   display: flex;
@@ -223,25 +223,25 @@ const emit = defineEmits([
 
 .dispatch-highlight-badge {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px;
-  padding-top: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  padding-top: 10px;
   border-top: 1px dashed #E2D5C8;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .dispatch-badge-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 6px;
+  padding: 6px 8px;
   background-color: #FAF5F0;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .dispatch-icon {
-  font-size: 1.15rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -251,7 +251,7 @@ const emit = defineEmits([
 }
 
 .dispatch-title {
-  font-size: 0.675rem;
+  font-size: 0.625rem;
   color: #64748b;
   font-weight: 600;
   text-transform: uppercase;
@@ -259,7 +259,7 @@ const emit = defineEmits([
 }
 
 .dispatch-value {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6E1F3A;
   font-weight: 700;
 }

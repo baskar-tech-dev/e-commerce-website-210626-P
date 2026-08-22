@@ -60,7 +60,9 @@ class DashboardController extends Controller
                         'order_id' => $order->order_number,
                         'customer_name' => trim(($order->shipping_first_name ?? '') . ' ' . ($order->shipping_last_name ?? '')) ?: ($order->user->name ?? 'Guest'),
                         'amount' => (float) $order->grand_total,
-                        'status' => $order->status === 'delivered' ? 'Completed' : ($order->status === 'cancelled' ? 'Cancelled' : 'Processing'),
+                        'status' => $order->status,
+                        'status_label' => $order->status_label,
+                        'status_badge' => $order->status_details['badge'] ?? 'badge--secondary',
                         'date' => $order->created_at ? $order->created_at->format('M d, Y') : now()->format('M d, Y'),
                     ];
                 });

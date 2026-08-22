@@ -130,7 +130,7 @@
 | File Storage | AWS S3 | — | Images, documents |
 | Email | Mailgun | — | Transactional emails |
 | SMS | Twilio | — | SMS notifications |
-| Payment | Razorpay | — | Primary payment gateway |
+| Payment | Cashfree Payments | — | Primary payment gateway |
 | Payment (Intl) | Stripe | — | International payments |
 
 ### Development Tools

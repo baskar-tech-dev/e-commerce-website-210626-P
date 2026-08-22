@@ -109,6 +109,13 @@
             <span style="font-weight: 700; color: var(--color-text-primary); font-size: 1.05rem;">Estimated Total</span>
             <span style="font-weight: 800; color: var(--color-primary); font-size: 1.6rem;">₹{{ grandTotal }}</span>
           </div>
+          <!-- Guest Account Creation Prompt -->
+          <div v-if="!authStore.isAuthenticated" style="margin-bottom: var(--spacing-md); padding: var(--spacing-sm); background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 8px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            <strong style="color: var(--color-primary);">Create an account to save your cart & order history!</strong>
+            <button type="button" class="btn btn--secondary btn--sm" style="width: 100%; border-radius: 6px;" @click="authStore.openAuthModal('register', 'cart')">
+              ✨ Create Account / Sign In
+            </button>
+          </div>
 
           <button class="btn btn--primary" style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 1.05rem; border-radius: 8px;" @click="goToCheckout">
             Proceed To Checkout ➔
@@ -131,9 +138,11 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useAuthStore } from '../../stores/auth';
 import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const emit = defineEmits(['update-cart-count']);
 
 const cartItems = ref([]);
@@ -253,6 +262,14 @@ onMounted(() => {
       couponMsg.value = `✓ Applied! ${saved.type === 'percentage' ? saved.value + '%' : '₹' + saved.value} Discount`;
     }
   } catch (e) {}
+
+  // Push guest user with items in cart to create a new customer account
+  if (!authStore.isAuthenticated && cartItems.value.length > 0 && !sessionStorage.getItem('guest_cart_prompt_shown')) {
+    sessionStorage.setItem('guest_cart_prompt_shown', 'true');
+    setTimeout(() => {
+      authStore.openAuthModal('register', 'cart');
+    }, 400);
+  }
 });
 </script>
 

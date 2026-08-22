@@ -139,6 +139,9 @@
         </div>
       </div>
 
+      <!-- Customer Reviews Section -->
+      <ReviewSection v-if="product" :product="product" />
+
       <!-- Similar Products Section -->
       <section v-if="relatedProducts && relatedProducts.length" class="detail-recommend-section">
         <h3 class="detail-section-title">Similar Products</h3>
@@ -229,9 +232,13 @@ import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
 import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
+import ReviewSection from '../../components/ReviewSection.vue';
+
+import { useAuthStore } from '../../stores/auth';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const emit = defineEmits(['update-cart-count']);
 
 const triggerSizeGuide = () => {
@@ -516,7 +523,11 @@ const addToCart = () => {
 
     localStorage.setItem('vibe_cart_items', JSON.stringify(cart));
     emit('update-cart-count');
-    alert('✓ Product variant successfully added to shopping cart!');
+
+    // Progressive auth trigger: Prompt guest user to create account when adding to cart
+    if (!authStore.isAuthenticated) {
+      authStore.openAuthModal('register', 'cart');
+    }
   } catch (e) {
     console.error('Cart operation failed', e);
   }

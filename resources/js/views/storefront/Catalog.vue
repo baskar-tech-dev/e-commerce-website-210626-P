@@ -312,6 +312,18 @@
               <!-- Card Details Section -->
               <div class="card-details-wrap">
                 <h4 class="card-product-title">{{ product.name }}</h4>
+
+                <!-- Product Rating Badge -->
+                <div class="card-rating-badge" style="display: flex; align-items: center; gap: 4px; font-size: 0.8rem; margin: 3px 0;">
+                  <template v-if="product.total_reviews > 0">
+                    <span style="color: #B68D40; font-weight: bold;">★</span>
+                    <span style="font-weight: 700; color: #4A423A;">{{ Number(product.avg_rating || 0).toFixed(1) }}</span>
+                    <span style="color: #7A726A;">({{ product.total_reviews }})</span>
+                  </template>
+                  <template v-else>
+                    <span style="color: #9C8A94; font-size: 0.75rem;">No reviews yet</span>
+                  </template>
+                </div>
                 
                 <!-- Included Sizes List -->
                 <div class="card-sizes-info" v-if="product.variants && product.variants.some(v => v.stock_quantity > 0)">
@@ -627,8 +639,11 @@ import {
   Plus 
 } from 'lucide-vue-next';
 
+import { useAuthStore } from '../../stores/auth';
+
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 
 const products = ref([]);
@@ -911,10 +926,17 @@ const isInWishlist = (id) => {
   return wishlist.value.some(item => item.id === id);
 };
 
-const toggleWishlist = (product) => {
+const toggleWishlist = async (product) => {
   const index = wishlist.value.findIndex(item => item.id === product.id);
+  const isAdding = index < 0;
+
   if (index >= 0) {
     wishlist.value.splice(index, 1);
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.delete(`/api/customer/wishlist/${product.uuid || product.id}`);
+      } catch (err) {}
+    }
   } else {
     wishlist.value.push({
       id: product.id,
@@ -923,15 +945,24 @@ const toggleWishlist = (product) => {
       selling_price: product.selling_price,
       image: getPrimaryImage(product)
     });
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.post('/api/customer/wishlist', { product_id: product.id });
+      } catch (err) {}
+    }
   }
+
   localStorage.setItem('vibe_wishlist_items', JSON.stringify(wishlist.value));
   emit('update-wishlist-count');
+
+  // Progressive auth trigger: Prompt guest to create account when adding a wishlist item
+  if (isAdding && !authStore.isAuthenticated) {
+    authStore.openAuthModal('register', 'wishlist');
+  }
 };
 
 const getPrimaryImage = (product) => {
-  if (!product.images || product.images.length === 0) {
-    return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop';
-  }
+  if (!product.images || product.images.length === 0) return '/asset/profile/logo.png';
   const primary = product.images.find(img => img.is_primary);
   return primary ? (primary.image_path || primary.url) : (product.images[0].image_path || product.images[0].url);
 };
@@ -963,7 +994,11 @@ const addVariantToCart = (product, variant) => {
     }
     localStorage.setItem('vibe_cart_items', JSON.stringify(cart));
     emit('update-cart-count');
-    alert(`✓ Added Size ${variant.size || 'OS'} of ${product.name} to your cart!`);
+
+    // Progressive auth trigger: Prompt guest user to create account when adding to cart
+    if (!authStore.isAuthenticated) {
+      authStore.openAuthModal('register', 'cart');
+    }
   } catch (e) {
     console.error('Cart operation failed', e);
   }

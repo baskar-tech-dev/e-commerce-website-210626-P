@@ -13,7 +13,7 @@ Copy and paste this brief into ChatGPT, Claude, or other AI assistants to instan
 - **Frontend**: Vue 3 Single Page Application (SPA) with Vite compilation, Vue Router, and Pinia stores.
 - **Styling**: Vanilla CSS with custom global CSS variables for dynamic themes (avoiding Tailwind unless explicitly configured).
 - **Database**: MySQL for local development, SQLite (in-memory) for automated PHPUnit tests.
-- **Payment Gateway**: Razorpay (fully integrated with checkouts, signature verification, and secure webhooks).
+- **Payment Gateway**: Cashfree Payments (fully integrated with session checkout, server-side status verification, and secure webhooks).
 
 ## 3. Core Directory Structure
 - `app/Models/`: Eloquent models (e.g., `Product`, `Order`, `Menu`, `Role`, `User`).

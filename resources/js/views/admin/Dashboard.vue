@@ -333,9 +333,8 @@
             
             <div class="mdc-footer">
               <div class="mdc-badges">
-                <span :class="['badge', order.status === 'Completed' ? 'badge--success' : '']" 
-                      :style="order.status !== 'Completed' ? 'background: rgba(99, 102, 241, 0.1); color: #6366f1;' : ''">
-                  {{ order.status }}
+                <span :class="['badge', order.status_badge || 'badge--secondary']">
+                  {{ order.status_label || order.status }}
                 </span>
               </div>
             </div>
@@ -366,9 +365,8 @@
               </td>
               <td><strong>₹{{ parseFloat(order.amount).toFixed(2) }}</strong></td>
               <td>
-                <span :class="['badge', order.status === 'Completed' ? 'badge--success' : '']" 
-                      :style="order.status !== 'Completed' ? 'background: rgba(99, 102, 241, 0.1); color: #6366f1;' : ''">
-                  {{ order.status }}
+                <span :class="['badge', order.status_badge || 'badge--secondary']">
+                  {{ order.status_label || order.status }}
                 </span>
               </td>
               <td>{{ order.date }}</td>

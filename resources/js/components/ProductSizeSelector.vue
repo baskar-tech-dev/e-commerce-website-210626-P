@@ -59,12 +59,12 @@ const openSizeGuide = () => {
 .selection-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   font-family: 'Poppins', sans-serif;
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #2D2D2D;
   margin: 0;
@@ -77,41 +77,41 @@ const openSizeGuide = () => {
 }
 
 .size-chip-btn {
-  height: 44px;
-  padding: 0 22px; /* 22px horizontal padding */
-  border-radius: 12px; /* 12px border radius */
+  height: 38px;
+  padding: 0 16px; /* Horizontal padding */
+  border-radius: 8px; /* Sleek 8px radius */
   background-color: #F8F5F1; /* cream background */
   border: 1px solid #E8DDD3; /* thin border */
   color: #2D2D2D; /* dark text */
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 600; /* 600 weight */
+  font-size: 13px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
-  transition: all 200ms ease; /* 200ms ease transition */
+  transition: all 200ms ease;
   position: relative;
   overflow: hidden;
 }
 
 .size-chip-btn:hover:not(:disabled) {
-  border-color: #5B163A; /* border changes to primary color */
-  box-shadow: 0 4px 12px rgba(91, 22, 58, 0.08); /* soft shadow */
-  transform: translateY(-2px); /* translateY(-2px) */
+  border-color: #5B163A;
+  box-shadow: 0 3px 8px rgba(91, 22, 58, 0.08);
+  transform: translateY(-1px);
 }
 
 .size-chip-btn.selected {
-  background-color: #5B163A; /* deep maroon background */
+  background-color: #5B163A;
   border-color: #5B163A;
-  color: #FFFDF9; /* white text */
-  box-shadow: 0 6px 16px rgba(91, 22, 58, 0.2); /* subtle shadow */
-  transform: scale(1.03); /* slight scale animation */
+  color: #FFFDF9;
+  box-shadow: 0 4px 12px rgba(91, 22, 58, 0.2);
+  transform: scale(1.02);
 }
 
 .size-chip-btn.selected:hover {
-  transform: translateY(-2px) scale(1.03);
+  transform: translateY(-1px) scale(1.02);
 }
 
 .size-chip-btn:focus-visible {
@@ -120,11 +120,11 @@ const openSizeGuide = () => {
 }
 
 .size-chip-btn:disabled {
-  background-color: #f3f3f3; /* light gray */
+  background-color: #f3f3f3;
   border-color: #E8DDD3;
   color: #2D2D2D;
-  opacity: 0.4; /* opacity 40% */
-  cursor: not-allowed; /* cursor not allowed */
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .size-chip-btn:disabled::after {
@@ -141,10 +141,10 @@ const openSizeGuide = () => {
 .size-guide-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .size-guide-prefix {

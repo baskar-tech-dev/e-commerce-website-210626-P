@@ -298,7 +298,7 @@ class ReturnController extends Controller
                 // Generate cod mock payment
                 $payment = Payment::create([
                     'order_id' => $returnRequest->order_id,
-                    'gateway' => $returnRequest->order->payment_method === 'cod' ? 'cod' : 'razorpay',
+                    'gateway' => $returnRequest->order->payment_method === 'cod' ? 'cod' : 'cashfree',
                     'method' => $returnRequest->order->payment_method,
                     'amount' => $returnRequest->order->grand_total,
                     'status' => 'captured',

@@ -11,26 +11,29 @@ export const usePaymentStore = defineStore('payment', {
 
   actions: {
     /**
-     * Initiate payment by creating a Razorpay Order in the Laravel backend.
+     * Initiate payment by creating a Cashfree Order session in the Laravel backend.
      * 
      * @param {number} orderId 
      * @returns {Promise<object>}
      */
-    async createRazorpayOrder(orderId) {
+    async createPaymentSession(orderId) {
       this.loading = true;
       this.processing = true;
       this.error = null;
       this.success = false;
       
+      const token = localStorage.getItem('auth_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
-        const response = await axios.post('/api/payment/create-order', {
+        const response = await axios.post('/api/payment/cashfree/create', {
           order_id: orderId,
-        });
+        }, { headers });
         
         if (response.data && response.data.success) {
           return response.data.data;
         } else {
-          throw new Error(response.data?.message || 'Failed to initiate payment.');
+          throw new Error(response.data?.message || 'Failed to initiate Cashfree payment session.');
         }
       } catch (err) {
         this.error = err.response?.data?.message || err.message || 'Failed to create payment order.';
@@ -42,7 +45,14 @@ export const usePaymentStore = defineStore('payment', {
     },
 
     /**
-     * Verify Razorpay payment signature in the Laravel backend.
+     * Alias for createPaymentSession.
+     */
+    async createCashfreeOrder(orderId) {
+      return this.createPaymentSession(orderId);
+    },
+
+    /**
+     * Verify payment on backend against Cashfree API.
      * 
      * @param {object} verificationData 
      * @returns {Promise<object>}
@@ -51,24 +61,25 @@ export const usePaymentStore = defineStore('payment', {
       this.loading = true;
       this.processing = true;
       this.error = null;
-      
+
+      const token = localStorage.getItem('auth_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
-        const response = await axios.post('/api/payment/verify', {
+        const response = await axios.post('/api/payment/cashfree/verify', {
           order_id: verificationData.order_id,
-          razorpay_order_id: verificationData.razorpay_order_id,
-          razorpay_payment_id: verificationData.razorpay_payment_id,
-          razorpay_signature: verificationData.razorpay_signature,
-        });
+          cashfree_order_id: verificationData.cashfree_order_id || verificationData.order_number,
+        }, { headers });
         
         if (response.data && response.data.success) {
           this.success = true;
           this.processing = false;
           return response.data;
         } else {
-          throw new Error(response.data?.message || 'Payment signature verification failed.');
+          throw new Error(response.data?.message || 'Payment verification failed.');
         }
       } catch (err) {
-        this.error = err.response?.data?.message || err.message || 'Signature verification failed.';
+        this.error = err.response?.data?.message || err.message || 'Payment verification failed.';
         this.success = false;
         this.processing = false;
         throw err;
@@ -84,15 +95,18 @@ export const usePaymentStore = defineStore('payment', {
      * @param {string} reason 
      * @returns {Promise<object>}
      */
-    async cancelPayment(orderId, reason = 'Payment modal dismissed by user') {
+    async cancelPayment(orderId, reason = 'Payment cancelled or dismissed by user') {
       this.loading = true;
       this.error = null;
-      
+
+      const token = localStorage.getItem('auth_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
-        const response = await axios.post('/api/payment/cancel', {
+        const response = await axios.post('/api/payment/cashfree/cancel', {
           order_id: orderId,
           reason: reason,
-        });
+        }, { headers });
         
         this.processing = false;
         return response.data;
@@ -102,6 +116,25 @@ export const usePaymentStore = defineStore('payment', {
         throw err;
       } finally {
         this.loading = false;
+      }
+    },
+
+    /**
+     * Fetch verified payment status from server.
+     * 
+     * @param {number} orderId 
+     * @returns {Promise<object>}
+     */
+    async getPaymentStatus(orderId) {
+      const token = localStorage.getItem('auth_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      try {
+        const response = await axios.get(`/api/payment/cashfree/status/${orderId}`, { headers });
+        return response.data;
+      } catch (err) {
+        console.error('Failed to get payment status:', err);
+        throw err;
       }
     },
 

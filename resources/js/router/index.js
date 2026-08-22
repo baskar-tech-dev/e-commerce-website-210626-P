@@ -18,9 +18,12 @@ import SignIn from '../views/storefront/SignIn.vue';
 import Dashboard from '../views/admin/Dashboard.vue';
 import CategoryList from '../views/admin/CategoryList.vue';
 import TagList from '../views/admin/TagList.vue';
+import ColorList from '../views/admin/ColorList.vue';
+import SizeMasterList from '../views/admin/SizeMasterList.vue';
 import ProductList from '../views/admin/ProductList.vue';
 import ProductForm from '../views/admin/ProductForm.vue';
 import InventoryList from '../views/admin/InventoryList.vue';
+import StockMatrixEntry from '../views/admin/StockMatrixEntry.vue';
 import PurchaseOrderList from '../views/admin/PurchaseOrderList.vue';
 import PurchaseOrderForm from '../views/admin/PurchaseOrderForm.vue';
 import CustomerList from '../views/admin/CustomerList.vue';
@@ -40,6 +43,8 @@ import RoleList from '../views/admin/RoleList.vue';
 import SettingDashboard from '../views/admin/SettingDashboard.vue';
 import AuditLogList from '../views/admin/AuditLogList.vue';
 import InstagramReelList from '../views/admin/InstagramReelList.vue';
+import ReviewList from '../views/admin/ReviewList.vue';
+import CourierList from '../views/admin/CourierList.vue';
 
 const routes = [
   {
@@ -203,6 +208,11 @@ const routes = [
         component: BlogPostForm,
       },
       {
+        path: 'couriers',
+        name: 'admin.couriers',
+        component: CourierList,
+      },
+      {
         path: 'coupons',
         name: 'admin.coupons',
         component: CouponList,
@@ -233,6 +243,16 @@ const routes = [
         component: TagList,
       },
       {
+        path: 'colors',
+        name: 'admin.colors',
+        component: ColorList,
+      },
+      {
+        path: 'size-masters',
+        name: 'admin.size-masters',
+        component: SizeMasterList,
+      },
+      {
         path: 'products',
         name: 'admin.products',
         component: ProductList,
@@ -248,9 +268,19 @@ const routes = [
         component: ProductForm,
       },
       {
+        path: 'reviews',
+        name: 'admin.reviews',
+        component: ReviewList,
+      },
+      {
         path: 'inventory',
         name: 'admin.inventory',
         component: InventoryList,
+      },
+      {
+        path: 'stock-entry',
+        name: 'admin.stock-entry',
+        component: StockMatrixEntry,
       },
       {
         path: 'purchase-orders',

@@ -39,8 +39,8 @@
         <label class="form-label">Status</label>
         <select v-model="filters.is_active" class="form-input" @change="applyFilters">
           <option value="">All Statuses</option>
-          <option value="true">Active Only</option>
-          <option value="false">Inactive Only</option>
+          <option value="true">🟢 Active (Published)</option>
+          <option value="false">📝 Draft (Unpublished)</option>
         </select>
       </div>
 
@@ -105,12 +105,12 @@
         
         <div class="mdc-footer">
           <div class="mdc-badges" style="flex-direction: row; flex-wrap: wrap;">
-            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--danger']">{{ prod.is_active ? 'Active' : 'Inactive' }}</span>
+            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--warning']">{{ prod.is_active ? '🟢 Active' : '📝 Draft' }}</span>
             <span v-if="prod.is_featured" class="badge badge--success">Featured</span>
             <span v-if="prod.is_bestseller" class="badge badge--warning">Bestseller</span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
-            <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">Activate</button>
+            <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">🚀 Publish</button>
             <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">Edit</router-link>
           </div>
         </div>
@@ -184,14 +184,14 @@
             <span v-else style="color: var(--color-danger); font-size: 0.85rem;">⚠️ No Variants</span>
           </td>
           <td>
-            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--danger']">
-              {{ prod.is_active ? 'Active' : 'Inactive' }}
+            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--warning']">
+              {{ prod.is_active ? '🟢 Active' : '📝 Draft' }}
             </span>
           </td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 0.5rem;">
               <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">
-                🟢 Activate
+                🚀 Publish
               </button>
               <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm" style="text-decoration: none;">
                 ✏️ Edit
