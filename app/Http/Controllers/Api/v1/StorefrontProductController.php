@@ -51,9 +51,14 @@ class StorefrontProductController extends Controller
             $query->where('is_bestseller', filter_var($request->input('is_bestseller'), FILTER_VALIDATE_BOOLEAN));
         }
 
-        // Occasion Filter
+        // Occasion Filter (supports comma-separated multi-select values)
         if ($request->filled('occasion')) {
-            $query->where('occasion', $request->input('occasion'));
+            $occVal = trim($request->input('occasion'));
+            $query->where(function ($q) use ($occVal) {
+                $q->where('occasion', 'like', "%{$occVal}%")
+                  ->orWhere('badge', 'like', "%{$occVal}%")
+                  ->orWhere('name', 'like', "%{$occVal}%");
+            });
         }
 
         // Badge Filter (supports assigned badge, occasion tag, name matching)
@@ -179,34 +184,40 @@ class StorefrontProductController extends Controller
      */
     public function getEditBadges(): JsonResponse
     {
-        $raw = \App\Models\Setting::get('maya_sree_edit_badges');
-        if (!empty($raw)) {
-            $badges = is_string($raw) ? json_decode($raw, true) : $raw;
-            if (is_array($badges) && count($badges) > 0) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $badges,
-                ]);
-            }
-        }
-
-        // Default Maya Sree Edit badges
-        $defaultBadges = [
-            ['id' => 'NEW_ARRIVALS', 'label' => 'New Arrivals', 'active' => true, 'type' => 'new_arrival'],
-            ['id' => 'BEST_SELLERS', 'label' => 'Best Sellers', 'active' => true, 'type' => 'bestseller'],
-            ['id' => 'TRENDING', 'label' => 'Trending', 'active' => true, 'type' => 'featured'],
-            ['id' => 'PREMIUM_COLLECTION', 'label' => 'Premium Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Premium Collection'],
-            ['id' => 'DESIGNER', 'label' => 'Designer', 'active' => true, 'type' => 'badge', 'badge_name' => 'Designer'],
-            ['id' => 'EMBROIDERED', 'label' => 'Embroidered', 'active' => true, 'type' => 'badge', 'badge_name' => 'Embroidered'],
-            ['id' => 'MIRROR_WORK', 'label' => 'Mirror Work', 'active' => true, 'type' => 'badge', 'badge_name' => 'Mirror Work'],
-            ['id' => 'STONE_WORK', 'label' => 'Stone Work', 'active' => true, 'type' => 'badge', 'badge_name' => 'Stone Work'],
-            ['id' => 'FLORAL_COLLECTION', 'label' => 'Floral Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Floral Collection'],
-            ['id' => 'TEMPLE_COLLECTION', 'label' => 'Temple Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Temple Collection'],
-        ];
+        $badges = \App\Models\SectionBadge::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'label' => $b->title,
+                    'type' => $b->filter_type,
+                    'badge_name' => $b->badge_key ?: $b->title,
+                    'active' => (bool)$b->is_active,
+                    'sort_order' => $b->sort_order,
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'data' => $defaultBadges,
+            'data' => $badges,
+        ]);
+    }
+
+    /**
+     * Get active occasions from database for Homepage "Shop by Occasion" & Product filters.
+     */
+    public function getOccasions(): JsonResponse
+    {
+        $occasions = \App\Models\Occasion::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $occasions,
         ]);
     }
 }

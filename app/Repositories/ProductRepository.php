@@ -31,7 +31,7 @@ class ProductRepository implements ProductRepositoryInterface
         }
 
         if (!empty($filters['occasion'])) {
-            $query->where('occasion', $filters['occasion']);
+            $query->where('occasion', 'like', "%{$filters['occasion']}%");
         }
 
 

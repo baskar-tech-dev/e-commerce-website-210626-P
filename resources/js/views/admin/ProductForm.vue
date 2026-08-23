@@ -469,21 +469,31 @@
               </p>
             </div>
 
-            <!-- Occasion Selector -->
+            <!-- Occasion Multi-Selector -->
             <div>
-              <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.5rem; display: block;">
-                Shop By Occasion Tag
-              </label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0;">
+                  Shop By Occasion Tags <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: normal;">(Multi-Select)</span>
+                </label>
+                <button
+                  type="button"
+                  v-if="selectedOccasions.length > 0"
+                  @click="clearOccasions"
+                  style="border: none; background: transparent; font-size: 0.75rem; color: #ef4444; font-weight: 600; cursor: pointer; padding: 0;"
+                >
+                  ✕ Clear All ({{ selectedOccasions.length }})
+                </button>
+              </div>
               <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem;">
                 <button
                   type="button"
                   v-for="occ in occasionPresets"
                   :key="occ"
-                  @click="form.occasion = (form.occasion === occ ? '' : occ)"
+                  @click="toggleOccasion(occ)"
                   class="btn-badge-preset"
-                  :class="{ active: form.occasion === occ }"
+                  :class="{ active: isOccasionSelected(occ) }"
                 >
-                  {{ occ }}
+                  <span v-if="isOccasionSelected(occ)">✓ </span>{{ occ }}
                 </button>
               </div>
               <div class="floating-label-group" style="margin-bottom: 0;">
@@ -495,34 +505,35 @@
                   placeholder=" " 
                   id="input_occasion" 
                 />
-                <label for="input_occasion" class="form-label">Custom Occasion (e.g. Wedding, Festive, Bridal)</label>
+                <label for="input_occasion" class="form-label">Custom Occasion(s) (comma-separated, e.g. Bridal, Wedding, Festive)</label>
               </div>
             </div>
 
-            <!-- Product Card Badge Selector -->
+            <!-- Product Card Badge & Section Badges Multi-Selector -->
             <div>
-              <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.5rem; display: block;">
-                Card Corner Badge (e.g. Top-Left Highlight)
-              </label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0;">
+                  Card Corner Badges & Section Tags <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: normal;">(Multi-Select)</span>
+                </label>
+                <button
+                  type="button"
+                  v-if="selectedBadges.length > 0"
+                  @click="clearBadges"
+                  style="border: none; background: transparent; font-size: 0.75rem; color: #ef4444; font-weight: 600; cursor: pointer; padding: 0;"
+                >
+                  ✕ Clear All ({{ selectedBadges.length }})
+                </button>
+              </div>
               <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem;">
                 <button
                   type="button"
                   v-for="b in badgePresets"
                   :key="b"
-                  @click="form.badge = (form.badge === b ? '' : b)"
+                  @click="toggleBadge(b)"
                   class="btn-badge-preset"
-                  :class="{ active: form.badge === b }"
+                  :class="{ active: isBadgeSelected(b) }"
                 >
-                  {{ b }}
-                </button>
-                <button
-                  type="button"
-                  v-if="form.badge"
-                  @click="form.badge = ''"
-                  class="btn-badge-preset"
-                  style="border-color: #ef4444; color: #ef4444;"
-                >
-                  ✕ Clear Badge
+                  <span v-if="isBadgeSelected(b)">✓ </span>{{ b }}
                 </button>
               </div>
               <div class="floating-label-group" style="margin-bottom: 0;">
@@ -534,7 +545,7 @@
                   placeholder=" " 
                   id="input_badge" 
                 />
-                <label for="input_badge" class="form-label">Custom Badge Text (e.g. Bridal Special, Trending Now)</label>
+                <label for="input_badge" class="form-label">Custom Badge(s) / Section Tags (comma-separated, e.g. Mirror Work, Premium Collection)</label>
               </div>
             </div>
 
@@ -1543,9 +1554,9 @@ const form = ref({
   images: [],
 });
 
-const occasionPresets = [
-  'Bridal', 'Wedding', 'Festive', 'Party Wear', 'Traditional', 'Casual & Daily', 'Workwear'
-];
+const occasionPresets = ref([
+  'Bridal', 'Wedding', 'Festive', 'Party Wear', 'Temple Wear', 'Family Functions', 'Office Wear', 'Daily Wear', 'Traditional'
+]);
 
 const badgePresets = ref([
   'New Arrival', 'Bestseller', 'Trending', 'Premium Collection', 'Designer', 
@@ -1564,6 +1575,76 @@ const fetchConfiguredBadges = async () => {
   } catch (err) {
     // fallback
   }
+};
+
+const fetchConfiguredOccasions = async () => {
+  try {
+    const res = await axios.get('/api/storefront/occasions');
+    if (res.data && res.data.success && Array.isArray(res.data.data)) {
+      const names = res.data.data.map(o => o.name).filter(Boolean);
+      if (names.length > 0) {
+        occasionPresets.value = [...new Set([...names, ...occasionPresets.value])];
+      }
+    }
+  } catch (err) {
+    // fallback
+  }
+};
+
+// Multi-Select Occasion Helpers
+const selectedOccasions = computed(() => {
+  if (!form.value.occasion) return [];
+  return form.value.occasion
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+});
+
+const isOccasionSelected = (occ) => {
+  return selectedOccasions.value.some(o => o.toLowerCase() === occ.toLowerCase());
+};
+
+const toggleOccasion = (occ) => {
+  const current = [...selectedOccasions.value];
+  const index = current.findIndex(o => o.toLowerCase() === occ.toLowerCase());
+  if (index >= 0) {
+    current.splice(index, 1);
+  } else {
+    current.push(occ);
+  }
+  form.value.occasion = current.join(', ');
+};
+
+const clearOccasions = () => {
+  form.value.occasion = '';
+};
+
+// Multi-Select Badge Helpers
+const selectedBadges = computed(() => {
+  if (!form.value.badge) return [];
+  return form.value.badge
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+});
+
+const isBadgeSelected = (badge) => {
+  return selectedBadges.value.some(b => b.toLowerCase() === badge.toLowerCase());
+};
+
+const toggleBadge = (badge) => {
+  const current = [...selectedBadges.value];
+  const index = current.findIndex(b => b.toLowerCase() === badge.toLowerCase());
+  if (index >= 0) {
+    current.splice(index, 1);
+  } else {
+    current.push(badge);
+  }
+  form.value.badge = current.join(', ');
+};
+
+const clearBadges = () => {
+  form.value.badge = '';
 };
 
 const standardGstSlabs = [
@@ -1980,6 +2061,7 @@ onMounted(async () => {
   tagStore.fetchTags();
   colorStore.fetchActiveColors();
   fetchConfiguredBadges();
+  fetchConfiguredOccasions();
   await sizeStore.fetchActiveSizeGroups();
   if (sizeStore.activeSizeGroups && sizeStore.activeSizeGroups.length > 0 && !selectedSizeGroupId.value) {
     selectedSizeGroupId.value = sizeStore.activeSizeGroups[0].id;

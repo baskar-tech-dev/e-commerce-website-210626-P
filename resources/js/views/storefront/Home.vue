@@ -280,7 +280,7 @@
               <component :is="getOccasionIcon(occ.name)" :size="20" />
             </div>
             <h3 class="occasion-title">{{ occ.name }}</h3>
-            <p class="occasion-desc">{{ getOccasionDetails(occ.name).sub }}</p>
+            <p class="occasion-desc">{{ occ.subtitle }}</p>
             <!-- Decorative Gold Divider -->
             <div class="decor-divider">
               <span class="divider-line"></span>
@@ -1027,37 +1027,48 @@ const slides = [
   }
 ];
 
-const occasions = [
-  { id: 1, name: 'Wedding Collection', image: '/asset/occasion/wedding-Collection.png' },
-  { id: 2, name: 'Wedding Guest', image: '/asset/occasion/wedding-guest.png' },
-  { id: 3, name: 'Festival Collection', image: '/asset/occasion/festival-collection.png' },
-  { id: 4, name: 'Temple Wear', image: '/asset/occasion/temple-collection.png' },
-  { id: 5, name: 'Family Functions', image: '/asset/occasion/family-function.png' },
-  { id: 6, name: 'Office Wear', image: '/asset/occasion/office-wear.png' },
-  { id: 7, name: 'Daily Wear', image: '/asset/occasion/daily-wear.png' },
-  { id: 8, name: 'Party Wear', image: '/asset/occasion/Party-wear.png' },
-  { id: 9, name: 'Traditional Wear', image: '/asset/banner-1.jpeg' }
-];
+const occasions = ref([
+  { id: 1, name: 'Bridal', image_url: '/asset/occasion/wedding-Collection.png', subtitle: 'Royal heavy work & bridal stretchable blouses' },
+  { id: 2, name: 'Wedding Collection', image_url: '/asset/occasion/wedding-Collection.png', subtitle: 'Timeless wedding elegance & silk rich designs' },
+  { id: 3, name: 'Wedding Guest', image_url: '/asset/occasion/wedding-guest.png', subtitle: 'Chic & graceful outfits for wedding attendees' },
+  { id: 4, name: 'Festival Collection', image_url: '/asset/occasion/festival-collection.png', subtitle: 'Vibrant festive wear & auspicious hues' },
+  { id: 5, name: 'Temple Wear', image_url: '/asset/occasion/temple-collection.png', subtitle: 'Sacred traditional motifs & temple styles' },
+  { id: 6, name: 'Family Functions', image_url: '/asset/occasion/family-function.png', subtitle: 'Comfortable luxury for intimate get-togethers' },
+  { id: 7, name: 'Party Wear', image_url: '/asset/occasion/Party-wear.png', subtitle: 'Glamorous evening styles & glitter statements' },
+  { id: 8, name: 'Office Wear', image_url: '/asset/occasion/office-wear.png', subtitle: 'Sophisticated, elegant workwear essentials' },
+  { id: 9, name: 'Daily Wear', image_url: '/asset/occasion/daily-wear.png', subtitle: 'Everyday breathable comfort & graceful cuts' },
+]);
+
+const fetchOccasions = async () => {
+  try {
+    const res = await axios.get('/api/storefront/occasions');
+    if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      occasions.value = res.data.data;
+    }
+  } catch (err) {
+    // fallback
+  }
+};
 
 const getOccasionDetails = (name) => {
-  const normalized = name.toLowerCase();
-  if (normalized.includes('wedding collection')) {
+  const normalized = (name || '').toLowerCase();
+  if (normalized.includes('bridal') || normalized.includes('wedding collection')) {
     return { sub: 'Bridal splendour & legacy silk', icon: Sparkles };
   } else if (normalized.includes('wedding guest')) {
     return { sub: 'Stand out. Celebrate in style', icon: Users };
-  } else if (normalized.includes('festival collection')) {
+  } else if (normalized.includes('festival') || normalized.includes('festive')) {
     return { sub: 'Radiate joy in festive prints', icon: Flame };
-  } else if (normalized.includes('temple wear')) {
+  } else if (normalized.includes('temple')) {
     return { sub: 'Divine traditional elegance', icon: Crown };
-  } else if (normalized.includes('family functions')) {
+  } else if (normalized.includes('family')) {
     return { sub: 'Cherished styles for celebrations', icon: Heart };
-  } else if (normalized.includes('office wear')) {
+  } else if (normalized.includes('office')) {
     return { sub: 'Sophisticated styling for work', icon: Briefcase };
-  } else if (normalized.includes('daily wear')) {
+  } else if (normalized.includes('daily')) {
     return { sub: 'Graceful comfort for every day', icon: Smile };
-  } else if (normalized.includes('party wear')) {
+  } else if (normalized.includes('party')) {
     return { sub: 'Sleek silhouettes for the night', icon: Sparkles };
-  } else if (normalized.includes('traditional wear')) {
+  } else if (normalized.includes('traditional')) {
     return { sub: 'Timeless heritage & custom drapes', icon: Award };
   } else {
     return { sub: "Be the first to wear the season's best", icon: Compass };
@@ -1069,11 +1080,12 @@ const getOccasionIcon = (name) => {
 };
 
 const categoriesToShow = computed(() => {
-  return occasions.map(o => ({
+  return occasions.value.map(o => ({
     id: o.id,
     name: o.name,
-    image: o.image,
-    link: `/shop?search=${encodeURIComponent(o.name.replace(' Collection', ''))}`
+    image: o.image_url || o.image || '/asset/occasion/wedding-Collection.png',
+    subtitle: o.subtitle || getOccasionDetails(o.name).sub,
+    link: `/shop?occasion=${encodeURIComponent(o.name)}`
   }));
 });
 
@@ -1560,6 +1572,7 @@ onMounted(() => {
   updateScreenSize();
   fetchProducts();
   fetchEditBadges();
+  fetchOccasions();
   fetchProductsForTab('NEW_ARRIVALS');
   loadWishlist();
   runSimulations();

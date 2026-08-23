@@ -86,6 +86,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/indian-states', [StorefrontCheckoutController::class, 'getIndianStates']);
     Route::get('storefront/shipping-rates', [StorefrontCheckoutController::class, 'getShippingRates']);
     Route::get('storefront/edit-badges', [StorefrontProductController::class, 'getEditBadges']);
+    Route::get('storefront/occasions', [StorefrontProductController::class, 'getOccasions']);
     Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
 
     // Public Product Reviews
@@ -200,6 +201,22 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
 
         // WhatsApp Club & Subscribers Leads
         Route::get('subscribers', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'index']);
+
+        // Section Badges (The Maya Sree Edit)
+        Route::get('section-badges', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'index']);
+        Route::post('section-badges', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'store']);
+        Route::put('section-badges/{id}', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'update']);
+        Route::patch('section-badges/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'toggle']);
+        Route::post('section-badges/reorder', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'reorder']);
+        Route::delete('section-badges/{id}', [\App\Http\Controllers\Api\v1\Admin\SectionBadgeController::class, 'destroy']);
+
+        // Shop by Occasions Database Table
+        Route::get('occasions', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'index']);
+        Route::post('occasions', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'store']);
+        Route::put('occasions/{id}', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'update']);
+        Route::patch('occasions/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'toggle']);
+        Route::post('occasions/reorder', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'reorder']);
+        Route::delete('occasions/{id}', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'destroy']);
     });
 
     // Order Management (requires 'manage_orders')

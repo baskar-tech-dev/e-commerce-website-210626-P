@@ -25,7 +25,7 @@
             "
         >
             <button
-                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews', 'edit_badges']"
+                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews', 'edit_badges', 'occasions']"
                 :key="tab"
                 type="button"
                 @click="activeTab = tab"
@@ -54,6 +54,9 @@
                 >
                 <span v-else-if="tab === 'edit_badges'"
                     >✨ Maya Sree Edit Badges</span
+                >
+                <span v-else-if="tab === 'occasions'"
+                    >🎉 Shop By Occasions</span
                 >
             </button>
         </div>
@@ -1489,6 +1492,268 @@
                     </div>
                 </div>
 
+                <!-- Section Badge Add / Edit Modal -->
+                <div
+                    v-if="badgeModal.isOpen"
+                    style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(15, 23, 42, 0.6);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 9999;
+                        padding: 16px;
+                    "
+                >
+                    <div
+                        style="
+                            background: #ffffff;
+                            border-radius: 12px;
+                            width: 100%;
+                            max-width: 500px;
+                            padding: 24px;
+                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                            display: flex;
+                            flex-direction: column;
+                            gap: 16px;
+                        "
+                    >
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                            <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
+                                {{ badgeModal.isEditing ? '✏️ Edit Section Badge' : '➕ New Section Badge' }}
+                            </h3>
+                            <button
+                                type="button"
+                                @click="badgeModal.isOpen = false"
+                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form @submit.prevent="submitBadgeModal" style="display: flex; flex-direction: column; gap: 14px;">
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Badge / Tab Title *</label>
+                                <input
+                                    type="text"
+                                    v-model="badgeModal.form.title"
+                                    class="form-input"
+                                    placeholder="e.g. Mirror Work, Velvet Edit, Bridal Special"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Filter Behavior *</label>
+                                <select v-model="badgeModal.form.filter_type" class="form-input">
+                                    <option value="badge">🏷️ Custom Assigned Badge / Tag Match</option>
+                                    <option value="new_arrival">⚡ Auto New Arrivals Filter</option>
+                                    <option value="bestseller">🏆 Auto Best Sellers Filter</option>
+                                    <option value="featured">✨ Auto Trending Filter</option>
+                                </select>
+                            </div>
+
+                            <div v-if="badgeModal.form.filter_type === 'badge'" class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Product Tag / Occasion Match Key</label>
+                                <input
+                                    type="text"
+                                    v-model="badgeModal.form.badge_key"
+                                    class="form-input"
+                                    placeholder="Leave blank to match Badge Title automatically"
+                                />
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                    Products assigned this tag or badge name will appear under this tab.
+                                </span>
+                            </div>
+
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div class="form-group" style="margin: 0; flex: 1;">
+                                    <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                                    <input
+                                        type="number"
+                                        v-model.number="badgeModal.form.sort_order"
+                                        class="form-input"
+                                        placeholder="1"
+                                    />
+                                </div>
+
+                                <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                        <input type="checkbox" v-model="badgeModal.form.is_active" />
+                                        <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                                <button
+                                    type="button"
+                                    @click="badgeModal.isOpen = false"
+                                    class="btn btn--secondary"
+                                    style="padding: 0.5rem 1rem;"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    class="btn btn--primary"
+                                    :disabled="badgeModal.submitting"
+                                    style="padding: 0.5rem 1.25rem; background: #6E1F3A; color: #ffffff;"
+                                >
+                                    {{ badgeModal.submitting ? 'Saving...' : (badgeModal.isEditing ? 'Update Badge' : 'Create Badge') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Occasion Add / Edit Modal -->
+                <div
+                    v-if="occasionModal.isOpen"
+                    style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(15, 23, 42, 0.6);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 9999;
+                        padding: 16px;
+                    "
+                >
+                    <div
+                        style="
+                            background: #ffffff;
+                            border-radius: 12px;
+                            width: 100%;
+                            max-width: 520px;
+                            padding: 24px;
+                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                            display: flex;
+                            flex-direction: column;
+                            gap: 16px;
+                        "
+                    >
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                            <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
+                                {{ occasionModal.isEditing ? '✏️ Edit Occasion Category' : '➕ New Occasion Category' }}
+                            </h3>
+                            <button
+                                type="button"
+                                @click="occasionModal.isOpen = false"
+                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form @submit.prevent="submitOccasionModal" style="display: flex; flex-direction: column; gap: 14px;">
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Occasion Name *</label>
+                                <input
+                                    type="text"
+                                    v-model="occasionModal.form.name"
+                                    class="form-input"
+                                    placeholder="e.g. Bridal, Wedding Guest, Festive Wear, Reception Special"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Subtitle / Tagline</label>
+                                <input
+                                    type="text"
+                                    v-model="occasionModal.form.subtitle"
+                                    class="form-input"
+                                    placeholder="e.g. Royal heavy work & bridal stretchable blouses"
+                                />
+                            </div>
+
+                            <!-- Image Preset Selector -->
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold; margin-bottom: 4px; display: block;">
+                                    Card Image
+                                </label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                                    <div
+                                        v-for="img in presetOccasionImages"
+                                        :key="img.url"
+                                        @click="occasionModal.form.image_url = img.url"
+                                        :style="{
+                                            cursor: 'pointer',
+                                            padding: '4px',
+                                            borderRadius: '8px',
+                                            border: occasionModal.form.image_url === img.url ? '2px solid #6E1F3A' : '1px solid #e2e8f0',
+                                            background: '#f8fafc',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            width: '60px'
+                                        }"
+                                    >
+                                        <img :src="img.url" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px;" />
+                                        <span style="font-size: 0.65rem; color: #64748b; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px;">
+                                            {{ img.label }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <input
+                                    type="text"
+                                    v-model="occasionModal.form.image_url"
+                                    class="form-input"
+                                    placeholder="/asset/occasion/wedding-Collection.png or image URL"
+                                />
+                            </div>
+
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div class="form-group" style="margin: 0; flex: 1;">
+                                    <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                                    <input
+                                        type="number"
+                                        v-model.number="occasionModal.form.sort_order"
+                                        class="form-input"
+                                        placeholder="1"
+                                    />
+                                </div>
+
+                                <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                        <input type="checkbox" v-model="occasionModal.form.is_active" />
+                                        <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                                <button
+                                    type="button"
+                                    @click="occasionModal.isOpen = false"
+                                    class="btn btn--secondary"
+                                    style="padding: 0.5rem 1rem;"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    class="btn btn--primary"
+                                    :disabled="occasionModal.submitting"
+                                    style="padding: 0.5rem 1.25rem; background: #6E1F3A; color: #ffffff;"
+                                >
+                                    {{ occasionModal.submitting ? 'Saving...' : (occasionModal.isEditing ? 'Update Occasion' : 'Create Occasion') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Tab 6: Product Reviews Settings -->
                 <div
                     v-if="activeTab === 'reviews'"
@@ -1579,74 +1844,186 @@
                     </div>
                 </div>
 
-                <!-- TAB 8: THE MAYA SREE EDIT SECTION BADGES -->
+                <!-- TAB 8: THE MAYA SREE EDIT SECTION BADGES DATABASE TABLE -->
                 <div v-if="activeTab === 'edit_badges'">
-                    <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
-                        ✨ "The Maya Sree Edit" Section Badges & Collection Tabs
-                    </div>
-                    <p style="color: var(--color-text-muted); font-size: 0.88rem; margin-bottom: var(--spacing-md); line-height: 1.5;">
-                        Configure the collection badge tabs shown on the storefront homepage under <strong>"The Maya Sree Edit"</strong>. Create custom badges, reorder them, or toggle their visibility. In the <strong>Product Management form</strong>, you can assign these badges to products so they appear under each tab.
-                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--spacing-md);">
+                        <div>
+                            <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
+                                ✨ "The Maya Sree Edit" Section Badges Database Table
+                            </div>
+                            <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                                Database table for collection badge tabs shown on the storefront homepage under <strong>"The Maya Sree Edit"</strong>. Create badges, reorder tabs, toggle active status, and assign badges to products.
+                            </p>
+                        </div>
 
-                    <!-- Badges Table -->
+                        <div style="display: flex; gap: 8px;">
+                            <button
+                                type="button"
+                                @click="openAddBadgeModal"
+                                class="btn btn--primary"
+                                style="padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; background: #6E1F3A; color: #ffffff;"
+                            >
+                                <span>➕</span> Add New Badge Tab
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Storefront Pills Preview Strip -->
+                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem;">
+                        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #B68D40; margin-bottom: 8px;">
+                            👁️ Live Storefront Tab Bar Preview (Active Badges: {{ sectionBadgeMeta.active_count }})
+                        </div>
+                        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                            <span
+                                v-for="(b, idx) in activeBadgesPreview"
+                                :key="b.id"
+                                :style="{
+                                    padding: '6px 16px',
+                                    borderRadius: '24px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600',
+                                    whiteSpace: 'nowrap',
+                                    background: idx === 0 ? '#6E1F3A' : '#ffffff',
+                                    color: idx === 0 ? '#ffffff' : '#334155',
+                                    border: idx === 0 ? '1px solid #6E1F3A' : '1px solid #E2E8F0',
+                                    boxShadow: idx === 0 ? '0 2px 8px rgba(110,31,58,0.25)' : 'none'
+                                }"
+                            >
+                                {{ b.title }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Active / Inactive Filter View Tabs -->
+                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem;">
+                        <button
+                            type="button"
+                            @click="setBadgeFilter('all')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: badgeFilter === 'all' ? '#6E1F3A' : '#f1f5f9',
+                                color: badgeFilter === 'all' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
+                        >
+                            All ({{ sectionBadgeMeta.total }})
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="setBadgeFilter('active')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: badgeFilter === 'active' ? '#10b981' : '#f1f5f9',
+                                color: badgeFilter === 'active' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
+                        >
+                            Active View ({{ sectionBadgeMeta.active_count }})
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="setBadgeFilter('inactive')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: badgeFilter === 'inactive' ? '#ef4444' : '#f1f5f9',
+                                color: badgeFilter === 'inactive' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
+                        >
+                            Inactive View ({{ sectionBadgeMeta.inactive_count }})
+                        </button>
+                    </div>
+
+                    <!-- Badges Database Table -->
                     <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; margin-bottom: var(--spacing-md);">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 600px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 680px;">
                             <thead>
                                 <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
-                                    <th style="padding: 10px 14px; width: 45px;">#</th>
-                                    <th style="padding: 10px 14px;">Badge / Tab Title</th>
-                                    <th style="padding: 10px 14px;">Filter Behavior</th>
-                                    <th style="padding: 10px 14px; text-align: center; width: 80px;">Active</th>
-                                    <th style="padding: 10px 14px; text-align: center; width: 100px;">Order</th>
-                                    <th style="padding: 10px 14px; text-align: center; width: 70px;">Action</th>
+                                    <th style="padding: 12px 14px; width: 45px;">#</th>
+                                    <th style="padding: 12px 14px;">Badge / Tab Title</th>
+                                    <th style="padding: 12px 14px;">Filter Behavior</th>
+                                    <th style="padding: 12px 14px;">Product Tag Key</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 90px;">Status</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 80px;">Toggle</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 100px;">Order</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr 
-                                    v-for="(badge, index) in settings.edit_badges.maya_sree_edit_badges" 
-                                    :key="index"
-                                    style="border-bottom: 1px solid #f1e9df;"
+                                    v-for="(badge, index) in sectionBadgesList" 
+                                    :key="badge.id"
+                                    style="border-bottom: 1px solid #f1e9df; transition: background 0.15s ease;"
+                                    :style="{ background: badge.is_active ? '#ffffff' : '#fafafa' }"
                                 >
-                                    <td style="padding: 10px 14px; font-weight: bold; color: var(--color-text-muted);">
+                                    <td style="padding: 12px 14px; font-weight: bold; color: var(--color-text-muted);">
                                         {{ index + 1 }}
                                     </td>
-                                    <td style="padding: 10px 14px;">
-                                        <input 
-                                            type="text" 
-                                            v-model="badge.label" 
-                                            class="form-input" 
-                                            style="padding: 6px 10px; font-size: 0.85rem;" 
-                                            placeholder="Badge Title (e.g. Mirror Work)"
-                                            required
-                                        />
+                                    <td style="padding: 12px 14px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span 
+                                                style="padding: 3px 10px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; border: 1px solid #e2e8f0; background: #FAF8F5; color: #6E1F3A;"
+                                            >
+                                                {{ badge.title }}
+                                            </span>
+                                        </div>
                                     </td>
-                                    <td style="padding: 10px 14px;">
-                                        <select 
-                                            v-model="badge.type" 
-                                            class="form-input" 
-                                            style="padding: 6px 10px; font-size: 0.85rem;"
-                                        >
-                                            <option value="badge">Custom Assigned Badge / Keyword Match</option>
-                                            <option value="new_arrival">⚡ New Arrivals Auto Filter</option>
-                                            <option value="bestseller">🏆 Best Sellers Auto Filter</option>
-                                            <option value="featured">✨ Trending / Featured Auto Filter</option>
-                                        </select>
+                                    <td style="padding: 12px 14px;">
+                                        <span v-if="badge.filter_type === 'new_arrival'" class="badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; font-size: 0.75rem;">
+                                            ⚡ Auto New Arrivals
+                                        </span>
+                                        <span v-else-if="badge.filter_type === 'bestseller'" class="badge" style="background: rgba(245, 158, 11, 0.1); color: #d97706; font-size: 0.75rem;">
+                                            🏆 Auto Best Sellers
+                                        </span>
+                                        <span v-else-if="badge.filter_type === 'featured'" class="badge" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; font-size: 0.75rem;">
+                                            ✨ Auto Trending
+                                        </span>
+                                        <span v-else class="badge" style="background: rgba(110, 31, 58, 0.08); color: #6E1F3A; font-size: 0.75rem;">
+                                            🏷️ Assigned Product Badge
+                                        </span>
                                     </td>
-                                    <td style="padding: 10px 14px; text-align: center;">
+                                    <td style="padding: 12px 14px; color: var(--color-text-muted); font-size: 0.82rem;">
+                                        {{ badge.badge_key || badge.title }}
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <span :class="['badge', badge.is_active ? 'badge--success' : 'badge--secondary']" style="font-size: 0.75rem;">
+                                            {{ badge.is_active ? '🟢 Active' : '⚪ Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
                                         <input 
                                             type="checkbox" 
-                                            v-model="badge.active" 
+                                            :checked="badge.is_active" 
+                                            @change="toggleSectionBadgeActive(badge)"
                                             style="width: 18px; height: 18px; cursor: pointer;" 
+                                            title="Toggle Status"
                                         />
                                     </td>
-                                    <td style="padding: 10px 14px; text-align: center;">
+                                    <td style="padding: 12px 14px; text-align: center;">
                                         <div style="display: flex; gap: 4px; justify-content: center;">
                                             <button 
                                                 type="button" 
                                                 class="btn btn--secondary btn--sm" 
                                                 style="padding: 2px 8px; font-size: 0.75rem;" 
                                                 :disabled="index === 0" 
-                                                @click="moveBadge(index, -1)"
+                                                @click="moveSectionBadge(index, -1)"
                                                 title="Move Up"
                                             >
                                                 ▲
@@ -1655,47 +2032,271 @@
                                                 type="button" 
                                                 class="btn btn--secondary btn--sm" 
                                                 style="padding: 2px 8px; font-size: 0.75rem;" 
-                                                :disabled="index === settings.edit_badges.maya_sree_edit_badges.length - 1" 
-                                                @click="moveBadge(index, 1)"
+                                                :disabled="index === sectionBadgesList.length - 1" 
+                                                @click="moveSectionBadge(index, 1)"
                                                 title="Move Down"
                                             >
                                                 ▼
                                             </button>
                                         </div>
                                     </td>
-                                    <td style="padding: 10px 14px; text-align: center;">
-                                        <button 
-                                            type="button" 
-                                            class="btn btn--secondary btn--sm" 
-                                            style="padding: 2px 8px; color: #e11d48; border-color: rgba(225,29,72,0.3);" 
-                                            @click="removeBadge(index)" 
-                                            title="Delete Badge"
-                                        >
-                                            ✕
-                                        </button>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                @click="openEditBadgeModal(badge)"
+                                                title="Edit Badge"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; color: #e11d48; border-color: rgba(225,29,72,0.3); font-size: 0.75rem;" 
+                                                @click="deleteSectionBadge(badge)" 
+                                                title="Delete Badge"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="sectionBadgesList.length === 0">
+                                    <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--color-text-muted);">
+                                        No section badges found in this view.
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <div style="display: flex; gap: var(--spacing-sm); align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                        <button 
-                            type="button" 
-                            class="btn btn--secondary" 
-                            style="font-size: 0.85rem; padding: 6px 14px;" 
-                            @click="addNewBadge"
+                <!-- TAB 9: SHOP BY OCCASIONS DATABASE TABLE -->
+                <div v-if="activeTab === 'occasions'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--spacing-md);">
+                        <div>
+                            <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
+                                🎉 "Shop by Occasion" Database Table
+                            </div>
+                            <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                                Manage occasion categories displayed on the storefront homepage and used in the <strong>Product Form</strong>. Add new occasions, edit images and taglines, reorder, and toggle active visibility.
+                            </p>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button
+                                type="button"
+                                @click="openAddOccasionModal"
+                                class="btn btn--primary"
+                                style="padding: 0.5rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; background: #6E1F3A; color: #ffffff;"
+                            >
+                                <span>➕</span> Add New Occasion
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Storefront Occasions Strip Preview -->
+                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem;">
+                        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #B68D40; margin-bottom: 10px;">
+                            👁️ Live Storefront Cards Preview (Active Occasions: {{ occasionMeta.active_count }})
+                        </div>
+                        <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;">
+                            <div
+                                v-for="occ in activeOccasionsPreview"
+                                :key="occ.id"
+                                style="
+                                    flex: 0 0 130px;
+                                    background: #ffffff;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+                                    display: flex;
+                                    flex-direction: column;
+                                "
+                            >
+                                <img
+                                    :src="occ.image_url || '/asset/occasion/wedding-Collection.png'"
+                                    :alt="occ.name"
+                                    style="width: 100%; height: 90px; object-fit: cover;"
+                                />
+                                <div style="padding: 8px; text-align: center;">
+                                    <div style="font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ occ.name }}
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
+                                        {{ occ.subtitle || 'Shop collection' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active / Inactive Filter View Tabs -->
+                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem;">
+                        <button
+                            type="button"
+                            @click="setOccasionFilter('all')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: occasionFilter === 'all' ? '#6E1F3A' : '#f1f5f9',
+                                color: occasionFilter === 'all' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
                         >
-                            ➕ Add New Section Badge / Tab
+                            All ({{ occasionMeta.total }})
                         </button>
-                        <button 
-                            type="button" 
-                            class="btn btn--secondary" 
-                            style="font-size: 0.82rem; padding: 6px 12px; color: #6E1F3A;" 
-                            @click="resetToDefaultBadges"
+
+                        <button
+                            type="button"
+                            @click="setOccasionFilter('active')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: occasionFilter === 'active' ? '#10b981' : '#f1f5f9',
+                                color: occasionFilter === 'active' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
                         >
-                            ↺ Reset to Defaults
+                            Active View ({{ occasionMeta.active_count }})
                         </button>
+
+                        <button
+                            type="button"
+                            @click="setOccasionFilter('inactive')"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: occasionFilter === 'inactive' ? '#ef4444' : '#f1f5f9',
+                                color: occasionFilter === 'inactive' ? '#ffffff' : '#64748b',
+                                transition: 'all 0.2s ease'
+                            }"
+                        >
+                            Inactive View ({{ occasionMeta.inactive_count }})
+                        </button>
+                    </div>
+
+                    <!-- Occasions Database Table -->
+                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; margin-bottom: var(--spacing-md);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 720px;">
+                            <thead>
+                                <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
+                                    <th style="padding: 12px 14px; width: 45px;">#</th>
+                                    <th style="padding: 12px 14px; width: 60px;">Image</th>
+                                    <th style="padding: 12px 14px;">Occasion Name</th>
+                                    <th style="padding: 12px 14px;">Tagline / Subtitle</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 90px;">Status</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 80px;">Toggle</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 100px;">Order</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr 
+                                    v-for="(occ, index) in occasionsList" 
+                                    :key="occ.id"
+                                    style="border-bottom: 1px solid #f1e9df; transition: background 0.15s ease;"
+                                    :style="{ background: occ.is_active ? '#ffffff' : '#fafafa' }"
+                                >
+                                    <td style="padding: 12px 14px; font-weight: bold; color: var(--color-text-muted);">
+                                        {{ index + 1 }}
+                                    </td>
+                                    <td style="padding: 8px 14px;">
+                                        <img 
+                                            :src="occ.image_url || '/asset/occasion/wedding-Collection.png'" 
+                                            :alt="occ.name"
+                                            style="width: 44px; height: 52px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
+                                        />
+                                    </td>
+                                    <td style="padding: 12px 14px; font-weight: 600; color: #1e293b;">
+                                        {{ occ.name }}
+                                    </td>
+                                    <td style="padding: 12px 14px; color: var(--color-text-muted); font-size: 0.82rem;">
+                                        {{ occ.subtitle || '—' }}
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <span :class="['badge', occ.is_active ? 'badge--success' : 'badge--secondary']" style="font-size: 0.75rem;">
+                                            {{ occ.is_active ? '🟢 Active' : '⚪ Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <input 
+                                            type="checkbox" 
+                                            :checked="occ.is_active" 
+                                            @change="toggleOccasionActive(occ)"
+                                            style="width: 18px; height: 18px; cursor: pointer;" 
+                                            title="Toggle Status"
+                                        />
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 4px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === 0" 
+                                                @click="moveOccasion(index, -1)"
+                                                title="Move Up"
+                                            >
+                                                ▲
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === occasionsList.length - 1" 
+                                                @click="moveOccasion(index, 1)"
+                                                title="Move Down"
+                                            >
+                                                ▼
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                @click="openEditOccasionModal(occ)"
+                                                title="Edit Occasion"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; color: #e11d48; border-color: rgba(225,29,72,0.3); font-size: 0.75rem;" 
+                                                @click="deleteOccasion(occ)" 
+                                                title="Delete Occasion"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="occasionsList.length === 0">
+                                    <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--color-text-muted);">
+                                        No occasions found in this view.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -1919,32 +2520,299 @@ const defaultEditBadges = [
     { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', active: true, type: 'badge', badge_name: 'Temple Collection' }
 ];
 
-const addNewBadge = () => {
-    const newId = 'BADGE_' + Date.now();
-    settings.value.edit_badges.maya_sree_edit_badges.push({
-        id: newId,
-        label: 'New Badge',
-        active: true,
-        type: 'badge',
-        badge_name: 'New Badge'
-    });
+// Section Badges Database Table State
+const badgeFilter = ref("all");
+const sectionBadgesList = ref([]);
+const sectionBadgeMeta = ref({ total: 0, active_count: 0, inactive_count: 0 });
+
+const activeBadgesPreview = computed(() => {
+    return sectionBadgesList.value.filter((b) => b.is_active);
+});
+
+const badgeModal = ref({
+    isOpen: false,
+    isEditing: false,
+    submitting: false,
+    form: {
+        id: null,
+        title: "",
+        filter_type: "badge",
+        badge_key: "",
+        sort_order: 1,
+        is_active: true,
+    },
+});
+
+const fetchSectionBadgesList = async () => {
+    try {
+        const response = await axios.get("/api/admin/section-badges", {
+            params: { status: badgeFilter.value },
+        });
+        if (response.data && response.data.success) {
+            sectionBadgesList.value = response.data.data || [];
+            if (response.data.meta) {
+                sectionBadgeMeta.value = response.data.meta;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load section badges database table:", err);
+    }
 };
 
-const removeBadge = (index) => {
-    settings.value.edit_badges.maya_sree_edit_badges.splice(index, 1);
+const setBadgeFilter = (filter) => {
+    badgeFilter.value = filter;
+    fetchSectionBadgesList();
 };
 
-const moveBadge = (index, direction) => {
-    const list = settings.value.edit_badges.maya_sree_edit_badges;
+const toggleSectionBadgeActive = async (badge) => {
+    try {
+        const response = await axios.patch(`/api/admin/section-badges/${badge.id}/toggle`);
+        if (response.data && response.data.success) {
+            await fetchSectionBadgesList();
+        }
+    } catch (err) {
+        console.error("Failed to toggle section badge status:", err);
+        alert("Failed to update badge status");
+    }
+};
+
+const openAddBadgeModal = () => {
+    badgeModal.value = {
+        isOpen: true,
+        isEditing: false,
+        submitting: false,
+        form: {
+            id: null,
+            title: "",
+            filter_type: "badge",
+            badge_key: "",
+            sort_order: sectionBadgesList.value.length + 1,
+            is_active: true,
+        },
+    };
+};
+
+const openEditBadgeModal = (badge) => {
+    badgeModal.value = {
+        isOpen: true,
+        isEditing: true,
+        submitting: false,
+        form: {
+            id: badge.id,
+            title: badge.title,
+            filter_type: badge.filter_type || "badge",
+            badge_key: badge.badge_key || "",
+            sort_order: badge.sort_order || 1,
+            is_active: !!badge.is_active,
+        },
+    };
+};
+
+const submitBadgeModal = async () => {
+    if (!badgeModal.value.form.title.trim()) return;
+    badgeModal.value.submitting = true;
+    try {
+        if (badgeModal.value.isEditing) {
+            await axios.put(`/api/admin/section-badges/${badgeModal.value.form.id}`, badgeModal.value.form);
+        } else {
+            await axios.post("/api/admin/section-badges", badgeModal.value.form);
+        }
+        badgeModal.value.isOpen = false;
+        await fetchSectionBadgesList();
+    } catch (err) {
+        console.error("Failed to save section badge:", err);
+        alert(err.response?.data?.message || "Failed to save section badge");
+    } finally {
+        badgeModal.value.submitting = false;
+    }
+};
+
+const deleteSectionBadge = async (badge) => {
+    if (!confirm(`Are you sure you want to delete badge: "${badge.title}"?`)) {
+        return;
+    }
+    try {
+        await axios.delete(`/api/admin/section-badges/${badge.id}`);
+        await fetchSectionBadgesList();
+    } catch (err) {
+        console.error("Failed to delete section badge:", err);
+        alert("Failed to delete badge");
+    }
+};
+
+const moveSectionBadge = async (index, direction) => {
+    const list = [...sectionBadgesList.value];
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= list.length) return;
-    const item = list.splice(index, 1)[0];
-    list.splice(targetIndex, 0, item);
+    
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+
+    const orders = list.map((item, idx) => ({
+        id: item.id,
+        sort_order: idx + 1,
+    }));
+
+    try {
+        await axios.post("/api/admin/section-badges/reorder", { orders });
+        await fetchSectionBadgesList();
+    } catch (err) {
+        console.error("Failed to reorder badges:", err);
+    }
 };
 
-const resetToDefaultBadges = () => {
-    if (confirm('Reset section badges to default configuration?')) {
-        settings.value.edit_badges.maya_sree_edit_badges = JSON.parse(JSON.stringify(defaultEditBadges));
+// Shop By Occasions Database Table State
+const occasionFilter = ref("all");
+const occasionsList = ref([]);
+const occasionMeta = ref({ total: 0, active_count: 0, inactive_count: 0 });
+
+const activeOccasionsPreview = computed(() => {
+    return occasionsList.value.filter((o) => o.is_active);
+});
+
+const presetOccasionImages = [
+    { url: '/asset/occasion/wedding-Collection.png', label: 'Wedding' },
+    { url: '/asset/occasion/wedding-guest.png', label: 'Guest' },
+    { url: '/asset/occasion/festival-collection.png', label: 'Festival' },
+    { url: '/asset/occasion/temple-collection.png', label: 'Temple' },
+    { url: '/asset/occasion/family-function.png', label: 'Family' },
+    { url: '/asset/occasion/Party-wear.png', label: 'Party' },
+    { url: '/asset/occasion/office-wear.png', label: 'Office' },
+    { url: '/asset/occasion/daily-wear.png', label: 'Daily' },
+];
+
+const occasionModal = ref({
+    isOpen: false,
+    isEditing: false,
+    submitting: false,
+    form: {
+        id: null,
+        name: "",
+        slug: "",
+        image_url: "/asset/occasion/wedding-Collection.png",
+        subtitle: "",
+        sort_order: 1,
+        is_active: true,
+    },
+});
+
+const fetchOccasionsList = async () => {
+    try {
+        const response = await axios.get("/api/admin/occasions", {
+            params: { status: occasionFilter.value },
+        });
+        if (response.data && response.data.success) {
+            occasionsList.value = response.data.data || [];
+            if (response.data.meta) {
+                occasionMeta.value = response.data.meta;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load occasions database table:", err);
+    }
+};
+
+const setOccasionFilter = (filter) => {
+    occasionFilter.value = filter;
+    fetchOccasionsList();
+};
+
+const toggleOccasionActive = async (occ) => {
+    try {
+        const response = await axios.patch(`/api/admin/occasions/${occ.id}/toggle`);
+        if (response.data && response.data.success) {
+            await fetchOccasionsList();
+        }
+    } catch (err) {
+        console.error("Failed to toggle occasion status:", err);
+        alert("Failed to update occasion status");
+    }
+};
+
+const openAddOccasionModal = () => {
+    occasionModal.value = {
+        isOpen: true,
+        isEditing: false,
+        submitting: false,
+        form: {
+            id: null,
+            name: "",
+            slug: "",
+            image_url: "/asset/occasion/wedding-Collection.png",
+            subtitle: "",
+            sort_order: occasionsList.value.length + 1,
+            is_active: true,
+        },
+    };
+};
+
+const openEditOccasionModal = (occ) => {
+    occasionModal.value = {
+        isOpen: true,
+        isEditing: true,
+        submitting: false,
+        form: {
+            id: occ.id,
+            name: occ.name,
+            slug: occ.slug || "",
+            image_url: occ.image_url || "/asset/occasion/wedding-Collection.png",
+            subtitle: occ.subtitle || "",
+            sort_order: occ.sort_order || 1,
+            is_active: !!occ.is_active,
+        },
+    };
+};
+
+const submitOccasionModal = async () => {
+    if (!occasionModal.value.form.name.trim()) return;
+    occasionModal.value.submitting = true;
+    try {
+        if (occasionModal.value.isEditing) {
+            await axios.put(`/api/admin/occasions/${occasionModal.value.form.id}`, occasionModal.value.form);
+        } else {
+            await axios.post("/api/admin/occasions", occasionModal.value.form);
+        }
+        occasionModal.value.isOpen = false;
+        await fetchOccasionsList();
+    } catch (err) {
+        console.error("Failed to save occasion:", err);
+        alert(err.response?.data?.message || "Failed to save occasion");
+    } finally {
+        occasionModal.value.submitting = false;
+    }
+};
+
+const deleteOccasion = async (occ) => {
+    if (!confirm(`Are you sure you want to delete occasion: "${occ.name}"?`)) {
+        return;
+    }
+    try {
+        await axios.delete(`/api/admin/occasions/${occ.id}`);
+        await fetchOccasionsList();
+    } catch (err) {
+        console.error("Failed to delete occasion:", err);
+        alert("Failed to delete occasion");
+    }
+};
+
+const moveOccasion = async (index, direction) => {
+    const list = [...occasionsList.value];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+
+    const orders = list.map((item, idx) => ({
+        id: item.id,
+        sort_order: idx + 1,
+    }));
+
+    try {
+        await axios.post("/api/admin/occasions/reorder", { orders });
+        await fetchOccasionsList();
+    } catch (err) {
+        console.error("Failed to reorder occasions:", err);
     }
 };
 
@@ -2250,6 +3118,8 @@ const saveSettings = async () => {
 onMounted(() => {
     fetchSettings();
     fetchAnnouncementsList();
+    fetchSectionBadgesList();
+    fetchOccasionsList();
     fetchCoupons();
 });
 </script>

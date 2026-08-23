@@ -85,8 +85,8 @@ class ProductController extends Controller
             'is_featured' => 'nullable|boolean',
             'is_new_arrival' => 'nullable|boolean',
             'is_bestseller' => 'nullable|boolean',
-            'badge' => 'nullable|string|max:60',
-            'occasion' => 'nullable|string|max:60',
+            'badge' => 'nullable|string|max:255',
+            'occasion' => 'nullable|string|max:255',
             'is_returnable' => 'nullable|boolean',
             'return_window_days' => 'nullable|integer|min:0',
             
@@ -212,8 +212,8 @@ class ProductController extends Controller
             'is_featured' => 'nullable|boolean',
             'is_new_arrival' => 'nullable|boolean',
             'is_bestseller' => 'nullable|boolean',
-            'badge' => 'nullable|string|max:60',
-            'occasion' => 'nullable|string|max:60',
+            'badge' => 'nullable|string|max:255',
+            'occasion' => 'nullable|string|max:255',
             'is_returnable' => 'nullable|boolean',
             'return_window_days' => 'nullable|integer|min:0',
             
