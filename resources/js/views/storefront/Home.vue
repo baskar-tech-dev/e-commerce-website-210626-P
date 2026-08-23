@@ -113,8 +113,8 @@
                 <router-link :to="`/products/${product.uuid}`">{{ product.name }}</router-link>
               </h4>
               <div class="product-price">
-                <span class="current-price">₹{{ product.selling_price }}</span>
-                <span v-if="product.mrp > product.selling_price" class="old-price">₹{{ product.mrp }}</span>
+                <span class="current-price">{{ formatProductPrice(product) }}</span>
+                <span v-if="formatProductMrp(product)" class="old-price">{{ formatProductMrp(product) }}</span>
               </div>
               <div class="product-rating">
                 <span class="stars"><Star :size="12" class="star-filled inline" /> 4.8</span>
@@ -224,8 +224,8 @@
                 <router-link :to="`/products/${product.uuid}`">{{ product.name }}</router-link>
               </h4>
               <div class="product-price">
-                <span class="current-price">₹{{ product.selling_price }}</span>
-                <span v-if="product.mrp > product.selling_price" class="old-price">₹{{ product.mrp }}</span>
+                <span class="current-price">{{ formatProductPrice(product) }}</span>
+                <span v-if="formatProductMrp(product)" class="old-price">{{ formatProductMrp(product) }}</span>
               </div>
               <div class="product-rating">
                 <span class="stars"><Star :size="12" class="star-filled inline" /> 4.8</span>
@@ -415,8 +415,8 @@
                 </h4>
 
                 <div class="luxury-price-row">
-                  <span class="selling-price">₹{{ product.selling_price }}</span>
-                  <span v-if="product.mrp > product.selling_price" class="original-price">₹{{ product.mrp }}</span>
+                  <span class="selling-price">{{ formatProductPrice(product) }}</span>
+                  <span v-if="formatProductMrp(product)" class="original-price">{{ formatProductMrp(product) }}</span>
                 </div>
 
                 <!-- Rating Row at bottom -->
@@ -1386,6 +1386,70 @@ const triggerMockToast = () => {
   if (activityToasts.value.length > 5) {
     activityToasts.value.pop();
   }
+};
+
+const formatProductPrice = (product) => {
+  if (!product) return '₹0.00';
+  
+  if (product.price_display) {
+    return product.price_display;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    const prices = product.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (prices.length > 0) {
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min < max) {
+        return `₹${min.toFixed(2)} - ₹${max.toFixed(2)}`;
+      }
+      return `₹${min.toFixed(2)}`;
+    }
+  }
+
+  const basePrice = parseFloat(product.selling_price || 0);
+  return `₹${basePrice.toFixed(2)}`;
+};
+
+const formatProductMrp = (product) => {
+  if (!product) return null;
+  
+  if (product.mrp_display) {
+    return product.mrp_display;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    const mrps = product.variants
+      .map(v => parseFloat(v.mrp))
+      .filter(m => !isNaN(m) && m > 0);
+    const sellPrices = product.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (mrps.length > 0) {
+      const minMrp = Math.min(...mrps);
+      const maxMrp = Math.max(...mrps);
+      const minSell = sellPrices.length > 0 ? Math.min(...sellPrices) : parseFloat(product.selling_price || 0);
+      const maxSell = sellPrices.length > 0 ? Math.max(...sellPrices) : parseFloat(product.selling_price || 0);
+
+      if (maxMrp > maxSell || minMrp > minSell) {
+        if (minMrp < maxMrp) {
+          return `₹${minMrp.toFixed(2)} - ₹${maxMrp.toFixed(2)}`;
+        }
+        return `₹${maxMrp.toFixed(2)}`;
+      }
+    }
+  }
+
+  const baseMrp = parseFloat(product.mrp || 0);
+  const baseSell = parseFloat(product.selling_price || 0);
+  if (baseMrp > baseSell) {
+    return `₹${baseMrp.toFixed(2)}`;
+  }
+  return null;
 };
 
 const getPrimaryImage = (product) => {

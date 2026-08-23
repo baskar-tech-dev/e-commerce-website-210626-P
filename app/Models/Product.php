@@ -65,7 +65,16 @@ class Product extends Model
         'weight' => 'decimal:2',
     ];
 
-    /**
+    protected $appends = [
+        'min_price',
+        'max_price',
+        'min_mrp',
+        'max_mrp',
+        'has_price_range',
+        'price_display',
+        'mrp_display',
+        'primary_image_url',
+    ];
      * Boot function for auto-generating product UUID.
      */
     protected static function boot()
@@ -139,5 +148,112 @@ class Product extends Model
         $this->avg_rating = round($avgRating, 2);
         $this->total_reviews = $approvedCount;
         $this->save();
+    }
+
+    /**
+     * Get minimum selling price across variants or base product.
+     */
+    public function getMinPriceAttribute(): float
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $prices = $this->variants->pluck('selling_price')->filter()->map(fn($p) => (float)$p);
+            if ($prices->isNotEmpty()) {
+                return round($prices->min(), 2);
+            }
+        }
+        return (float) ($this->selling_price ?? 0);
+    }
+
+    /**
+     * Get maximum selling price across variants or base product.
+     */
+    public function getMaxPriceAttribute(): float
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $prices = $this->variants->pluck('selling_price')->filter()->map(fn($p) => (float)$p);
+            if ($prices->isNotEmpty()) {
+                return round($prices->max(), 2);
+            }
+        }
+        return (float) ($this->selling_price ?? 0);
+    }
+
+    /**
+     * Get minimum MRP across variants or base product.
+     */
+    public function getMinMrpAttribute(): float
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $mrps = $this->variants->pluck('mrp')->filter()->map(fn($p) => (float)$p);
+            if ($mrps->isNotEmpty()) {
+                return round($mrps->min(), 2);
+            }
+        }
+        return (float) ($this->mrp ?? 0);
+    }
+
+    /**
+     * Get maximum MRP across variants or base product.
+     */
+    public function getMaxMrpAttribute(): float
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $mrps = $this->variants->pluck('mrp')->filter()->map(fn($p) => (float)$p);
+            if ($mrps->isNotEmpty()) {
+                return round($mrps->max(), 2);
+            }
+        }
+        return (float) ($this->mrp ?? 0);
+    }
+
+    /**
+     * Check if product prices vary across sizes / variants.
+     */
+    public function getHasPriceRangeAttribute(): bool
+    {
+        return $this->min_price < $this->max_price;
+    }
+
+    /**
+     * Formatted selling price range (e.g. ₹599 - ₹799 or ₹599).
+     */
+    public function getPriceDisplayAttribute(): string
+    {
+        if ($this->has_price_range) {
+            $min = number_format($this->min_price, 2);
+            $max = number_format($this->max_price, 2);
+            return "₹{$min} - ₹{$max}";
+        }
+        $val = number_format($this->min_price ?: (float)($this->selling_price ?? 0), 2);
+        return "₹{$val}";
+    }
+
+    /**
+     * Formatted MRP price display.
+     */
+    public function getMrpDisplayAttribute(): ?string
+    {
+        if ($this->min_mrp > $this->min_price || $this->max_mrp > $this->max_price) {
+            if ($this->min_mrp < $this->max_mrp) {
+                $min = number_format($this->min_mrp, 2);
+                $max = number_format($this->max_mrp, 2);
+                return "₹{$min} - ₹{$max}";
+            }
+            $val = number_format($this->max_mrp ?: (float)($this->mrp ?? 0), 2);
+            return "₹{$val}";
+        }
+        return null;
+    }
+
+    /**
+     * Primary cover image URL.
+     */
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        if ($this->relationLoaded('images') && $this->images->isNotEmpty()) {
+            $primary = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
+            return $primary?->url ?? $primary?->image_path;
+        }
+        return null;
     }
 }

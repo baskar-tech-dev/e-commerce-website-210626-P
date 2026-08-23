@@ -95,9 +95,11 @@
 
           <!-- Price split -->
           <div style="display: flex; align-items: baseline; gap: var(--spacing-md); margin-top: var(--spacing-xs);">
-            <span style="font-size: 2rem; font-weight: bold; color: var(--color-text-primary);">₹{{ selectedVariant?.selling_price || product.selling_price }}</span>
+            <span style="font-size: 2rem; font-weight: bold; color: var(--color-text-primary);">
+              {{ selectedVariant ? `₹${Number(selectedVariant.selling_price).toFixed(2)}` : formatProductPrice(product) }}
+            </span>
             <span v-if="hasDiscount" style="font-size: 1.25rem; text-decoration: line-through; color: var(--color-text-muted);">
-              MRP ₹{{ selectedVariant?.mrp || product.mrp }}
+              MRP {{ selectedVariant ? `₹${Number(selectedVariant.mrp).toFixed(2)}` : formatProductMrp(product) }}
             </span>
             <span v-if="hasDiscount" class="badge badge--success" style="font-size: 0.8rem; font-weight: bold; margin-left: 0.25rem;">
               SAVE {{ discountPct }}%
@@ -164,8 +166,8 @@
             <div class="card-info-box">
               <h4 class="card-title">{{ p.name }}</h4>
               <div class="card-price-row">
-                <span class="price-current">₹{{ p.selling_price }}</span>
-                <span v-if="p.mrp > p.selling_price" class="price-old">₹{{ p.mrp }}</span>
+                <span class="price-current">{{ formatProductPrice(p) }}</span>
+                <span v-if="formatProductMrp(p)" class="price-old">{{ formatProductMrp(p) }}</span>
               </div>
             </div>
           </div>
@@ -194,8 +196,8 @@
             <div class="card-info-box">
               <h4 class="card-title">{{ p.name }}</h4>
               <div class="card-price-row">
-                <span class="price-current">₹{{ p.selling_price }}</span>
-                <span v-if="p.mrp > p.selling_price" class="price-old">₹{{ p.mrp }}</span>
+                <span class="price-current">{{ formatProductPrice(p) }}</span>
+                <span v-if="formatProductMrp(p)" class="price-old">{{ formatProductMrp(p) }}</span>
               </div>
             </div>
           </div>
@@ -409,6 +411,64 @@ const getColorHex = (colorName) => {
     'wine': '#722f37',
   };
   return map[name] || name;
+};
+
+const formatProductPrice = (prod) => {
+  if (!prod) return '₹0.00';
+  if (prod.price_display) return prod.price_display;
+
+  if (prod.variants && prod.variants.length > 0) {
+    const prices = prod.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (prices.length > 0) {
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min < max) {
+        return `₹${min.toFixed(2)} - ₹${max.toFixed(2)}`;
+      }
+      return `₹${min.toFixed(2)}`;
+    }
+  }
+
+  const basePrice = parseFloat(prod.selling_price || 0);
+  return `₹${basePrice.toFixed(2)}`;
+};
+
+const formatProductMrp = (prod) => {
+  if (!prod) return null;
+  if (prod.mrp_display) return prod.mrp_display;
+
+  if (prod.variants && prod.variants.length > 0) {
+    const mrps = prod.variants
+      .map(v => parseFloat(v.mrp))
+      .filter(m => !isNaN(m) && m > 0);
+    const sellPrices = prod.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (mrps.length > 0) {
+      const minMrp = Math.min(...mrps);
+      const maxMrp = Math.max(...mrps);
+      const minSell = sellPrices.length > 0 ? Math.min(...sellPrices) : parseFloat(prod.selling_price || 0);
+      const maxSell = sellPrices.length > 0 ? Math.max(...sellPrices) : parseFloat(prod.selling_price || 0);
+
+      if (maxMrp > maxSell || minMrp > minSell) {
+        if (minMrp < maxMrp) {
+          return `₹${minMrp.toFixed(2)} - ₹${maxMrp.toFixed(2)}`;
+        }
+        return `₹${maxMrp.toFixed(2)}`;
+      }
+    }
+  }
+
+  const baseMrp = parseFloat(prod.mrp || 0);
+  const baseSell = parseFloat(prod.selling_price || 0);
+  if (baseMrp > baseSell) {
+    return `₹${baseMrp.toFixed(2)}`;
+  }
+  return null;
 };
 
 const hasDiscount = computed(() => {

@@ -273,8 +273,8 @@
                 />
 
                 <!-- Badges -->
-                <div class="card-badge-top-left" v-if="product.mrp > product.selling_price">
-                  {{ Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) }}% OFF
+                <div class="card-badge-top-left" v-if="getProductDiscount(product)">
+                  {{ getProductDiscount(product) }}% OFF
                 </div>
                 <div class="card-badge-top-left best-seller" v-else-if="product.avg_rating >= 4.5">
                   Best Seller
@@ -335,9 +335,9 @@
 
                 <div class="card-price-row">
                   <div class="price-split-wrap">
-                    <span class="card-selling-price">₹{{ product.selling_price }}</span>
-                    <span v-if="product.mrp > product.selling_price" class="card-mrp-price">
-                      ₹{{ product.mrp }}
+                    <span class="card-selling-price">{{ formatProductPrice(product) }}</span>
+                    <span v-if="formatProductMrp(product)" class="card-mrp-price">
+                      {{ formatProductMrp(product) }}
                     </span>
                   </div>
                   <!-- Mobile Direct Quick Add CTA -->
@@ -588,12 +588,12 @@
             <h3 class="modal-product-title">{{ quickViewProduct.name }}</h3>
             
             <div class="modal-price-row">
-              <span class="modal-sell-price">₹{{ quickViewProduct.selling_price }}</span>
-              <span v-if="quickViewProduct.mrp > quickViewProduct.selling_price" class="modal-mrp-price">
-                MRP ₹{{ quickViewProduct.mrp }}
+              <span class="modal-sell-price">{{ formatProductPrice(quickViewProduct) }}</span>
+              <span v-if="formatProductMrp(quickViewProduct)" class="modal-mrp-price">
+                {{ formatProductMrp(quickViewProduct) }}
               </span>
-              <span v-if="quickViewProduct.mrp > quickViewProduct.selling_price" class="modal-discount-tag">
-                {{ Math.round(((quickViewProduct.mrp - quickViewProduct.selling_price) / quickViewProduct.mrp) * 100) }}% OFF
+              <span v-if="getProductDiscount(quickViewProduct)" class="modal-discount-tag">
+                {{ getProductDiscount(quickViewProduct) }}% OFF
               </span>
             </div>
 
@@ -959,6 +959,90 @@ const toggleWishlist = async (product) => {
   if (isAdding && !authStore.isAuthenticated) {
     authStore.openAuthModal('register', 'wishlist');
   }
+};
+
+const formatProductPrice = (product) => {
+  if (!product) return '₹0.00';
+  
+  if (product.price_display) {
+    return product.price_display;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    const prices = product.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (prices.length > 0) {
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      if (min < max) {
+        return `₹${min.toFixed(2)} - ₹${max.toFixed(2)}`;
+      }
+      return `₹${min.toFixed(2)}`;
+    }
+  }
+
+  const basePrice = parseFloat(product.selling_price || 0);
+  return `₹${basePrice.toFixed(2)}`;
+};
+
+const formatProductMrp = (product) => {
+  if (!product) return null;
+  
+  if (product.mrp_display) {
+    return product.mrp_display;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    const mrps = product.variants
+      .map(v => parseFloat(v.mrp))
+      .filter(m => !isNaN(m) && m > 0);
+    const sellPrices = product.variants
+      .map(v => parseFloat(v.selling_price))
+      .filter(p => !isNaN(p) && p > 0);
+
+    if (mrps.length > 0) {
+      const minMrp = Math.min(...mrps);
+      const maxMrp = Math.max(...mrps);
+      const minSell = sellPrices.length > 0 ? Math.min(...sellPrices) : parseFloat(product.selling_price || 0);
+      const maxSell = sellPrices.length > 0 ? Math.max(...sellPrices) : parseFloat(product.selling_price || 0);
+
+      if (maxMrp > maxSell || minMrp > minSell) {
+        if (minMrp < maxMrp) {
+          return `₹${minMrp.toFixed(2)} - ₹${maxMrp.toFixed(2)}`;
+        }
+        return `₹${maxMrp.toFixed(2)}`;
+      }
+    }
+  }
+
+  const baseMrp = parseFloat(product.mrp || 0);
+  const baseSell = parseFloat(product.selling_price || 0);
+  if (baseMrp > baseSell) {
+    return `₹${baseMrp.toFixed(2)}`;
+  }
+  return null;
+};
+
+const getProductDiscount = (product) => {
+  if (!product) return 0;
+  
+  if (product.variants && product.variants.length > 0) {
+    const discounts = product.variants
+      .filter(v => parseFloat(v.mrp) > parseFloat(v.selling_price))
+      .map(v => Math.round(((parseFloat(v.mrp) - parseFloat(v.selling_price)) / parseFloat(v.mrp)) * 100));
+    if (discounts.length > 0) {
+      return Math.max(...discounts);
+    }
+  }
+
+  const mrp = parseFloat(product.mrp || 0);
+  const sell = parseFloat(product.selling_price || 0);
+  if (mrp > sell && mrp > 0) {
+    return Math.round(((mrp - sell) / mrp) * 100);
+  }
+  return 0;
 };
 
 const getPrimaryImage = (product) => {
