@@ -65,23 +65,36 @@ class CategoryService
     }
 
     /**
-     * Move temp uploaded category image to permanent categories storage directory.
+     * Move temp uploaded category images to permanent categories storage directory.
      */
     protected function processCategoryImage(array $data): array
     {
-        if (!empty($data['image']) && str_contains($data['image'], '/temp/')) {
-            $relPath = preg_replace('/^\/?storage\//', '', parse_url($data['image'], PHP_URL_PATH));
+        $moveTemp = function (?string $url, string $subfolder) {
+            if (empty($url) || !str_contains($url, '/temp/')) {
+                return $url;
+            }
+            $relPath = preg_replace('/^\/?storage\//', '', parse_url($url, PHP_URL_PATH));
             if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relPath)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('categories');
+                $dir = "categories/{$subfolder}";
+                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($dir);
                 $fileName = basename($relPath);
-                $newPath = "categories/{$fileName}";
+                $newPath = "{$dir}/{$fileName}";
                 if (!@\Illuminate\Support\Facades\Storage::disk('public')->move($relPath, $newPath)) {
                     @\Illuminate\Support\Facades\Storage::disk('public')->copy($relPath, $newPath);
                     @\Illuminate\Support\Facades\Storage::disk('public')->delete($relPath);
                 }
-                $data['image'] = '/storage/' . $newPath;
+                return '/storage/' . $newPath;
             }
+            return $url;
+        };
+
+        if (isset($data['image'])) {
+            $data['image'] = $moveTemp($data['image'], 'covers');
         }
+        if (isset($data['size_chart_image'])) {
+            $data['size_chart_image'] = $moveTemp($data['size_chart_image'], 'size_charts');
+        }
+
         return $data;
     }
 

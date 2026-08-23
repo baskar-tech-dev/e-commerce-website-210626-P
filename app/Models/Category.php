@@ -18,6 +18,7 @@ class Category extends Model
         'slug',
         'description',
         'image',
+        'size_chart_image',
         'icon',
         'meta_title',
         'meta_description',

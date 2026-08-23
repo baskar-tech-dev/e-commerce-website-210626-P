@@ -612,20 +612,18 @@ onUnmounted(() => {
   opacity: 0.5;
 }
 .storefront-header {
-  background: rgba(255, 252, 247, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 252, 247, 0.95);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 1000;
   padding: var(--spacing-sm) 0;
-  transition: top 0.3s ease;
-}
-.storefront-layout--announcement-sticky .storefront-header {
-  top: 40px;
+  transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 .storefront-layout--scrolled .storefront-header {
-  top: 0 !important;
+  background: rgba(255, 252, 247, 0.98);
+  box-shadow: 0 4px 20px rgba(128, 0, 32, 0.06);
 }
 .storefront-header__container {
     max-width: 1400px;

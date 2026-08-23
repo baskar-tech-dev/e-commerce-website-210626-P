@@ -73,9 +73,12 @@
     
     <!-- Mobile Cards View -->
     <div class="mobile-data-list">
-      <div class="mobile-data-card" v-for="prod in products" :key="prod.id">
+      <div class="mobile-data-card" v-for="(prod, index) in products" :key="prod.id">
         <div class="mdc-header">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: rgba(128, 0, 32, 0.08); border: 1px solid rgba(128, 0, 32, 0.15); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">
+              #{{ (pagination.current_page - 1) * (pagination.per_page || 15) + index + 1 }}
+            </span>
             <div style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
               <img v-if="getPrimaryImage(prod)" :src="getPrimaryImage(prod)" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" />
               <span v-else style="font-weight: 700; color: var(--color-text-muted);">🛍️</span>
@@ -125,6 +128,7 @@
     <table class="data-table desktop-data-table">
       <thead>
         <tr>
+          <th style="width: 55px; text-align: center;">S.No</th>
           <th>Product</th>
           <th>Slug & Info</th>
           <th>Category</th>
@@ -135,7 +139,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="prod in products" :key="prod.id">
+        <tr v-for="(prod, index) in products" :key="prod.id">
+          <td style="width: 55px; text-align: center; font-weight: 600; color: var(--color-text-secondary); font-size: 0.85rem;">
+            {{ (pagination.current_page - 1) * (pagination.per_page || 15) + index + 1 }}
+          </td>
           <td>
             <div style="display: flex; align-items: center; gap: 1rem;">
               <!-- Thumbnail -->
@@ -184,16 +191,23 @@
             <span v-else style="color: var(--color-danger); font-size: 0.85rem;">⚠️ No Variants</span>
           </td>
           <td>
-            <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--warning']">
-              {{ prod.is_active ? '🟢 Active' : '📝 Draft' }}
-            </span>
-          </td>
-          <td style="text-align: right;">
-            <div style="display: inline-flex; gap: 0.5rem;">
-              <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+              <span :class="['badge', prod.is_active ? 'badge--success' : 'badge--warning']">
+                {{ prod.is_active ? '🟢 Active' : '📝 Draft' }}
+              </span>
+              <button 
+                v-if="!prod.is_active" 
+                class="btn btn--success btn--sm" 
+                style="padding: 2px 6px; font-size: 0.7rem;" 
+                @click="activateProduct(prod.id)"
+              >
                 🚀 Publish
               </button>
-              <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm" style="text-decoration: none;">
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+              <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">
                 ✏️ Edit
               </router-link>
               <button class="btn btn--danger btn--sm" @click="deleteProduct(prod.id)">
@@ -203,7 +217,7 @@
           </td>
         </tr>
         <tr v-if="products.length === 0 && !productStore.loading">
-          <td colspan="7" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
+          <td colspan="8" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
             No products found matching filters.
           </td>
         </tr>

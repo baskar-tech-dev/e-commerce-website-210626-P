@@ -49,7 +49,11 @@
           </div>
 
           <!-- Large display image -->
-          <div class="glass-panel product-detail-main-img">
+          <div 
+            class="glass-panel product-detail-main-img zoomable-main-img" 
+            @click="openLightbox"
+            title="Click to view in Ultra HD Fullscreen Zoom"
+          >
             <img 
               v-protect-image
               :src="activeImagePath || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=600&auto=format&fit=crop'" 
@@ -57,6 +61,13 @@
               alt="large preview" 
               loading="lazy"
             />
+
+            <!-- Luxury Zoom Badge Indicator -->
+            <div class="luxury-zoom-indicator">
+              <ZoomIn :size="15" />
+              <span>Tap to Zoom & Expand</span>
+            </div>
+
             <!-- Left & Right Switch Controls -->
             <template v-if="product && product.images && product.images.length > 1">
               <button 
@@ -95,15 +106,38 @@
 
           <!-- Price split -->
           <div style="display: flex; align-items: baseline; gap: var(--spacing-md); margin-top: var(--spacing-xs);">
-            <span style="font-size: 2rem; font-weight: bold; color: var(--color-text-primary);">
+            <span style="font-size: 2rem; font-weight: bold; color: var(--color-text-primary);" :class="{ 'price-muted': isProductSoldOut }">
               {{ selectedVariant ? `₹${Number(selectedVariant.selling_price).toFixed(2)}` : formatProductPrice(product) }}
             </span>
             <span v-if="hasDiscount" style="font-size: 1.25rem; text-decoration: line-through; color: var(--color-text-muted);">
               MRP {{ selectedVariant ? `₹${Number(selectedVariant.mrp).toFixed(2)}` : formatProductMrp(product) }}
             </span>
-            <span v-if="hasDiscount" class="badge badge--success" style="font-size: 0.8rem; font-weight: bold; margin-left: 0.25rem;">
+            <span v-if="hasDiscount && !isProductSoldOut" class="badge badge--success" style="font-size: 0.8rem; font-weight: bold; margin-left: 0.25rem;">
               SAVE {{ discountPct }}%
             </span>
+          </div>
+
+          <!-- Stock status alert boxes -->
+          <div v-if="isProductSoldOut" class="luxury-sold-out-box" role="status">
+            <div class="sold-out-box-header">
+              <span class="sold-out-pill-tag">SOLD OUT</span>
+              <span class="sold-out-box-title">Temporarily Out of Stock</span>
+            </div>
+            <p class="sold-out-box-desc">
+              All sizes for this exclusive piece are currently reserved. Connect with our Maya Sree stylist on WhatsApp to request priority restock notice!
+            </p>
+            <a 
+              :href="`https://wa.me/919488344773?text=Hi%20Maya%20Sree,%20I%20would%20like%20to%20enquire%20about%20restock%20for%20${encodeURIComponent(product.name)}`" 
+              target="_blank" 
+              class="btn-sold-out-whatsapp"
+            >
+              💬 Enquire on WhatsApp
+            </a>
+          </div>
+
+          <div v-else-if="isProductLowStock" class="luxury-low-stock-box">
+            <span class="low-stock-dot"></span>
+            <span>⚡ <strong>Hurry, Only Few Left in Stock!</strong> High demand style — order soon to secure your piece.</span>
           </div>
 
           <!-- Description -->
@@ -217,21 +251,267 @@
         <button 
           class="btn btn--primary" 
           style="padding: 0 1.25rem; font-size: 0.9rem; font-weight: bold; border-radius: 8px; height: 44px; border: none; flex-shrink: 0;"
-          :disabled="product.variants && product.variants.filter(v => v.stock_quantity > 0).length === 0"
+          :disabled="isProductSoldOut || (selectedVariant && selectedVariant.stock_quantity <= 0)"
           @click="handleStickyClick"
         >
-          🛒 Add to Cart
+          {{ isProductSoldOut || (selectedVariant && selectedVariant.stock_quantity <= 0) ? 'Sold Out' : '🛒 Add to Cart' }}
         </button>
       </div>
     </div>
+
+    <!-- Ultra-HD Fullscreen Luxury Lightbox Studio -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div 
+          v-if="isLightboxOpen" 
+          class="luxury-lightbox-overlay" 
+          @click="closeLightbox"
+          tabindex="0"
+        >
+          <!-- Top Header Bar -->
+          <div class="lightbox-top-bar" @click.stop>
+            <div class="lightbox-title-wrap">
+              <span class="lightbox-brand">Maya Sree Luxury Studio</span>
+              <h3 class="lightbox-prod-name">{{ product.name }}</h3>
+            </div>
+
+            <div class="lightbox-controls-group">
+              <!-- Image Counter Badge -->
+              <span class="lightbox-counter-pill" v-if="product?.images?.length">
+                {{ activeImageIndex + 1 }} / {{ product.images.length }} • HD View
+              </span>
+
+              <!-- Zoom Toggle Button -->
+              <button 
+                class="lightbox-btn" 
+                @click="toggleLightboxZoom" 
+                :title="isZoomed ? 'Zoom Out (1x)' : 'Zoom In (2.5x)'"
+                :class="{ active: isZoomed }"
+              >
+                <ZoomOut v-if="isZoomed" :size="18" />
+                <ZoomIn v-else :size="18" />
+                <span class="btn-text">{{ isZoomed ? '1x Normal' : '2.5x Zoom' }}</span>
+              </button>
+
+              <!-- Close Button -->
+              <button 
+                class="lightbox-btn lightbox-close-btn" 
+                @click="closeLightbox" 
+                title="Close (Esc)"
+              >
+                <X :size="22" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Viewing Stage -->
+          <div 
+            class="lightbox-stage" 
+            @click.stop 
+            @mousemove="handleLightboxMouseMove"
+            @touchstart="handleTouchStart"
+            @touchend="handleTouchEnd"
+          >
+            <!-- Navigation Left -->
+            <button 
+              v-if="product?.images?.length > 1" 
+              class="lightbox-nav-arrow arrow-left" 
+              @click.stop="prevImage"
+              title="Previous (Left Arrow)"
+            >
+              <ChevronLeft :size="32" />
+            </button>
+
+            <!-- Interactive Zoom Container -->
+            <div 
+              class="lightbox-zoom-container" 
+              :class="{ 'is-zoomed': isZoomed }"
+              @dblclick="toggleLightboxZoom"
+            >
+              <img 
+                v-protect-image 
+                :src="activeImagePath" 
+                :alt="product.name" 
+                class="lightbox-main-img" 
+                :style="isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`, transform: 'scale(2.5)' } : {}"
+              />
+            </div>
+
+            <!-- Navigation Right -->
+            <button 
+              v-if="product?.images?.length > 1" 
+              class="lightbox-nav-arrow arrow-right" 
+              @click.stop="nextImage"
+              title="Next (Right Arrow)"
+            >
+              <ChevronRight :size="32" />
+            </button>
+
+            <!-- Bottom Floating Guidance Hint -->
+            <div class="lightbox-hint-pill" v-if="!isZoomed">
+              🔍 Double-click or click Zoom button to inspect intricate fabric & embroidery
+            </div>
+            <div class="lightbox-hint-pill" v-else>
+              ✨ Move cursor to pan across details • Double-click to reset zoom
+            </div>
+          </div>
+
+          <!-- Bottom Thumbnails Bar -->
+          <div 
+            class="lightbox-bottom-bar" 
+            v-if="product?.images?.length > 1" 
+            @click.stop
+          >
+            <div class="lightbox-thumb-strip">
+              <div 
+                v-for="(img, idx) in product.images" 
+                :key="img.id || idx" 
+                class="lightbox-thumb-item" 
+                :class="{ active: activeImagePath === img.image_path }"
+                @click="activeImagePath = img.image_path"
+              >
+                <img v-protect-image :src="img.image_path" :alt="`Angle ${idx + 1}`" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Category Size Chart Modal -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div 
+          v-if="showSizeGuideModal" 
+          class="size-guide-overlay" 
+          @click.self="showSizeGuideModal = false"
+        >
+          <div class="size-guide-modal-container">
+            <!-- Modal Header -->
+            <div class="size-guide-header">
+              <div class="size-guide-title-box">
+                <span class="size-guide-tag">Official Fit Guide</span>
+                <h3 class="size-guide-title">{{ product?.category?.name || 'Garment' }} Size Chart</h3>
+              </div>
+              <button class="size-guide-close-btn" @click="showSizeGuideModal = false" aria-label="Close size guide">
+                <X :size="20" />
+              </button>
+            </div>
+
+            <!-- Modal Content Area -->
+            <div class="size-guide-body">
+              <!-- When Category has an uploaded size chart image -->
+              <div v-if="product?.category?.size_chart_image" class="category-chart-image-wrap">
+                <div class="chart-image-card">
+                  <img 
+                    v-protect-image 
+                    :src="product.category.size_chart_image" 
+                    :alt="`${product.category.name} Size Chart`" 
+                    class="category-size-chart-img" 
+                  />
+                </div>
+                <div class="chart-hint-row">
+                  <span>💡 Tip: Official sizing guide tailored specifically for <strong>{{ product.category.name }}</strong>.</span>
+                </div>
+              </div>
+
+              <!-- Default interactive South Indian sizing guide table when no custom image is uploaded -->
+              <div v-else class="default-sizing-table-wrap">
+                <div class="table-responsive-box">
+                  <table class="luxury-size-table">
+                    <thead>
+                      <tr>
+                        <th>Size</th>
+                        <th>Bust (Inches)</th>
+                        <th>Waist (Inches)</th>
+                        <th>Length (Inches)</th>
+                        <th>Fit Guide</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>XS-S (32-34)</strong></td>
+                        <td>32" – 34"</td>
+                        <td>26" – 28"</td>
+                        <td>14.5"</td>
+                        <td>Petite / Slim Fit</td>
+                      </tr>
+                      <tr>
+                        <td><strong>M-L (36-38)</strong></td>
+                        <td>36" – 38"</td>
+                        <td>30" – 32"</td>
+                        <td>15.0"</td>
+                        <td>Standard Regular Fit</td>
+                      </tr>
+                      <tr>
+                        <td><strong>XL (40)</strong></td>
+                        <td>40"</td>
+                        <td>34"</td>
+                        <td>15.5"</td>
+                        <td>Comfort Fit</td>
+                      </tr>
+                      <tr>
+                        <td><strong>XXL (42)</strong></td>
+                        <td>42"</td>
+                        <td>36"</td>
+                        <td>16.0"</td>
+                        <td>Plus Comfort Fit</td>
+                      </tr>
+                      <tr>
+                        <td><strong>3XL (44)</strong></td>
+                        <td>44"</td>
+                        <td>38"</td>
+                        <td>16.5"</td>
+                        <td>Extended Plus Fit</td>
+                      </tr>
+                      <tr>
+                        <td><strong>4XL (46)</strong></td>
+                        <td>46"</td>
+                        <td>40"</td>
+                        <td>17.0"</td>
+                        <td>Extended Plus Fit</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- How to Measure section -->
+                <div class="measurement-tips-box">
+                  <h4 class="tips-heading">📏 How to Measure:</h4>
+                  <ul class="tips-list">
+                    <li><strong>Bust:</strong> Measure around the fullest part of your chest with measuring tape level.</li>
+                    <li><strong>Waist:</strong> Measure around your natural waistline, keeping tape comfortably loose.</li>
+                    <li><strong>Stretch Margin:</strong> Our 4-way stretchable blouses comfortably accommodate +2 inches.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Footer Assistance -->
+            <div class="size-guide-footer">
+              <div class="footer-help-text">
+                Need personalized fit assistance?
+              </div>
+              <a 
+                href="https://wa.me/919488344773?text=Hello%20Maya%20Sree%20Fashion,%20I%20need%20help%20with%20size%20and%20fit%20for%20a%20product" 
+                target="_blank" 
+                class="btn-whatsapp-fit-advice"
+              >
+                💬 Chat on WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
 import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 import ReviewSection from '../../components/ReviewSection.vue';
@@ -243,14 +523,30 @@ const router = useRouter();
 const authStore = useAuthStore();
 const emit = defineEmits(['update-cart-count']);
 
+const showSizeGuideModal = ref(false);
+
 const triggerSizeGuide = () => {
-  alert("Our design team is preparing the size guide table. Please contact us on WhatsApp support for direct fit advice!");
+  showSizeGuideModal.value = true;
 };
 
 const product = ref(null);
 const relatedProducts = ref([]);
 const recentlyViewed = ref([]);
 const loading = ref(true);
+
+const isProductSoldOut = computed(() => {
+  if (!product.value) return false;
+  if (product.value.is_sold_out) return true;
+  if (!product.value.variants || product.value.variants.length === 0) return true;
+  return !product.value.variants.some(v => v.stock_quantity > 0);
+});
+
+const isProductLowStock = computed(() => {
+  if (!product.value || isProductSoldOut.value) return false;
+  if (product.value.is_low_stock) return true;
+  const total = product.value.variants?.reduce((sum, v) => sum + (v.stock_quantity || 0), 0) || 0;
+  return total > 0 && total <= 5;
+});
 const activeImagePath = ref('');
 const selectedColor = ref('');
 const selectedSize = ref('');
@@ -620,16 +916,92 @@ const nextImage = () => {
   activeImagePath.value = images[nextIndex].image_path;
 };
 
-const getPrimaryImage = (p) => {
-  if (!p || !p.images || p.images.length === 0) {
-    return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop';
+const isLightboxOpen = ref(false);
+const isZoomed = ref(false);
+const zoomPos = ref({ x: 50, y: 50 });
+let touchStartX = 0;
+let touchEndX = 0;
+
+const activeImageIndex = computed(() => {
+  if (!product.value?.images || product.value.images.length === 0) return 0;
+  const idx = product.value.images.findIndex(img => img.image_path === activeImagePath.value);
+  return idx >= 0 ? idx : 0;
+});
+
+const openLightbox = () => {
+  isLightboxOpen.value = true;
+  isZoomed.value = false;
+  zoomPos.value = { x: 50, y: 50 };
+  document.body.style.overflow = 'hidden';
+  window.addEventListener('keydown', handleLightboxKeydown);
+};
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false;
+  isZoomed.value = false;
+  document.body.style.overflow = '';
+  window.removeEventListener('keydown', handleLightboxKeydown);
+};
+
+const toggleLightboxZoom = () => {
+  isZoomed.value = !isZoomed.value;
+  if (!isZoomed.value) {
+    zoomPos.value = { x: 50, y: 50 };
   }
-  const primary = p.images.find(img => img.is_primary);
-  return primary ? (primary.image_path || primary.url) : (p.images[0].image_path || p.images[0].url);
+};
+
+const handleLightboxMouseMove = (e) => {
+  if (!isZoomed.value) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  zoomPos.value = {
+    x: Math.max(0, Math.min(100, x)),
+    y: Math.max(0, Math.min(100, y)),
+  };
+};
+
+const handleTouchStart = (e) => {
+  if (e.changedTouches && e.changedTouches[0]) {
+    touchStartX = e.changedTouches[0].screenX;
+  }
+};
+
+const handleTouchEnd = (e) => {
+  if (e.changedTouches && e.changedTouches[0]) {
+    touchEndX = e.changedTouches[0].screenX;
+    if (Math.abs(touchEndX - touchStartX) > 45) {
+      if (touchEndX < touchStartX) {
+        nextImage();
+      } else {
+        prevImage();
+      }
+    }
+  }
+};
+
+const handleLightboxKeydown = (e) => {
+  if (!isLightboxOpen.value) return;
+  if (e.key === 'Escape') {
+    closeLightbox();
+  } else if (e.key === 'ArrowRight') {
+    nextImage();
+  } else if (e.key === 'ArrowLeft') {
+    prevImage();
+  } else if (e.key === '+' || e.key === '=') {
+    isZoomed.value = true;
+  } else if (e.key === '-') {
+    isZoomed.value = false;
+  }
 };
 
 onMounted(() => {
   fetchDetails(route.params.uuid);
+});
+
+onUnmounted(() => {
+  document.body.style.overflow = '';
+  window.removeEventListener('keydown', handleLightboxKeydown);
 });
 </script>
 
@@ -969,5 +1341,616 @@ onMounted(() => {
 @keyframes fade-pulse {
   0%, 100% { opacity: 0.4; }
   50%       { opacity: 1; }
+}
+
+/* ==========================================================================
+   Luxury Ultra-HD Lightbox & Zoom Studio
+   ========================================================================== */
+.zoomable-main-img {
+  cursor: zoom-in;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.zoomable-main-img:hover {
+  border-color: #B68D40;
+  box-shadow: 0 10px 25px rgba(128, 0, 32, 0.08);
+}
+
+.zoomable-main-img:hover .luxury-zoom-indicator {
+  transform: translateY(-2px);
+  background: rgba(128, 0, 32, 0.95);
+  border-color: #B68D40;
+}
+
+.luxury-zoom-indicator {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(30, 20, 25, 0.85);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(182, 141, 64, 0.4);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  pointer-events: none;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  z-index: 2;
+}
+
+.luxury-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(12, 6, 10, 0.95);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  user-select: none;
+  outline: none;
+}
+
+.lightbox-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+  z-index: 10;
+}
+
+.lightbox-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.75rem;
+  color: #B68D40;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.lightbox-prod-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: #ffffff;
+  margin: 2px 0 0 0;
+  font-weight: 600;
+}
+
+.lightbox-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lightbox-counter-pill {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.lightbox-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.lightbox-btn:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: #B68D40;
+}
+
+.lightbox-btn.active {
+  background: #B68D40;
+  color: #1a0f14;
+  font-weight: 700;
+  border-color: #B68D40;
+}
+
+.lightbox-close-btn {
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  justify-content: center;
+}
+
+.lightbox-close-btn:hover {
+  background: #800020;
+  border-color: #B68D40;
+  transform: rotate(90deg);
+}
+
+.lightbox-stage {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.lightbox-zoom-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.lightbox-zoom-container.is-zoomed {
+  cursor: crosshair;
+}
+
+.lightbox-main-img {
+  max-width: 90vw;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.lightbox-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(30, 20, 25, 0.75);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.lightbox-nav-arrow.arrow-left {
+  left: 24px;
+}
+
+.lightbox-nav-arrow.arrow-right {
+  right: 24px;
+}
+
+.lightbox-nav-arrow:hover {
+  background: #800020;
+  border-color: #B68D40;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.lightbox-hint-pill {
+  position: absolute;
+  bottom: 12px;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(8px);
+  color: rgba(255,255,255,0.85);
+  font-size: 0.75rem;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  pointer-events: none;
+}
+
+.lightbox-bottom-bar {
+  padding: 14px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.lightbox-thumb-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  max-width: 90vw;
+  padding: 4px 8px;
+}
+
+.lightbox-thumb-item {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background: #ffffff;
+}
+
+.lightbox-thumb-item:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.lightbox-thumb-item.active {
+  border-color: #B68D40;
+  opacity: 1;
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(182, 141, 64, 0.6);
+}
+
+.lightbox-thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .lightbox-top-bar {
+    padding: 12px 16px;
+  }
+  .lightbox-prod-name {
+    font-size: 0.95rem;
+  }
+  .lightbox-btn .btn-text {
+    display: none;
+  }
+  .lightbox-nav-arrow {
+    width: 40px;
+    height: 40px;
+  }
+  .lightbox-nav-arrow.arrow-left {
+    left: 10px;
+  }
+  .lightbox-nav-arrow.arrow-right {
+    right: 10px;
+  }
+  .lightbox-thumb-item {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ==========================================================================
+   Luxury Category Size Guide Modal
+   ========================================================================== */
+.size-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(12, 6, 10, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.size-guide-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(182, 141, 64, 0.3);
+  overflow: hidden;
+  animation: slide-up 0.25s ease-out;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.size-guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1ece4;
+  background: #fdfbf7;
+}
+
+.size-guide-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #B68D40;
+  font-weight: 700;
+}
+
+.size-guide-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  color: #6E1F3A;
+  margin: 2px 0 0 0;
+  font-weight: 700;
+}
+
+.size-guide-close-btn {
+  background: #f3eee6;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6E1F3A;
+  transition: all 0.2s ease;
+}
+
+.size-guide-close-btn:hover {
+  background: #6E1F3A;
+  color: #ffffff;
+}
+
+.size-guide-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.category-chart-image-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chart-image-card {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e8dfd2;
+  box-shadow: 0 4px 16px rgba(110, 31, 58, 0.06);
+  background: #ffffff;
+  text-align: center;
+}
+
+.category-size-chart-img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.chart-hint-row {
+  font-size: 0.8rem;
+  color: #7A726A;
+  background: #fdfbf7;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #f1ece4;
+  width: 100%;
+  text-align: center;
+}
+
+.table-responsive-box {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #ece4d8;
+  margin-bottom: 1.25rem;
+}
+
+.luxury-size-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.luxury-size-table th {
+  background: #6E1F3A;
+  color: #ffffff;
+  padding: 10px 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.luxury-size-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1ece4;
+  color: #2D2424;
+}
+
+.luxury-size-table tr:nth-child(even) td {
+  background: #faf7f2;
+}
+
+.measurement-tips-box {
+  background: #fdfbf7;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  border: 1px dashed #B68D40;
+}
+
+.tips-heading {
+  font-size: 0.85rem;
+  color: #6E1F3A;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.tips-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.8rem;
+  color: #554D47;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.size-guide-footer {
+  padding: 1rem 1.5rem;
+  background: #fdfbf7;
+  border-top: 1px solid #f1ece4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.footer-help-text {
+  font-size: 0.82rem;
+  color: #7A726A;
+  font-weight: 500;
+}
+
+.btn-whatsapp-fit-advice {
+  background: #25D366;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-whatsapp-fit-advice:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+}
+
+/* ==========================================================================
+   Luxury Sold Out & Low Stock Alerts
+   ========================================================================== */
+.luxury-sold-out-box {
+  background: linear-gradient(135deg, #FFF5F5 0%, #FEF2F2 100%);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin: 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.05);
+}
+
+.sold-out-box-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sold-out-pill-tag {
+  background: #1a0f14;
+  color: #FDFBF7;
+  border: 1px solid #B68D40;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.sold-out-box-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: #991b1b;
+  font-weight: 700;
+}
+
+.sold-out-box-desc {
+  font-size: 0.85rem;
+  color: #554D47;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.btn-sold-out-whatsapp {
+  align-self: flex-start;
+  background: #25D366;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-sold-out-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+}
+
+.luxury-low-stock-box {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #92400E;
+  font-weight: 500;
+  animation: pulse-light 2s ease-in-out infinite;
+}
+
+.low-stock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #D97706;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-light {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+.price-muted {
+  opacity: 0.6;
 }
 </style>

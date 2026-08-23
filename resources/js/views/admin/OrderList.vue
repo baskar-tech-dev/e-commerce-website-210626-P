@@ -105,11 +105,16 @@
     
     <!-- Mobile Cards View -->
     <div class="mobile-data-list">
-      <div class="mobile-data-card" v-for="order in orders" :key="order.id">
+      <div class="mobile-data-card" v-for="(order, index) in orders" :key="order.id">
         <div class="mdc-header">
-          <router-link :to="`/admin/orders/${order.id}`" class="mdc-title">
-            {{ order.order_number }}
-          </router-link>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: rgba(128, 0, 32, 0.08); border: 1px solid rgba(128, 0, 32, 0.15); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">
+              #{{ (pagination.current_page - 1) * (pagination.per_page || 15) + index + 1 }}
+            </span>
+            <router-link :to="`/admin/orders/${order.id}`" class="mdc-title">
+              {{ order.order_number }}
+            </router-link>
+          </div>
           <span class="mdc-date">{{ formatDate(order.created_at) }}</span>
         </div>
         
@@ -152,6 +157,7 @@
     <table class="data-table desktop-data-table">
       <thead>
         <tr>
+          <th style="width: 55px; text-align: center;">S.No</th>
           <th>Order #</th>
           <th>Customer</th>
           <th>Date Placed</th>
@@ -163,7 +169,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in orders" :key="order.id">
+        <tr v-for="(order, index) in orders" :key="order.id">
+          <td style="width: 55px; text-align: center; font-weight: 600; color: var(--color-text-secondary); font-size: 0.85rem;">
+            {{ (pagination.current_page - 1) * (pagination.per_page || 15) + index + 1 }}
+          </td>
           <td style="font-weight: bold; color: var(--color-primary);">
             <router-link :to="`/admin/orders/${order.id}`" style="color: var(--color-primary); text-decoration: none;">
               {{ order.order_number }}
@@ -202,7 +211,7 @@
           </td>
         </tr>
         <tr v-if="orders.length === 0">
-          <td colspan="8" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
+          <td colspan="9" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
             No customer orders matching the selected filter criteria.
           </td>
         </tr>

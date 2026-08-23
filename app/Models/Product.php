@@ -258,4 +258,32 @@ class Product extends Model
         }
         return null;
     }
+
+    /**
+     * Total available stock across all variants.
+     */
+    public function getTotalStockAttribute(): int
+    {
+        if ($this->relationLoaded('variants')) {
+            return (int) $this->variants->where('is_active', true)->sum('stock_quantity');
+        }
+        return (int) $this->variants()->where('is_active', true)->sum('stock_quantity');
+    }
+
+    /**
+     * Check if product is completely sold out.
+     */
+    public function getIsSoldOutAttribute(): bool
+    {
+        return $this->total_stock <= 0;
+    }
+
+    /**
+     * Check if product has low stock (urgency indicator: 1-5 items left).
+     */
+    public function getIsLowStockAttribute(): bool
+    {
+        $stock = $this->total_stock;
+        return $stock > 0 && $stock <= 5;
+    }
 }

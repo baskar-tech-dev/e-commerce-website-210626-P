@@ -260,10 +260,11 @@
               v-for="product in products" 
               :key="product.id" 
               class="premium-product-card"
+              :class="{ 'card-sold-out': isProductSoldOut(product) }"
               @click="routeToProduct(product.uuid)"
             >
               <!-- Card Top Section (Images & Badges) -->
-              <div class="card-image-wrap">
+              <div class="card-image-wrap" :class="{ 'image-sold-out': isProductSoldOut(product) }">
                 <img 
                   v-protect-image
                   :src="getPrimaryImage(product)" 
@@ -273,11 +274,22 @@
                 />
 
                 <!-- Badges -->
-                <div class="card-badge-top-left" v-if="getProductDiscount(product)">
+                <div class="card-badge-top-left badge-sold-out" v-if="isProductSoldOut(product)">
+                  SOLD OUT
+                </div>
+                <div class="card-badge-top-left badge-low-stock" v-else-if="isProductLowStock(product)">
+                  ⚡ ONLY FEW LEFT
+                </div>
+                <div class="card-badge-top-left" v-else-if="getProductDiscount(product)">
                   {{ getProductDiscount(product) }}% OFF
                 </div>
                 <div class="card-badge-top-left best-seller" v-else-if="product.avg_rating >= 4.5">
                   Best Seller
+                </div>
+
+                <!-- Sold Out Center Overlay Ribbon -->
+                <div v-if="isProductSoldOut(product)" class="card-sold-out-overlay">
+                  <span class="sold-out-pill-badge">SOLD OUT</span>
                 </div>
 
                 <!-- Wishlist Heart Trigger -->
@@ -291,21 +303,25 @@
 
                 <!-- Actions Overlay Panel (Desktop Only) -->
                 <div class="desktop-hover-overlay desktop-only" @click.stop>
-                  <span class="overlay-sizes-title">SELECT SIZE</span>
-                  <div class="overlay-sizes-row">
-                    <button 
-                      v-for="v in product.variants.filter(v => v.stock_quantity > 0)" 
-                      :key="v.id"
-                      class="overlay-size-btn"
-                      @click="addVariantToCart(product, v)"
-                      :title="`Add ${v.size || 'OS'} to Cart`"
-                    >
-                      {{ v.size || 'OS' }}
-                    </button>
-                    <div v-if="!product.variants || product.variants.filter(v => v.stock_quantity > 0).length === 0" class="overlay-no-variants">
-                      Sold Out
+                  <template v-if="!isProductSoldOut(product)">
+                    <span class="overlay-sizes-title">SELECT SIZE</span>
+                    <div class="overlay-sizes-row">
+                      <button 
+                        v-for="v in product.variants.filter(v => v.stock_quantity > 0)" 
+                        :key="v.id"
+                        class="overlay-size-btn"
+                        @click="addVariantToCart(product, v)"
+                        :title="`Add ${v.size || 'OS'} to Cart`"
+                      >
+                        {{ v.size || 'OS' }}
+                      </button>
                     </div>
-                  </div>
+                  </template>
+                  <template v-else>
+                    <div class="overlay-sold-out-banner">
+                      <span>TEMPORARILY OUT OF STOCK</span>
+                    </div>
+                  </template>
                 </div>
               </div>
               
@@ -325,29 +341,36 @@
                   </template>
                 </div>
                 
-                <!-- Included Sizes List -->
-                <div class="card-sizes-info" v-if="product.variants && product.variants.some(v => v.stock_quantity > 0)">
+                <!-- Included Sizes List or Sold Out indicator -->
+                <div class="card-sizes-info" v-if="!isProductSoldOut(product) && product.variants && product.variants.some(v => v.stock_quantity > 0)">
                   <span class="sizes-info-label">Sizes:</span>
                   <span class="sizes-info-list">
                     {{ product.variants.filter(v => v.stock_quantity > 0).map(v => v.size || 'OS').filter((v, i, self) => self.indexOf(v) === i).join(', ') }}
                   </span>
                 </div>
+                <div class="card-sizes-info" v-else-if="isProductSoldOut(product)">
+                  <span class="sold-out-text-inline">🔴 Sold Out • Restocking Soon</span>
+                </div>
 
                 <div class="card-price-row">
                   <div class="price-split-wrap">
-                    <span class="card-selling-price">{{ formatProductPrice(product) }}</span>
+                    <span class="card-selling-price" :class="{ 'price-muted': isProductSoldOut(product) }">{{ formatProductPrice(product) }}</span>
                     <span v-if="formatProductMrp(product)" class="card-mrp-price">
                       {{ formatProductMrp(product) }}
                     </span>
                   </div>
                   <!-- Mobile Direct Quick Add CTA -->
                   <button 
+                    v-if="!isProductSoldOut(product)"
                     class="mobile-only mobile-quick-add-btn" 
                     @click.stop="openMobileSizeSelector(product)"
                     title="Add directly to cart"
                   >
                     <Plus :size="16" />
                   </button>
+                  <span v-else class="mobile-only mobile-sold-out-badge">
+                    Sold Out
+                  </span>
                 </div>
               </div>
             </div>
@@ -597,14 +620,33 @@
               </span>
             </div>
 
+            <!-- Quick View Sold Out Alert -->
+            <div v-if="isProductSoldOut(quickViewProduct)" style="margin-bottom: 12px; padding: 10px 14px; background: #FFF5F5; border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span class="sold-out-pill-badge" style="font-size: 0.75rem; padding: 3px 8px; background: #6E1F3A; color: #fff; border-radius: 4px; font-weight: bold;">SOLD OUT</span>
+              <span style="font-size: 0.8rem; color: #991b1b; font-weight: 500;">Currently out of stock in all sizes.</span>
+            </div>
+
             <p class="modal-description-text">
               {{ quickViewProduct.description || 'Premium handpicked South Indian designer wear. Crafted with high-grade fabrics for elegant draping and custom styling.' }}
             </p>
 
             <div class="modal-actions-group">
-              <button @click="addToCartDirect(quickViewProduct)" class="btn btn--primary modal-primary-cta">
+              <button 
+                v-if="!isProductSoldOut(quickViewProduct)"
+                @click="addToCartDirect(quickViewProduct)" 
+                class="btn btn--primary modal-primary-cta"
+              >
                 🛒 Add to Cart
               </button>
+              <a 
+                v-else
+                :href="`https://wa.me/919488344773?text=Hi%20Maya%20Sree,%20when%20will%20${encodeURIComponent(quickViewProduct.name)}%20be%20back%20in%20stock?`" 
+                target="_blank" 
+                class="btn modal-primary-cta"
+                style="background: #25D366; color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: bold;"
+              >
+                💬 Enquire Restock on WhatsApp
+              </a>
               <button @click="routeToProduct(quickViewProduct.uuid)" class="btn btn--secondary modal-secondary-cta">
                 View Details
               </button>
@@ -959,6 +1001,20 @@ const toggleWishlist = async (product) => {
   if (isAdding && !authStore.isAuthenticated) {
     authStore.openAuthModal('register', 'wishlist');
   }
+};
+
+const isProductSoldOut = (product) => {
+  if (!product) return false;
+  if (product.is_sold_out) return true;
+  if (!product.variants || product.variants.length === 0) return true;
+  return !product.variants.some(v => v.stock_quantity > 0);
+};
+
+const isProductLowStock = (product) => {
+  if (!product || isProductSoldOut(product)) return false;
+  if (product.is_low_stock) return true;
+  const total = product.variants?.reduce((sum, v) => sum + (v.stock_quantity || 0), 0) || 0;
+  return total > 0 && total <= 5;
 };
 
 const formatProductPrice = (product) => {
@@ -1639,11 +1695,90 @@ onMounted(() => {
   padding: 4px 8px;
   border-radius: 4px;
   box-shadow: var(--shadow-sm);
-  z-index: 2;
+  z-index: 3;
 }
 
 .card-badge-top-left.best-seller {
   background-color: var(--color-primary);
+}
+
+.card-badge-top-left.badge-sold-out {
+  background-color: #1a0f14;
+  color: #FDFBF7;
+  border: 1px solid #B68D40;
+  letter-spacing: 1px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.card-badge-top-left.badge-low-stock {
+  background: linear-gradient(135deg, #b45309, #d97706);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.3);
+}
+
+.image-sold-out img.card-image {
+  filter: grayscale(30%) brightness(0.92);
+  opacity: 0.85;
+}
+
+.card-sold-out-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 10, 14, 0.4);
+  backdrop-filter: blur(1.5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.sold-out-pill-badge {
+  background: rgba(26, 15, 20, 0.92);
+  color: #ffffff;
+  border: 1px solid #B68D40;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  text-transform: uppercase;
+}
+
+.overlay-sold-out-banner {
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px;
+}
+
+.sold-out-text-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.price-muted {
+  opacity: 0.6;
+}
+
+.mobile-sold-out-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
 }
 
 /* Wishlist Heart */

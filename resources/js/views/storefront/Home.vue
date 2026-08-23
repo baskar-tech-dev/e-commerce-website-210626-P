@@ -180,13 +180,11 @@
     </section>
 
     <!-- 7. New Arrivals Section -->
-    <section class="section new-arrivals-section">
-      <div class="section-header text-center">
-        <span class="section-tag">Just Launched</span>
-        <h2 class="section-title">New Arrivals</h2>
-        <div class="header-line">
-          <span class="line"></span>
-          <span class="diamond">♦</span>
+    <section class="home-section luxury-new-arrivals">
+      <div class="container-fluid">
+        <div class="section-luxury-heading">
+          <span class="sub-title">FRESH OFF THE RUNWAY</span>
+          <h2 class="main-title">New Arrivals</h2>
           <span class="line"></span>
         </div>
       </div>
@@ -196,9 +194,12 @@
             v-for="product in visibleNewArrivalsProducts" 
             :key="product.id" 
             class="product-card"
+            :class="{ 'card-sold-out': isProductSoldOut(product) }"
           >
-            <span class="product-tag new-arrival">New</span>
-            <div class="product-image-container">
+            <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
+            <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
+            <span v-else class="product-tag new-arrival">New</span>
+            <div class="product-image-container" :class="{ 'image-sold-out': isProductSoldOut(product) }">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
                 <img 
                   v-protect-image
@@ -207,10 +208,13 @@
                   class="product-image"
                 />
               </router-link>
+              <div v-if="isProductSoldOut(product)" class="home-sold-out-overlay">
+                <span class="home-sold-out-pill">SOLD OUT</span>
+              </div>
               <button class="btn-wishlist" @click.stop="toggleWishlist(product)" aria-label="Toggle Wishlist">
                 <Heart :size="16" :class="{ 'heart-filled': isInWishlist(product.id) }" />
               </button>
-              <div class="quick-add">
+              <div class="quick-add" v-if="!isProductSoldOut(product)">
                 <span class="quick-add-title">Quick Add</span>
                 <div class="size-options">
                   <span @click.stop="quickAdd(product, 'Free Size')">Free Size</span>
@@ -224,7 +228,7 @@
                 <router-link :to="`/products/${product.uuid}`">{{ product.name }}</router-link>
               </h4>
               <div class="product-price">
-                <span class="current-price">{{ formatProductPrice(product) }}</span>
+                <span class="current-price" :class="{ 'price-muted': isProductSoldOut(product) }">{{ formatProductPrice(product) }}</span>
                 <span v-if="formatProductMrp(product)" class="old-price">{{ formatProductMrp(product) }}</span>
               </div>
               <div class="product-rating">
@@ -374,8 +378,9 @@
               v-for="product in tabProducts" 
               :key="product.id" 
               class="luxury-product-card"
+              :class="{ 'card-sold-out': isProductSoldOut(product) }"
             >
-              <div class="card-image-wrapper">
+              <div class="card-image-wrapper" :class="{ 'image-sold-out': isProductSoldOut(product) }">
                 <router-link :to="`/products/${product.uuid}`" class="card-image-link">
                   <img 
                     v-protect-image
@@ -385,17 +390,24 @@
                   />
                 </router-link>
                 
+                <!-- Sold Out Center Overlay -->
+                <div v-if="isProductSoldOut(product)" class="home-sold-out-overlay">
+                  <span class="home-sold-out-pill">SOLD OUT</span>
+                </div>
+
                 <!-- Wishlist -->
                 <button class="btn-card-wishlist" @click.stop="toggleWishlist(product)" aria-label="Add to Wishlist">
                   <Heart :size="16" :class="{ 'heart-filled': isInWishlist(product.id) }" />
                 </button>
 
-                <!-- New / Premium Badge -->
-                <span v-if="product.is_new_arrival" class="luxury-badge new">NEW</span>
+                <!-- New / Premium / Sold Out Badge -->
+                <span v-if="isProductSoldOut(product)" class="luxury-badge badge-sold-out">SOLD OUT</span>
+                <span v-else-if="isProductLowStock(product)" class="luxury-badge badge-low-stock">⚡ ONLY FEW LEFT</span>
+                <span v-else-if="product.is_new_arrival" class="luxury-badge new">NEW</span>
                 <span v-else-if="product.is_bestseller" class="luxury-badge best">BEST SELLER</span>
 
                 <!-- Quick Add Hover Overlay (matching Featured section style) -->
-                <div class="luxury-quick-add">
+                <div class="luxury-quick-add" v-if="!isProductSoldOut(product)">
                   <span class="luxury-quick-add-title">Quick Add</span>
                   <div class="luxury-size-options">
                     <span 
@@ -415,7 +427,7 @@
                 </h4>
 
                 <div class="luxury-price-row">
-                  <span class="selling-price">{{ formatProductPrice(product) }}</span>
+                  <span class="selling-price" :class="{ 'price-muted': isProductSoldOut(product) }">{{ formatProductPrice(product) }}</span>
                   <span v-if="formatProductMrp(product)" class="original-price">{{ formatProductMrp(product) }}</span>
                 </div>
 
@@ -1388,6 +1400,20 @@ const triggerMockToast = () => {
   }
 };
 
+const isProductSoldOut = (product) => {
+  if (!product) return false;
+  if (product.is_sold_out) return true;
+  if (!product.variants || product.variants.length === 0) return true;
+  return !product.variants.some(v => v.stock_quantity > 0);
+};
+
+const isProductLowStock = (product) => {
+  if (!product || isProductSoldOut(product)) return false;
+  if (product.is_low_stock) return true;
+  const total = product.variants?.reduce((sum, v) => sum + (v.stock_quantity || 0), 0) || 0;
+  return total > 0 && total <= 5;
+};
+
 const formatProductPrice = (product) => {
   if (!product) return '₹0.00';
   
@@ -1765,6 +1791,58 @@ onUnmounted(() => {
   aspect-ratio: 3/4;
   overflow: hidden;
   background-color: #FAF8F5;
+}
+
+.image-sold-out .luxury-product-image,
+.image-sold-out .product-image {
+  filter: grayscale(30%) brightness(0.92);
+  opacity: 0.85;
+}
+
+.home-sold-out-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 10, 14, 0.4);
+  backdrop-filter: blur(1px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.home-sold-out-pill {
+  background: rgba(26, 15, 20, 0.92);
+  color: #ffffff;
+  border: 1px solid #B68D40;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  text-transform: uppercase;
+}
+
+.badge-sold-out {
+  background-color: #1a0f14 !important;
+  color: #FDFBF7 !important;
+  border: 1px solid #B68D40 !important;
+  letter-spacing: 1px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.badge-low-stock {
+  background: linear-gradient(135deg, #b45309, #d97706) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.price-muted {
+  opacity: 0.6;
 }
 
 .luxury-quick-add {

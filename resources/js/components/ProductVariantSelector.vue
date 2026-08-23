@@ -41,11 +41,13 @@
 
       <button 
         class="btn boutique-add-to-cart-btn" 
+        :class="{ 'btn-sold-out-disabled': addToCartError === 'Out of Stock' || isAllSoldOut }"
         :disabled="!!addToCartError"
         @click="emit('add-to-cart')"
         aria-label="Add selected variant to shopping cart"
       >
-        🛒 Add to Cart
+        <span v-if="addToCartError === 'Out of Stock' || isAllSoldOut">Sold Out</span>
+        <span v-else>🛒 Add to Cart</span>
       </button>
     </div>
 
@@ -119,6 +121,15 @@ const props = defineProps({
     type: String,
     default: ''
   }
+});
+
+import { computed } from 'vue';
+
+const isAllSoldOut = computed(() => {
+  if (!props.product) return false;
+  if (props.product.is_sold_out) return true;
+  if (!props.product.variants || props.product.variants.length === 0) return true;
+  return !props.product.variants.some(v => v.stock_quantity > 0);
 });
 
 const emit = defineEmits([
