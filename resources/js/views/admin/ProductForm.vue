@@ -458,10 +458,91 @@
             </div>
           </div>
 
-          <!-- Storefront Badges & Visibility -->
-          <div style="background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--color-border); margin-top: 1.5rem;">
-            <div style="font-size: 0.9rem; font-weight: 600; color: var(--color-primary); margin-bottom: 1rem;">
-              Product Visibility & Badging
+          <!-- Storefront Badges, Occasion & Visibility -->
+          <div style="background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--color-border); margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.25rem;">
+                🎯 Product Badging & Occasion Tag
+              </div>
+              <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">
+                Choose an occasion and custom display badge shown on storefront product cards and listing filters.
+              </p>
+            </div>
+
+            <!-- Occasion Selector -->
+            <div>
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.5rem; display: block;">
+                Shop By Occasion Tag
+              </label>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem;">
+                <button
+                  type="button"
+                  v-for="occ in occasionPresets"
+                  :key="occ"
+                  @click="form.occasion = (form.occasion === occ ? '' : occ)"
+                  class="btn-badge-preset"
+                  :class="{ active: form.occasion === occ }"
+                >
+                  {{ occ }}
+                </button>
+              </div>
+              <div class="floating-label-group" style="margin-bottom: 0;">
+                <input 
+                  type="text" 
+                  v-model="form.occasion" 
+                  class="form-input" 
+                  :class="{'has-value': !!form.occasion}" 
+                  placeholder=" " 
+                  id="input_occasion" 
+                />
+                <label for="input_occasion" class="form-label">Custom Occasion (e.g. Wedding, Festive, Bridal)</label>
+              </div>
+            </div>
+
+            <!-- Product Card Badge Selector -->
+            <div>
+              <label class="form-label" style="font-size: 0.825rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 0.5rem; display: block;">
+                Card Corner Badge (e.g. Top-Left Highlight)
+              </label>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem;">
+                <button
+                  type="button"
+                  v-for="b in badgePresets"
+                  :key="b"
+                  @click="form.badge = (form.badge === b ? '' : b)"
+                  class="btn-badge-preset"
+                  :class="{ active: form.badge === b }"
+                >
+                  {{ b }}
+                </button>
+                <button
+                  type="button"
+                  v-if="form.badge"
+                  @click="form.badge = ''"
+                  class="btn-badge-preset"
+                  style="border-color: #ef4444; color: #ef4444;"
+                >
+                  ✕ Clear Badge
+                </button>
+              </div>
+              <div class="floating-label-group" style="margin-bottom: 0;">
+                <input 
+                  type="text" 
+                  v-model="form.badge" 
+                  class="form-input" 
+                  :class="{'has-value': !!form.badge}" 
+                  placeholder=" " 
+                  id="input_badge" 
+                />
+                <label for="input_badge" class="form-label">Custom Badge Text (e.g. Bridal Special, Trending Now)</label>
+              </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--color-border); margin: 0.5rem 0;" />
+
+            <!-- Visibility Toggles -->
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: -0.5rem;">
+              Visibility & Merchandising Toggles
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 1.5rem;">
               <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
@@ -1397,6 +1478,7 @@ import { useCategoryStore } from '../../stores/category';
 import { useTagStore } from '../../stores/tag';
 import { useColorStore } from '../../stores/color';
 import { useSizeStore } from '../../stores/size';
+import { compressImage } from '../../utils/imageCompressor';
 
 const route = useRoute();
 const router = useRouter();
@@ -1448,6 +1530,8 @@ const form = ref({
   is_featured: false,
   is_new_arrival: false,
   is_bestseller: false,
+  badge: '',
+  occasion: '',
   is_returnable: true,
   reviews_enabled: true,
   return_window_days: 7,
@@ -1458,6 +1542,29 @@ const form = ref({
   variants: [],
   images: [],
 });
+
+const occasionPresets = [
+  'Bridal', 'Wedding', 'Festive', 'Party Wear', 'Traditional', 'Casual & Daily', 'Workwear'
+];
+
+const badgePresets = ref([
+  'New Arrival', 'Bestseller', 'Trending', 'Premium Collection', 'Designer', 
+  'Embroidered', 'Mirror Work', 'Stone Work', 'Floral Collection', 'Temple Collection',
+  'Bridal Special', 'Festive Wear', 'Wedding Edit', 'Party Wear', 'Exclusive'
+]);
+
+const fetchConfiguredBadges = async () => {
+  try {
+    const res = await axios.get('/api/storefront/edit-badges');
+    if (res.data && res.data.success && Array.isArray(res.data.data)) {
+      const labels = res.data.data.map(b => b.badge_name || b.label).filter(Boolean);
+      const combined = [...new Set([...badgePresets.value, ...labels])];
+      badgePresets.value = combined;
+    }
+  } catch (err) {
+    // fallback
+  }
+};
 
 const standardGstSlabs = [
   { value: 5.00, label: '5% (Apparel & Blouses ≤ ₹1,000)' },
@@ -1872,6 +1979,7 @@ onMounted(async () => {
   categoryStore.fetchCategories();
   tagStore.fetchTags();
   colorStore.fetchActiveColors();
+  fetchConfiguredBadges();
   await sizeStore.fetchActiveSizeGroups();
   if (sizeStore.activeSizeGroups && sizeStore.activeSizeGroups.length > 0 && !selectedSizeGroupId.value) {
     selectedSizeGroupId.value = sizeStore.activeSizeGroups[0].id;
@@ -1901,6 +2009,8 @@ onMounted(async () => {
           is_featured: prod.is_featured,
           is_new_arrival: prod.is_new_arrival,
           is_bestseller: prod.is_bestseller,
+          badge: prod.badge || '',
+          occasion: prod.occasion || '',
           is_returnable: prod.is_returnable,
           return_window_days: prod.return_window_days || 7,
           meta_title: prod.meta_title || '',
@@ -2128,17 +2238,10 @@ function handleDrop(e, colorGroup) {
 }
 
 async function uploadFile(file, colorGroup) {
-  const valFormData = new FormData();
-  valFormData.append('file', file);
-
-  try {
-    const valRes = await axios.post('/api/admin/media/validate', valFormData);
-    if (!valRes.data.success) {
-      alert(`Validation error: ${valRes.data.message}`);
-      return;
-    }
-  } catch (err) {
-    alert(`File validation failed: ${err.response?.data?.message || err.message}`);
+  // 1. Client-side security and mime check
+  const allowedMimes = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/webp', 'image/avif'];
+  if (!allowedMimes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|avif)$/i)) {
+    alert(`Invalid file format for ${file.name}. Supported formats: JPG, PNG, WEBP, AVIF.`);
     return;
   }
 
@@ -2146,25 +2249,30 @@ async function uploadFile(file, colorGroup) {
   const uploadItem = ref({
     id: uploadId,
     name: file.name,
-    progress: 0,
+    progress: 10,
     status: 'uploading',
   });
   uploadsInProgress.value.push(uploadItem.value);
 
-  const fd = new FormData();
-  fd.append('file', file);
-  if (colorGroup) fd.append('color_group', colorGroup);
-  if (route.params.id) fd.append('product_id', route.params.id);
-
   try {
+    // 2. Client-side smart image compression (compresses to 200KB-400KB range)
+    const fileToUpload = await compressImage(file, 1800, 400, 200);
+    const activeItem = uploadsInProgress.value.find(item => item.id === uploadId);
+    if (activeItem) activeItem.progress = 25;
+
+    const fd = new FormData();
+    fd.append('file', fileToUpload);
+    if (colorGroup) fd.append('color_group', colorGroup);
+    if (route.params.id) fd.append('product_id', route.params.id);
+
     const res = await axios.post('/api/admin/media/upload', fd, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
       onUploadProgress: (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        const active = uploadsInProgress.value.find(item => item.id === uploadId);
-        if (active) active.progress = percentCompleted;
+        const item = uploadsInProgress.value.find(i => i.id === uploadId);
+        if (item) item.progress = Math.max(25, percentCompleted);
       }
     });
 
@@ -2186,11 +2294,16 @@ async function uploadFile(file, colorGroup) {
     }
   } catch (err) {
     const active = uploadsInProgress.value.find(item => item.id === uploadId);
+    const is413 = err.response?.status === 413;
+    const errorMsg = is413
+      ? 'File size is too large (HTTP 413). Please choose a compressed photo.'
+      : (err.response?.data?.message || err.message || 'Upload failed');
+
     if (active) {
       active.status = 'failed';
-      active.error = err.response?.data?.message || 'Upload failed';
+      active.error = errorMsg;
     }
-    alert(`Failed to upload ${file.name}: ${err.response?.data?.message || err.message}`);
+    alert(`Failed to upload ${file.name}: ${errorMsg}`);
   } finally {
     setTimeout(() => {
       uploadsInProgress.value = uploadsInProgress.value.filter(item => item.id !== uploadId);
@@ -2898,5 +3011,34 @@ async function submitForm(requireFullValidation = true) {
   .btn-nav-action {
     width: 100%;
   }
+}
+
+.btn-badge-preset {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-badge-preset:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(91, 22, 58, 0.05);
+}
+
+.btn-badge-preset.active {
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 2px 6px rgba(91, 22, 58, 0.22);
+  font-weight: 600;
 }
 </style>

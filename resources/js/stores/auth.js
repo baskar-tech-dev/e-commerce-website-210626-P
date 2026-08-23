@@ -92,7 +92,8 @@ export const useAuthStore = defineStore('auth', {
       } catch (err) {
         if (err.response?.status === 422) {
           this.validationErrors = err.response.data.errors || {};
-          this.error = err.response.data.message || 'Registration failed. Please check inputs.';
+          const firstErr = Object.values(this.validationErrors)[0]?.[0];
+          this.error = firstErr || err.response.data.message || 'Registration failed. Please check inputs.';
         } else {
           this.error = err.response?.data?.message || 'Failed to create account. Please try again.';
         }

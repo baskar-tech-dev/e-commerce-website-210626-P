@@ -51,6 +51,22 @@ class StorefrontProductController extends Controller
             $query->where('is_bestseller', filter_var($request->input('is_bestseller'), FILTER_VALIDATE_BOOLEAN));
         }
 
+        // Occasion Filter
+        if ($request->filled('occasion')) {
+            $query->where('occasion', $request->input('occasion'));
+        }
+
+        // Badge Filter (supports assigned badge, occasion tag, name matching)
+        if ($request->filled('badge')) {
+            $badgeVal = trim($request->input('badge'));
+            $query->where(function ($q) use ($badgeVal) {
+                $q->where('badge', 'like', "%{$badgeVal}%")
+                  ->orWhere('occasion', 'like', "%{$badgeVal}%")
+                  ->orWhere('name', 'like', "%{$badgeVal}%")
+                  ->orWhere('description', 'like', "%{$badgeVal}%");
+            });
+        }
+
         // Price Filter
         if ($request->filled('min_price')) {
             $query->where('selling_price', '>=', (float) $request->input('min_price'));
@@ -158,5 +174,39 @@ class StorefrontProductController extends Controller
         ]);
     }
 
+    /**
+     * Get the configured section badges for "The Maya Sree Edit" on Homepage.
+     */
+    public function getEditBadges(): JsonResponse
+    {
+        $raw = \App\Models\Setting::get('maya_sree_edit_badges');
+        if (!empty($raw)) {
+            $badges = is_string($raw) ? json_decode($raw, true) : $raw;
+            if (is_array($badges) && count($badges) > 0) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $badges,
+                ]);
+            }
+        }
 
+        // Default Maya Sree Edit badges
+        $defaultBadges = [
+            ['id' => 'NEW_ARRIVALS', 'label' => 'New Arrivals', 'active' => true, 'type' => 'new_arrival'],
+            ['id' => 'BEST_SELLERS', 'label' => 'Best Sellers', 'active' => true, 'type' => 'bestseller'],
+            ['id' => 'TRENDING', 'label' => 'Trending', 'active' => true, 'type' => 'featured'],
+            ['id' => 'PREMIUM_COLLECTION', 'label' => 'Premium Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Premium Collection'],
+            ['id' => 'DESIGNER', 'label' => 'Designer', 'active' => true, 'type' => 'badge', 'badge_name' => 'Designer'],
+            ['id' => 'EMBROIDERED', 'label' => 'Embroidered', 'active' => true, 'type' => 'badge', 'badge_name' => 'Embroidered'],
+            ['id' => 'MIRROR_WORK', 'label' => 'Mirror Work', 'active' => true, 'type' => 'badge', 'badge_name' => 'Mirror Work'],
+            ['id' => 'STONE_WORK', 'label' => 'Stone Work', 'active' => true, 'type' => 'badge', 'badge_name' => 'Stone Work'],
+            ['id' => 'FLORAL_COLLECTION', 'label' => 'Floral Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Floral Collection'],
+            ['id' => 'TEMPLE_COLLECTION', 'label' => 'Temple Collection', 'active' => true, 'type' => 'badge', 'badge_name' => 'Temple Collection'],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $defaultBadges,
+        ]);
+    }
 }

@@ -280,6 +280,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useCategoryStore } from '../../stores/category';
+import { compressImage } from '../../utils/imageCompressor';
 import axios from 'axios';
 
 const categoryStore = useCategoryStore();
@@ -411,11 +412,12 @@ async function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const formData = new FormData();
-  formData.append('file', file);
-
   imageUploading.value = true;
   try {
+    const fileToUpload = await compressImage(file, 1800, 400, 200);
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+
     const res = await axios.post('/api/admin/media/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -427,7 +429,10 @@ async function handleImageUpload(event) {
       alert('Upload failed: ' + res.data.message);
     }
   } catch (err) {
-    alert('Upload error: ' + (err.response?.data?.message || err.message));
+    const msg = err.response?.status === 413
+      ? 'File size is too large (HTTP 413). Please select a compressed photo.'
+      : (err.response?.data?.message || err.message);
+    alert('Upload error: ' + msg);
   } finally {
     imageUploading.value = false;
     if (event.target) event.target.value = '';
@@ -442,11 +447,12 @@ async function handleSizeChartUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const formData = new FormData();
-  formData.append('file', file);
-
   sizeChartUploading.value = true;
   try {
+    const fileToUpload = await compressImage(file, 1800, 400, 200);
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+
     const res = await axios.post('/api/admin/media/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -458,7 +464,10 @@ async function handleSizeChartUpload(event) {
       alert('Upload failed: ' + res.data.message);
     }
   } catch (err) {
-    alert('Upload error: ' + (err.response?.data?.message || err.message));
+    const msg = err.response?.status === 413
+      ? 'File size is too large (HTTP 413). Please select a compressed photo.'
+      : (err.response?.data?.message || err.message);
+    alert('Upload error: ' + msg);
   } finally {
     sizeChartUploading.value = false;
     if (event.target) event.target.value = '';

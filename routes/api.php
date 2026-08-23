@@ -85,6 +85,8 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/welcome-gift', [\App\Http\Controllers\Api\v1\StorefrontWelcomeGiftController::class, 'index']);
     Route::get('storefront/indian-states', [StorefrontCheckoutController::class, 'getIndianStates']);
     Route::get('storefront/shipping-rates', [StorefrontCheckoutController::class, 'getShippingRates']);
+    Route::get('storefront/edit-badges', [StorefrontProductController::class, 'getEditBadges']);
+    Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
 
     // Public Product Reviews
     Route::get('products/{product}/reviews', [ProductReviewController::class, 'index']);
@@ -195,6 +197,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::get('reviews/{id}', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'show']);
         Route::patch('reviews/{id}/status', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'updateStatus']);
         Route::delete('reviews/{id}', [\App\Http\Controllers\Api\v1\Admin\ReviewController::class, 'destroy']);
+
+        // WhatsApp Club & Subscribers Leads
+        Route::get('subscribers', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'index']);
     });
 
     // Order Management (requires 'manage_orders')

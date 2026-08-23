@@ -165,6 +165,29 @@
           </div>
         </div>
 
+        <!-- Occasion Section -->
+        <div class="filter-card">
+          <div class="filter-card-header" @click="toggleSection('occasion')">
+            <span class="filter-section-name">Occasion</span>
+            <ChevronUp v-if="openSections.occasion" :size="16" />
+            <ChevronDown v-else :size="16" />
+          </div>
+          <div v-show="openSections.occasion" class="filter-card-body">
+            <div class="filter-options-list">
+              <label class="custom-checkbox-option" v-for="occ in ['Bridal', 'Wedding', 'Festive', 'Party Wear', 'Traditional', 'Casual & Daily', 'Workwear']" :key="occ">
+                <input 
+                  type="checkbox" 
+                  :value="occ" 
+                  :checked="filters.occasion === occ"
+                  @change="filters.occasion = (filters.occasion === occ ? '' : occ); fetchProducts(1)" 
+                />
+                <span class="checkbox-indicator"></span>
+                <span class="option-label">{{ occ }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- Availability Section -->
         <div class="filter-card">
           <div class="filter-card-header" @click="toggleSection('availability')">
@@ -280,11 +303,20 @@
                 <div class="card-badge-top-left badge-low-stock" v-else-if="isProductLowStock(product)">
                   ⚡ ONLY FEW LEFT
                 </div>
+                <div class="card-badge-top-left badge-custom" v-else-if="product.badge">
+                  {{ product.badge }}
+                </div>
+                <div class="card-badge-top-left badge-occasion" v-else-if="product.occasion">
+                  {{ product.occasion }}
+                </div>
                 <div class="card-badge-top-left" v-else-if="getProductDiscount(product)">
                   {{ getProductDiscount(product) }}% OFF
                 </div>
-                <div class="card-badge-top-left best-seller" v-else-if="product.avg_rating >= 4.5">
+                <div class="card-badge-top-left best-seller" v-else-if="product.avg_rating >= 4.5 || product.is_bestseller">
                   Best Seller
+                </div>
+                <div class="card-badge-top-left badge-featured" v-else-if="product.is_featured">
+                  Featured
                 </div>
 
                 <!-- Sold Out Center Overlay Ribbon -->
@@ -703,6 +735,8 @@ const filters = ref({
   max_price: 10000,
   sort_by: 'newest',
   in_stock_only: false,
+  occasion: '',
+  badge: '',
 });
 
 const PRICE_MIN = 0;
@@ -861,6 +895,8 @@ const fetchProducts = async (page = 1) => {
       max_price: filters.value.max_price,
       sort_by: filters.value.sort_by === 'popularity' ? 'rating' : filters.value.sort_by,
       in_stock_only: filters.value.in_stock_only ? 1 : undefined,
+      occasion: filters.value.occasion || undefined,
+      badge: filters.value.badge || undefined,
     };
 
     const response = await axios.get('/api/storefront/products', { params });
@@ -897,7 +933,7 @@ const fetchFilterMetadata = async () => {
       categories.value = rawCats;
 
       // Default the active category to blouses if no category_id is pre-selected in route query
-      if (!route.query.category_id) {
+      if (!route.query.category_id && !route.query.occasion && !route.query.badge) {
         const blouseCat = categories.value.find(c => {
           const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
           return name === 'readymadeblouses' || name.includes('readymadeblouse') || name === 'blouses';
@@ -926,6 +962,8 @@ const resetFilters = () => {
     max_price: 10000,
     sort_by: 'newest',
     in_stock_only: false,
+    occasion: '',
+    badge: '',
   };
   mockFilters.value = {
     size: '',
@@ -942,13 +980,20 @@ watch(
   (newQuery) => {
     if (newQuery.category_id) {
       filters.value.category_id = newQuery.category_id;
-    } else {
-      // If no category_id is set in query, we default to blouses if metadata is already loaded
+    } else if (!newQuery.occasion && !newQuery.badge) {
       const blouseCat = categories.value.find(c => {
         const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
         return name === 'readymadeblouses' || name.includes('readymadeblouse') || name === 'blouses';
       });
       filters.value.category_id = blouseCat ? blouseCat.id : '';
+    } else {
+      filters.value.category_id = '';
+    }
+    if (newQuery.occasion) {
+      filters.value.occasion = newQuery.occasion;
+    }
+    if (newQuery.badge) {
+      filters.value.badge = newQuery.badge;
     }
     if (newQuery.search) {
       filters.value.search = newQuery.search;

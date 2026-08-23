@@ -18,7 +18,20 @@ class ProductRepository implements ProductRepositoryInterface
         }]);
 
         if (isset($filters['category_id']) && $filters['category_id'] !== '') {
-            $query->where('category_id', $filters['category_id']);
+            $categoryId = (int) $filters['category_id'];
+            $categoryIds = \App\Models\Category::where('parent_id', $categoryId)
+                ->pluck('id')
+                ->push($categoryId)
+                ->toArray();
+            $query->whereIn('category_id', $categoryIds);
+        }
+
+        if (!empty($filters['badge'])) {
+            $query->where('badge', 'like', "%{$filters['badge']}%");
+        }
+
+        if (!empty($filters['occasion'])) {
+            $query->where('occasion', $filters['occasion']);
         }
 
 

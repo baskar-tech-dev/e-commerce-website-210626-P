@@ -25,7 +25,7 @@
             "
         >
             <button
-                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews']"
+                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews', 'edit_badges']"
                 :key="tab"
                 type="button"
                 @click="activeTab = tab"
@@ -51,6 +51,9 @@
                 >
                 <span v-else-if="tab === 'reviews'"
                     >⭐ Product Reviews</span
+                >
+                <span v-else-if="tab === 'edit_badges'"
+                    >✨ Maya Sree Edit Badges</span
                 >
             </button>
         </div>
@@ -1576,6 +1579,126 @@
                     </div>
                 </div>
 
+                <!-- TAB 8: THE MAYA SREE EDIT SECTION BADGES -->
+                <div v-if="activeTab === 'edit_badges'">
+                    <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
+                        ✨ "The Maya Sree Edit" Section Badges & Collection Tabs
+                    </div>
+                    <p style="color: var(--color-text-muted); font-size: 0.88rem; margin-bottom: var(--spacing-md); line-height: 1.5;">
+                        Configure the collection badge tabs shown on the storefront homepage under <strong>"The Maya Sree Edit"</strong>. Create custom badges, reorder them, or toggle their visibility. In the <strong>Product Management form</strong>, you can assign these badges to products so they appear under each tab.
+                    </p>
+
+                    <!-- Badges Table -->
+                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; margin-bottom: var(--spacing-md);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 600px;">
+                            <thead>
+                                <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
+                                    <th style="padding: 10px 14px; width: 45px;">#</th>
+                                    <th style="padding: 10px 14px;">Badge / Tab Title</th>
+                                    <th style="padding: 10px 14px;">Filter Behavior</th>
+                                    <th style="padding: 10px 14px; text-align: center; width: 80px;">Active</th>
+                                    <th style="padding: 10px 14px; text-align: center; width: 100px;">Order</th>
+                                    <th style="padding: 10px 14px; text-align: center; width: 70px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr 
+                                    v-for="(badge, index) in settings.edit_badges.maya_sree_edit_badges" 
+                                    :key="index"
+                                    style="border-bottom: 1px solid #f1e9df;"
+                                >
+                                    <td style="padding: 10px 14px; font-weight: bold; color: var(--color-text-muted);">
+                                        {{ index + 1 }}
+                                    </td>
+                                    <td style="padding: 10px 14px;">
+                                        <input 
+                                            type="text" 
+                                            v-model="badge.label" 
+                                            class="form-input" 
+                                            style="padding: 6px 10px; font-size: 0.85rem;" 
+                                            placeholder="Badge Title (e.g. Mirror Work)"
+                                            required
+                                        />
+                                    </td>
+                                    <td style="padding: 10px 14px;">
+                                        <select 
+                                            v-model="badge.type" 
+                                            class="form-input" 
+                                            style="padding: 6px 10px; font-size: 0.85rem;"
+                                        >
+                                            <option value="badge">Custom Assigned Badge / Keyword Match</option>
+                                            <option value="new_arrival">⚡ New Arrivals Auto Filter</option>
+                                            <option value="bestseller">🏆 Best Sellers Auto Filter</option>
+                                            <option value="featured">✨ Trending / Featured Auto Filter</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 10px 14px; text-align: center;">
+                                        <input 
+                                            type="checkbox" 
+                                            v-model="badge.active" 
+                                            style="width: 18px; height: 18px; cursor: pointer;" 
+                                        />
+                                    </td>
+                                    <td style="padding: 10px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 4px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === 0" 
+                                                @click="moveBadge(index, -1)"
+                                                title="Move Up"
+                                            >
+                                                ▲
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === settings.edit_badges.maya_sree_edit_badges.length - 1" 
+                                                @click="moveBadge(index, 1)"
+                                                title="Move Down"
+                                            >
+                                                ▼
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 10px 14px; text-align: center;">
+                                        <button 
+                                            type="button" 
+                                            class="btn btn--secondary btn--sm" 
+                                            style="padding: 2px 8px; color: #e11d48; border-color: rgba(225,29,72,0.3);" 
+                                            @click="removeBadge(index)" 
+                                            title="Delete Badge"
+                                        >
+                                            ✕
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; gap: var(--spacing-sm); align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                        <button 
+                            type="button" 
+                            class="btn btn--secondary" 
+                            style="font-size: 0.85rem; padding: 6px 14px;" 
+                            @click="addNewBadge"
+                        >
+                            ➕ Add New Section Badge / Tab
+                        </button>
+                        <button 
+                            type="button" 
+                            class="btn btn--secondary" 
+                            style="font-size: 0.82rem; padding: 6px 12px; color: #6E1F3A;" 
+                            @click="resetToDefaultBadges"
+                        >
+                            ↺ Reset to Defaults
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div
                     style="
@@ -1767,7 +1890,63 @@ const settings = ref({
         max_images_per_review: 4,
         max_image_size_kb: 200,
     },
+    edit_badges: {
+        maya_sree_edit_badges: [
+            { id: 'NEW_ARRIVALS', label: 'New Arrivals', active: true, type: 'new_arrival' },
+            { id: 'BEST_SELLERS', label: 'Best Sellers', active: true, type: 'bestseller' },
+            { id: 'TRENDING', label: 'Trending', active: true, type: 'featured' },
+            { id: 'PREMIUM_COLLECTION', label: 'Premium Collection', active: true, type: 'badge', badge_name: 'Premium Collection' },
+            { id: 'DESIGNER', label: 'Designer', active: true, type: 'badge', badge_name: 'Designer' },
+            { id: 'EMBROIDERED', label: 'Embroidered', active: true, type: 'badge', badge_name: 'Embroidered' },
+            { id: 'MIRROR_WORK', label: 'Mirror Work', active: true, type: 'badge', badge_name: 'Mirror Work' },
+            { id: 'STONE_WORK', label: 'Stone Work', active: true, type: 'badge', badge_name: 'Stone Work' },
+            { id: 'FLORAL_COLLECTION', label: 'Floral Collection', active: true, type: 'badge', badge_name: 'Floral Collection' },
+            { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', active: true, type: 'badge', badge_name: 'Temple Collection' }
+        ]
+    }
 });
+
+const defaultEditBadges = [
+    { id: 'NEW_ARRIVALS', label: 'New Arrivals', active: true, type: 'new_arrival' },
+    { id: 'BEST_SELLERS', label: 'Best Sellers', active: true, type: 'bestseller' },
+    { id: 'TRENDING', label: 'Trending', active: true, type: 'featured' },
+    { id: 'PREMIUM_COLLECTION', label: 'Premium Collection', active: true, type: 'badge', badge_name: 'Premium Collection' },
+    { id: 'DESIGNER', label: 'Designer', active: true, type: 'badge', badge_name: 'Designer' },
+    { id: 'EMBROIDERED', label: 'Embroidered', active: true, type: 'badge', badge_name: 'Embroidered' },
+    { id: 'MIRROR_WORK', label: 'Mirror Work', active: true, type: 'badge', badge_name: 'Mirror Work' },
+    { id: 'STONE_WORK', label: 'Stone Work', active: true, type: 'badge', badge_name: 'Stone Work' },
+    { id: 'FLORAL_COLLECTION', label: 'Floral Collection', active: true, type: 'badge', badge_name: 'Floral Collection' },
+    { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', active: true, type: 'badge', badge_name: 'Temple Collection' }
+];
+
+const addNewBadge = () => {
+    const newId = 'BADGE_' + Date.now();
+    settings.value.edit_badges.maya_sree_edit_badges.push({
+        id: newId,
+        label: 'New Badge',
+        active: true,
+        type: 'badge',
+        badge_name: 'New Badge'
+    });
+};
+
+const removeBadge = (index) => {
+    settings.value.edit_badges.maya_sree_edit_badges.splice(index, 1);
+};
+
+const moveBadge = (index, direction) => {
+    const list = settings.value.edit_badges.maya_sree_edit_badges;
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const item = list.splice(index, 1)[0];
+    list.splice(targetIndex, 0, item);
+};
+
+const resetToDefaultBadges = () => {
+    if (confirm('Reset section badges to default configuration?')) {
+        settings.value.edit_badges.maya_sree_edit_badges = JSON.parse(JSON.stringify(defaultEditBadges));
+    }
+};
 
 const availableCoupons = ref([]);
 const fetchCoupons = async () => {
@@ -1989,6 +2168,15 @@ const fetchSettings = async () => {
                         : 200,
                 };
             }
+
+            if (data.edit_badges && data.edit_badges.maya_sree_edit_badges) {
+                const loadedBadges = typeof data.edit_badges.maya_sree_edit_badges === 'string'
+                    ? JSON.parse(data.edit_badges.maya_sree_edit_badges)
+                    : data.edit_badges.maya_sree_edit_badges;
+                if (Array.isArray(loadedBadges) && loadedBadges.length > 0) {
+                    settings.value.edit_badges.maya_sree_edit_badges = loadedBadges;
+                }
+            }
         }
     } catch (err) {
         console.error("Failed to load store settings:", err);
@@ -2033,6 +2221,9 @@ const saveSettings = async () => {
                 },
                 reviews: {
                     ...settings.value.reviews,
+                },
+                edit_badges: {
+                    maya_sree_edit_badges: settings.value.edit_badges.maya_sree_edit_badges,
                 },
             },
         };

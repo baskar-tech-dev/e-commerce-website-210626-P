@@ -43,6 +43,8 @@ class ProductResource extends JsonResource
             'is_featured' => $this->is_featured,
             'is_new_arrival' => $this->is_new_arrival,
             'is_bestseller' => $this->is_bestseller,
+            'badge' => $this->badge,
+            'occasion' => $this->occasion,
             'is_returnable' => $this->is_returnable,
             'return_window_days' => $this->return_window_days,
             'total_stock' => $this->total_stock,

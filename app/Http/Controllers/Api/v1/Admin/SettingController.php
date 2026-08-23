@@ -35,7 +35,7 @@ class SettingController extends Controller
             if (!is_array($pairs)) continue;
             foreach ($pairs as $key => $value) {
                 $type = null;
-                if ($group === 'announcement' || ($group === 'shipping' && $key === 'state_rates')) {
+                if ($group === 'announcement' || $group === 'edit_badges' || $key === 'maya_sree_edit_badges' || ($group === 'shipping' && $key === 'state_rates')) {
                     $type = 'json';
                 } elseif ($group === 'welcome_gift' && $key === 'is_enabled') {
                     $type = 'boolean';

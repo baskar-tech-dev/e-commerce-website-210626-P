@@ -376,7 +376,7 @@
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; padding: var(--spacing-md) 40px; border-top: 1px solid #4a1936; margin-top: var(--spacing-lg); flex-wrap: wrap; gap: var(--spacing-md);">
         <div style="font-size: 0.8rem; color: #a18a96;">
-          © 2026 MAYA SREE FASHION South India. All Rights Reserved.
+          © 2026 MAYA SREE FASHION. All Rights Reserved.
         </div>
         <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
           <router-link to="/privacy-policy" style="color: #a18a96; text-decoration: none; font-size: 0.78rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a18a96'">Privacy Policy</router-link>

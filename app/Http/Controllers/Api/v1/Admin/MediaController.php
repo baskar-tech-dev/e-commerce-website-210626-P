@@ -19,7 +19,7 @@ class MediaController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,webp,avif|max:10240', // max 10MB
+            'file' => 'required|image|mimes:jpeg,png,jpg,webp,avif|max:30720', // max 30MB
             'product_id' => 'nullable|integer|exists:products,id',
             'color_group' => 'nullable|string|max:50',
             'variant_id' => 'nullable|integer|exists:product_variants,id',
@@ -76,8 +76,8 @@ class MediaController extends Controller
         $fullWebpPath = Storage::disk('public')->path($webpPath);
         $fullThumbPath = Storage::disk('public')->path($thumbPath);
 
-        $successWebp = $this->resizeAndConvertWebp($sourcePath, $fullWebpPath, 1200);
-        $successThumb = $this->resizeAndConvertWebp($sourcePath, $fullThumbPath, 200);
+        $successWebp = $this->resizeAndConvertWebp($sourcePath, $fullWebpPath, 1600, 85);
+        $successThumb = $this->resizeAndConvertWebp($sourcePath, $fullThumbPath, 300, 80);
 
         if (!$successWebp && !file_exists($fullWebpPath)) {
             @copy($sourcePath, $fullWebpPath);
@@ -151,7 +151,7 @@ class MediaController extends Controller
     public function validateImage(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:30720',
         ]);
 
         $file = $request->file('file');

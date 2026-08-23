@@ -10,7 +10,7 @@
   </div>
 
   <!-- Filters panel -->
-  <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+  <div class="glass-panel" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
       
       <div class="form-group" style="margin-bottom: 0;">
@@ -26,18 +26,17 @@
 
       <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Category</label>
-        <select v-model="filters.category_id" class="form-input" @change="applyFilters">
+        <select v-model="filters.category_id" class="form-input" @change="applyFilters(true)">
           <option value="">All Categories</option>
           <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.name }}
+            {{ cat.parent_id ? '— ' : '' }}{{ cat.name }}
           </option>
         </select>
       </div>
 
-
       <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Status</label>
-        <select v-model="filters.is_active" class="form-input" @change="applyFilters">
+        <select v-model="filters.is_active" class="form-input" @change="applyFilters(true)">
           <option value="">All Statuses</option>
           <option value="true">🟢 Active (Published)</option>
           <option value="false">📝 Draft (Unpublished)</option>
@@ -46,13 +45,19 @@
 
       <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">Sort By</label>
-        <select v-model="filters.sort_by" class="form-input" @change="applyFilters">
+        <select v-model="filters.sort_by" class="form-input" @change="applyFilters(true)">
           <option value="created_at_desc">Newest First</option>
           <option value="price_asc">Price: Low to High</option>
           <option value="price_desc">Price: High to Low</option>
           <option value="name_asc">Name: A to Z</option>
           <option value="name_desc">Name: Z to A</option>
         </select>
+      </div>
+
+      <div v-if="hasActiveFilters" class="form-group" style="margin-bottom: 0;">
+        <button type="button" class="btn btn--secondary" style="width: 100%; padding: 0.55rem;" @click="resetFilters">
+          ✕ Reset Filters
+        </button>
       </div>
 
     </div>
@@ -271,23 +276,45 @@ const products = computed(() => productStore.products);
 const pagination = computed(() => productStore.pagination);
 const categories = computed(() => categoryStore.categories);
 
+const hasActiveFilters = computed(() => {
+  return !!(
+    filters.value.search || 
+    filters.value.category_id || 
+    filters.value.is_active !== '' || 
+    filters.value.sort_by !== 'created_at_desc'
+  );
+});
+
 // Debouncing search inputs
 let searchTimeout = null;
 function debouncedSearch() {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    filters.value.page = 1;
-    applyFilters();
+    applyFilters(true);
   }, 400);
 }
 
-function applyFilters() {
+function applyFilters(resetPage = true) {
+  if (resetPage) {
+    filters.value.page = 1;
+  }
   productStore.fetchProducts(filters.value);
+}
+
+function resetFilters() {
+  filters.value = {
+    search: '',
+    category_id: '',
+    is_active: '',
+    sort_by: 'created_at_desc',
+    page: 1,
+  };
+  applyFilters(true);
 }
 
 function changePage(page) {
   filters.value.page = page;
-  applyFilters();
+  applyFilters(false);
 }
 
 function getPrimaryImage(product) {

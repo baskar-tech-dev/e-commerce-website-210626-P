@@ -85,8 +85,13 @@
             v-for="product in visibleFeaturedProducts" 
             :key="product.id" 
             class="product-card"
+            :class="{ 'card-sold-out': isProductSoldOut(product) }"
           >
-            <span class="product-tag selling-fast">Featured</span>
+            <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
+            <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
+            <span v-else-if="product.badge" class="product-tag selling-fast">{{ product.badge }}</span>
+            <span v-else-if="product.occasion" class="product-tag selling-fast">{{ product.occasion }}</span>
+            <span v-else class="product-tag selling-fast">Featured</span>
             <div class="product-image-container">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
                 <img 
@@ -180,11 +185,13 @@
     </section>
 
     <!-- 7. New Arrivals Section -->
-    <section class="home-section luxury-new-arrivals">
-      <div class="container-fluid">
-        <div class="section-luxury-heading">
-          <span class="sub-title">FRESH OFF THE RUNWAY</span>
-          <h2 class="main-title">New Arrivals</h2>
+    <section class="section new-arrivals-section">
+      <div class="section-header text-center">
+        <span class="section-tag">Fresh Off The Runway</span>
+        <h2 class="section-title">New Arrivals</h2>
+        <div class="header-line">
+          <span class="line"></span>
+          <span class="diamond">♦</span>
           <span class="line"></span>
         </div>
       </div>
@@ -198,6 +205,8 @@
           >
             <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
             <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
+            <span v-else-if="product.badge" class="product-tag new-arrival">{{ product.badge }}</span>
+            <span v-else-if="product.occasion" class="product-tag new-arrival">{{ product.occasion }}</span>
             <span v-else class="product-tag new-arrival">New</span>
             <div class="product-image-container" :class="{ 'image-sold-out': isProductSoldOut(product) }">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
@@ -1116,43 +1125,75 @@ const visibleNewArrivalsProducts = computed(() => {
     : newArrivalsProducts.value.slice(0, 6);
 });
 
-// New and Popular Tabs Section Data
+// New and Popular Tabs Section Data (The Maya Sree Edit)
 const tabsContainerRef = ref(null);
 const carouselScrollRef = ref(null);
 const activeTab = ref('NEW_ARRIVALS');
 const tabProducts = ref([]);
 const isTabLoading = ref(false);
 
-const tabs = [
-  { id: 'NEW_ARRIVALS', label: 'New Arrivals', query: { is_new_arrival: 1 } },
-  { id: 'BEST_SELLERS', label: 'Best Sellers', query: { is_bestseller: 1 } },
-  { id: 'TRENDING', label: 'Trending', query: { is_featured: 1 } },
-  { id: 'PREMIUM_COLLECTION', label: 'Premium Collection', query: { search: 'Premium' } },
-  { id: 'DESIGNER', label: 'Designer', query: { search: 'Designer' } },
-  { id: 'EMBROIDERED', label: 'Embroidered', query: { search: 'Embroidered' } },
-  { id: 'MIRROR_WORK', label: 'Mirror Work', query: { search: 'Mirror' } },
-  { id: 'STONE_WORK', label: 'Stone Work', query: { search: 'Stone' } },
-  { id: 'FLORAL_COLLECTION', label: 'Floral Collection', query: { search: 'Floral' } },
-  { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', query: { search: 'Temple' } }
+const defaultTabs = [
+  { id: 'NEW_ARRIVALS', label: 'New Arrivals', active: true, type: 'new_arrival' },
+  { id: 'BEST_SELLERS', label: 'Best Sellers', active: true, type: 'bestseller' },
+  { id: 'TRENDING', label: 'Trending', active: true, type: 'featured' },
+  { id: 'PREMIUM_COLLECTION', label: 'Premium Collection', active: true, type: 'badge', badge_name: 'Premium Collection' },
+  { id: 'DESIGNER', label: 'Designer', active: true, type: 'badge', badge_name: 'Designer' },
+  { id: 'EMBROIDERED', label: 'Embroidered', active: true, type: 'badge', badge_name: 'Embroidered' },
+  { id: 'MIRROR_WORK', label: 'Mirror Work', active: true, type: 'badge', badge_name: 'Mirror Work' },
+  { id: 'STONE_WORK', label: 'Stone Work', active: true, type: 'badge', badge_name: 'Stone Work' },
+  { id: 'FLORAL_COLLECTION', label: 'Floral Collection', active: true, type: 'badge', badge_name: 'Floral Collection' },
+  { id: 'TEMPLE_COLLECTION', label: 'Temple Collection', active: true, type: 'badge', badge_name: 'Temple Collection' }
 ];
 
+const tabs = ref([...defaultTabs]);
+
+const fetchEditBadges = async () => {
+  try {
+    const res = await axios.get('/api/storefront/edit-badges');
+    if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      const activeBadges = res.data.data.filter(b => b.active !== false);
+      if (activeBadges.length > 0) {
+        tabs.value = activeBadges;
+        if (!tabs.value.some(t => t.id === activeTab.value)) {
+          activeTab.value = tabs.value[0].id;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load edit badges from admin:', err);
+  }
+};
+
 const fetchProductsForTab = async (tabId) => {
-  const selectedTab = tabs.find(t => t.id === tabId);
+  const selectedTab = tabs.value.find(t => t.id === tabId);
   if (!selectedTab) return;
   
   isTabLoading.value = true;
   try {
-    const params = {
-      ...selectedTab.query,
-      per_page: 8
-    };
+    const params = { per_page: 8 };
+
+    if (selectedTab.type === 'new_arrival' || tabId === 'NEW_ARRIVALS') {
+      params.is_new_arrival = 1;
+    } else if (selectedTab.type === 'bestseller' || tabId === 'BEST_SELLERS') {
+      params.is_bestseller = 1;
+    } else if (selectedTab.type === 'featured' || tabId === 'TRENDING') {
+      params.is_featured = 1;
+    } else {
+      params.badge = selectedTab.badge_name || selectedTab.label;
+    }
+
     const response = await axios.get('/api/storefront/products', { params });
-    if (response.data && response.data.success && response.data.data.length > 0) {
+    if (response.data && response.data.success && response.data.data && response.data.data.length > 0) {
       tabProducts.value = response.data.data;
     } else {
-      const fallbackRes = await axios.get('/api/storefront/products', { params: { per_page: 8 } });
-      if (fallbackRes.data && fallbackRes.data.success) {
+      // If no exact match for custom badge, search fallback
+      const fallbackRes = await axios.get('/api/storefront/products', { 
+        params: { search: selectedTab.label, per_page: 8 } 
+      });
+      if (fallbackRes.data && fallbackRes.data.success && fallbackRes.data.data && fallbackRes.data.data.length > 0) {
         tabProducts.value = fallbackRes.data.data;
+      } else {
+        tabProducts.value = bestSellersProducts.value.slice(0, 8);
       }
     }
   } catch (err) {
@@ -1273,9 +1314,25 @@ const joinInsiderMock = () => {
   alert('Thank you for your interest! Maya Sree Insider program registration is successful.');
 };
 
-const joinClub = () => {
-  alert(`Thank you for joining our WhatsApp Club! Code: MSF150 sent to ${clubPhone.value}.`);
-  clubPhone.value = '';
+const isSubscribing = ref(false);
+const joinClub = async () => {
+  if (!clubPhone.value.trim()) return;
+  isSubscribing.value = true;
+  try {
+    const res = await axios.post('/api/storefront/subscribe', {
+      phone: clubPhone.value.trim(),
+      source: 'whatsapp_club'
+    });
+    if (res.data && res.data.success) {
+      alert(res.data.message || `Thank you for joining our WhatsApp Club! Code: MSF150 sent to ${clubPhone.value}.`);
+      clubPhone.value = '';
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Thank you! Your request has been received.');
+    clubPhone.value = '';
+  } finally {
+    isSubscribing.value = false;
+  }
 };
 
 // Wishlist
@@ -1502,6 +1559,7 @@ const getPrimaryImage = (product) => {
 onMounted(() => {
   updateScreenSize();
   fetchProducts();
+  fetchEditBadges();
   fetchProductsForTab('NEW_ARRIVALS');
   loadWishlist();
   runSimulations();

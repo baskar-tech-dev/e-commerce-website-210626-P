@@ -91,7 +91,7 @@
         <!-- Right: Parameters and actions -->
         <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
           <div>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: var(--spacing-xs);">
+            <div style="display: flex; gap: var(--spacing-sm); align-items: center; flex-wrap: wrap; margin-bottom: var(--spacing-xs);">
               <router-link 
                 v-if="product.category" 
                 :to="'/shop?category_id=' + product.category_id" 
@@ -100,6 +100,21 @@
               >
                 {{ product.category.name }}
               </router-link>
+              <router-link 
+                v-if="product.occasion" 
+                :to="'/shop?occasion=' + encodeURIComponent(product.occasion)" 
+                class="badge" 
+                style="font-size: 0.75rem; text-decoration: none; background: rgba(182, 141, 64, 0.15); color: #8A6418; border: 1px solid rgba(182, 141, 64, 0.3); font-weight: 600;"
+              >
+                ✨ {{ product.occasion }}
+              </router-link>
+              <span 
+                v-if="product.badge" 
+                class="badge" 
+                style="font-size: 0.75rem; background: #5B163A; color: #ffffff; font-weight: 600;"
+              >
+                👑 {{ product.badge }}
+              </span>
             </div>
             <h1 style="color: var(--color-text-primary); font-size: 2.2rem; font-weight: 800; margin: 0; line-height: 1.1;">{{ product.name }}</h1>
           </div>

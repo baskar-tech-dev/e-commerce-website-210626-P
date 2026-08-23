@@ -24,12 +24,13 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
             'terms' => 'accepted',
         ], [
             'terms.accepted' => 'You must agree to the Terms & Privacy Policy to create an account.',
             'email.unique' => 'An account with this email address already exists. Please sign in.',
+            'phone.unique' => 'An account with this mobile number already exists. Please sign in.',
             'password.confirmed' => 'Passwords do not match.',
             'password.min' => 'Please choose a stronger password (minimum 8 characters).',
         ]);
@@ -43,27 +44,33 @@ class AuthController extends Controller
             ->orWhere('name', 'Customer')
             ->first();
 
-        $user = User::create([
-            'name' => trim($validated['name']),
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'email' => strtolower(trim($validated['email'])),
-            'phone' => isset($validated['phone']) ? trim($validated['phone']) : null,
-            'password' => Hash::make($validated['password']),
-            'role_id' => $customerRole?->id,
-            'is_active' => true,
-        ]);
+        try {
+            $user = User::create([
+                'name' => trim($validated['name']),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => strtolower(trim($validated['email'])),
+                'phone' => !empty($validated['phone']) ? trim($validated['phone']) : null,
+                'password' => Hash::make($validated['password']),
+                'role_id' => $customerRole?->id,
+                'is_active' => true,
+            ]);
 
-        // Auto-create customer profile
-        CustomerProfile::create([
-            'user_id' => $user->id,
-            'email_subscribed' => true,
-        ]);
+            // Auto-create customer profile
+            CustomerProfile::create([
+                'user_id' => $user->id,
+                'email_subscribed' => true,
+            ]);
 
-        // Update last login metadata
-        $user->last_login_at = now();
-        $user->last_login_ip = $request->ip();
-        $user->save();
+            // Update last login metadata
+            $user->last_login_at = now();
+            $user->last_login_ip = $request->ip();
+            $user->save();
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'phone' => ['An account with this mobile number or email already exists. Please sign in.'],
+            ]);
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

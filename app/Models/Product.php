@@ -36,6 +36,8 @@ class Product extends Model
         'is_featured',
         'is_new_arrival',
         'is_bestseller',
+        'badge',
+        'occasion',
         'is_returnable',
         'return_window_days',
         'reviews_enabled',
