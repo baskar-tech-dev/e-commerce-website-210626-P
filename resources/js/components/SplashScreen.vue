@@ -361,7 +361,7 @@ const getParticleStyle = (index) => {
   will-change: transform, opacity;
 }
 
-/* Subtitle "SOUTH INDIAN FASHION" - Generous Spacing Fade-Up */
+/* Subtitle Brand Tagline - Generous Spacing Fade-Up */
 .splash-brand-sub {
   font-family: var(--font-family-base), 'Poppins', sans-serif;
   font-size: 0.72rem;

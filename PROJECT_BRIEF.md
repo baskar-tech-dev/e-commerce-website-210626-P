@@ -1,11 +1,11 @@
-# Project Brief: Maya Sree South Indian Fashion E-Commerce Platform
+# Project Brief: Maya Sree Fashion E-Commerce Platform
 
 Copy and paste this brief into ChatGPT, Claude, or other AI assistants to instantly give them the context of this project.
 
 ---
 
 ## 1. Project Overview
-**Maya Sree South Indian Fashion** is an enterprise-grade fashion e-commerce platform specializing in South Indian garment wear (sarees, kurtis, and ready-made blouses). The brand celebrates traditional South Indian roots through high-end styling, premium fabric options, and modern, comfortable fits.
+**Maya Sree Fashion** is an enterprise-grade fashion e-commerce platform specializing in premium ethnic and contemporary garment wear (sarees, kurtis, and ready-made blouses). The brand celebrates timeless cultural roots through high-end styling, premium fabric options, and modern, comfortable fits.
 
 ## 2. Technology Stack
 - **Backend**: Laravel 11 (API-driven backend).

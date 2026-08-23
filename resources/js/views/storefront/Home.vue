@@ -15,7 +15,7 @@
               <div class="hero-main-card">
                 <img :src="slide.leftImage" alt="Maya Sree Fashion Main Banner" class="hero-img">
               </div>
-              <div class="hero-sub-card">
+              <div v-if="slide.rightImage" class="hero-sub-card">
                 <img :src="slide.rightImage" alt="Maya Sree Fashion Showcase" class="hero-img">
               </div>
               <!-- Carousel Nav buttons inside image view -->
@@ -32,7 +32,7 @@
               <h2 class="hero-script">{{ slide.script }} <span class="heart-icon">♡</span></h2>
               <h1 class="hero-title" v-html="slide.title"></h1>
               <p class="hero-desc">{{ slide.desc }}</p>
-              <router-link to="/shop" class="btn-shop-now">
+              <router-link :to="slide.btnLink || '/shop'" class="btn-shop-now">
                 {{ slide.btnText }} <ArrowRight :size="16" />
               </router-link>
               
@@ -1006,15 +1006,16 @@ const productsGridContainer = ref(null);
 let slideInterval = null;
 let visitorInterval = null;
 
-const slides = [
+const slides = ref([
   {
-    leftImage: '/asset/banner-1-left.png',
-    rightImage: '/asset/banner-1-right.png',
-    tag: 'EXCLUSIVE SOUTH INDIAN HERITAGE',
-    script: 'Handcrafted Perfection',
-    title: 'Timeless Elegance,<br><span class="highlight">South Indian Craftsmanship</span>',
-    desc: 'Graceful silk sarees, breathable everyday kurtis, and stretchable ready-made blouses tailored for supreme comfort.',
-    btnText: 'EXPLORE SHOP'
+    leftImage: '/asset/Bottle-Green-Designer-Stretchable-Blouse.jpeg',
+    rightImage: '/asset/hero-bottle-green-sub.png',
+    tag: 'SIGNATURE STRETCHABLE BLOUSE',
+    script: 'Signature Craftsmanship',
+    title: 'Stretchable Bottle Green Blouse<br><span class="highlight">Peacock & Flute Art</span>',
+    desc: 'Engineered with breathable 4-way cotton lycra, exquisite peacock embroidery, and seamless all-day comfort for silk sarees and festive occasions.',
+    btnText: 'SHOP THIS BLOUSE',
+    btnLink: '/shop'
   },
   {
     leftImage: '/asset/banner-2-left.png',
@@ -1023,9 +1024,31 @@ const slides = [
     script: 'Royal Heritage',
     title: 'Grand Festive Weaves<br><span class="highlight">& Bridal Blouses</span>',
     desc: 'Radiate timeless allure during weddings and celebrations with our rich zari borders and flawless fits.',
-    btnText: 'SHOP OCCASIONS'
+    btnText: 'SHOP OCCASIONS',
+    btnLink: '/shop'
   }
-];
+]);
+
+const fetchHeroSlides = async () => {
+  try {
+    const res = await axios.get('/api/storefront/hero-slides');
+    if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      slides.value = res.data.data.map(s => ({
+        id: s.id,
+        leftImage: s.left_image,
+        rightImage: s.right_image,
+        tag: s.tag || 'EXCLUSIVE COLLECTION',
+        script: s.script_text || 'Signature Style',
+        title: s.title,
+        desc: s.description,
+        btnText: s.button_text || 'SHOP NOW',
+        btnLink: s.button_link || '/shop'
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to load storefront hero slides:', err);
+  }
+};
 
 const occasions = ref([
   { id: 1, name: 'Bridal', image_url: '/asset/occasion/wedding-Collection.png', subtitle: 'Royal heavy work & bridal stretchable blouses' },
@@ -1305,11 +1328,13 @@ const fetchProducts = async () => {
 };
 
 const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % slides.length;
+  if (!slides.value || !slides.value.length) return;
+  currentSlide.value = (currentSlide.value + 1) % slides.value.length;
 };
 
 const prevSlide = () => {
-  currentSlide.value = (currentSlide.value - 1 + slides.length) % slides.length;
+  if (!slides.value || !slides.value.length) return;
+  currentSlide.value = (currentSlide.value - 1 + slides.value.length) % slides.value.length;
 };
 
 const toggleFaq = (index) => {
@@ -1570,6 +1595,7 @@ const getPrimaryImage = (product) => {
 
 onMounted(() => {
   updateScreenSize();
+  fetchHeroSlides();
   fetchProducts();
   fetchEditBadges();
   fetchOccasions();

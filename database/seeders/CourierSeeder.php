@@ -55,7 +55,7 @@ class CourierSeeder extends Seeder
                 'contact_email' => 'support@tpcindia.com',
                 'is_active' => true,
                 'sort_order' => 4,
-                'notes' => 'Specialized coverage across Tamil Nadu and South India.',
+                'notes' => 'Specialized regional & national delivery coverage.',
             ],
             [
                 'name' => 'ST Courier',
@@ -66,7 +66,7 @@ class CourierSeeder extends Seeder
                 'contact_email' => 'info@stcourier.com',
                 'is_active' => true,
                 'sort_order' => 5,
-                'notes' => 'Fast overnight regional delivery across South India.',
+                'notes' => 'Fast overnight regional & express delivery.',
             ],
             [
                 'name' => 'India Post (Speed Post)',

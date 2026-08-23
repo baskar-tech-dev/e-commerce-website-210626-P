@@ -659,7 +659,7 @@
             </div>
 
             <p class="modal-description-text">
-              {{ quickViewProduct.description || 'Premium handpicked South Indian designer wear. Crafted with high-grade fabrics for elegant draping and custom styling.' }}
+              {{ quickViewProduct.description || 'Premium handpicked designer wear. Crafted with high-grade fabrics for elegant draping and custom styling.' }}
             </p>
 
             <div class="modal-actions-group">
@@ -1237,7 +1237,7 @@ onMounted(() => {
   document.title = "Shop - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
-    metaDescription.setAttribute("content", "Explore our premium collections of South Indian sarees, designer kurtis, and stretchable ready-made blouses at Maya Sree Fashion.");
+    metaDescription.setAttribute("content", "Explore our premium collections of sarees, designer kurtis, and stretchable ready-made blouses at Maya Sree Fashion.");
   }
   fetchFilterMetadata();
   loadWishlist();

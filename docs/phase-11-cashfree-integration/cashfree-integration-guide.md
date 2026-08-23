@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This document outlines the Cashfree Payments integration for Maya Sree South Indian Fashion. Cashfree Payments serves as the sole online payment gateway for credit/debit cards, NetBanking, Instant UPI (Google Pay, PhonePe, Paytm, BHIM), and digital wallets.
+This document outlines the Cashfree Payments integration for Maya Sree Fashion. Cashfree Payments serves as the sole online payment gateway for credit/debit cards, NetBanking, Instant UPI (Google Pay, PhonePe, Paytm, BHIM), and digital wallets.
 
 ---
 

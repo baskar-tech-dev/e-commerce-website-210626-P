@@ -14,7 +14,7 @@ class StorefrontAnnouncementController extends Controller
         // Seed default items if announcements table is empty
         if (Announcement::count() === 0) {
             Announcement::create([
-                'text' => '🚚 Free Shipping Above ₹1999 across South India',
+                'text' => '🚚 Free Shipping on Orders Above ₹1999',
                 'link' => '/shop',
                 'is_active' => true,
                 'sort_order' => 1,

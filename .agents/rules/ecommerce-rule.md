@@ -62,7 +62,7 @@ Use them only as inspiration for
 TARGET USERS
 ==================================================
 
-South Indian Fashion Customers
+Modern Ethnic Fashion Customers
 
 Women
 
@@ -498,7 +498,7 @@ Developer handoff notes
 FINAL GOAL
 ==================================================
 
-Create a premium, elegant, enterprise-grade South Indian fashion e-commerce platform that looks and feels comparable to global brands like Nike, Zara, Shopify, and Apple while preserving the unique identity of Maya Sree South Indian Fashion.
+Create a premium, elegant, enterprise-grade fashion e-commerce platform that looks and feels comparable to global brands like Nike, Zara, Shopify, and Apple while preserving the unique identity of Maya Sree Fashion.
 
 Every design decision should prioritize usability, visual hierarchy, performance, consistency, trust, and conversion.
 

@@ -49,12 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     Route::get('/user', function (Request $request) {
-        return $request->user()->load('roles');
+        return $request->user()->load(['roles.permissions']);
     });
     Route::get('/auth/user', function (Request $request) {
         return response()->json([
             'success' => true,
-            'user' => $request->user()->load(['roles', 'customerProfile']),
+            'user' => $request->user()->load(['roles.permissions', 'customerProfile']),
         ]);
     });
 
@@ -85,6 +85,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/welcome-gift', [\App\Http\Controllers\Api\v1\StorefrontWelcomeGiftController::class, 'index']);
     Route::get('storefront/indian-states', [StorefrontCheckoutController::class, 'getIndianStates']);
     Route::get('storefront/shipping-rates', [StorefrontCheckoutController::class, 'getShippingRates']);
+    Route::get('storefront/hero-slides', [\App\Http\Controllers\Api\v1\StorefrontHeroSlideController::class, 'index']);
     Route::get('storefront/edit-badges', [StorefrontProductController::class, 'getEditBadges']);
     Route::get('storefront/occasions', [StorefrontProductController::class, 'getOccasions']);
     Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
@@ -180,6 +181,14 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::get('inventory/export-template/{id}', [InventoryController::class, 'exportTemplate']);
         Route::post('inventory/import-csv', [InventoryController::class, 'importCsv']);
         
+        // Stock Inward (Goods Receipt & Inventory Increment)
+        Route::get('inward/form-data', [\App\Http\Controllers\Api\v1\Admin\StockInwardController::class, 'formData']);
+        Route::apiResource('inward', \App\Http\Controllers\Api\v1\Admin\StockInwardController::class);
+
+        // Factory Master
+        Route::get('factories/active', [\App\Http\Controllers\Api\v1\Admin\FactoryController::class, 'activeList']);
+        Route::apiResource('factories', \App\Http\Controllers\Api\v1\Admin\FactoryController::class);
+
         Route::post('purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive']);
         Route::apiResource('purchase-orders', PurchaseOrderController::class);
         
@@ -213,10 +222,19 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         // Shop by Occasions Database Table
         Route::get('occasions', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'index']);
         Route::post('occasions', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'store']);
+        Route::post('occasions/upload-image', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'uploadImage']);
         Route::put('occasions/{id}', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'update']);
         Route::patch('occasions/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'toggle']);
         Route::post('occasions/reorder', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'reorder']);
         Route::delete('occasions/{id}', [\App\Http\Controllers\Api\v1\Admin\OccasionController::class, 'destroy']);
+
+        // Hero Banner Slides Management (Admin / Super Admin)
+        Route::get('hero-slides', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'index']);
+        Route::post('hero-slides', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'store']);
+        Route::post('hero-slides/upload-image', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'uploadImage']);
+        Route::put('hero-slides/{id}', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'update']);
+        Route::post('hero-slides/reorder', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'reorder']);
+        Route::delete('hero-slides/{id}', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'destroy']);
     });
 
     // Order Management (requires 'manage_orders')

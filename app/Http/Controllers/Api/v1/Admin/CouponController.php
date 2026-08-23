@@ -45,6 +45,18 @@ class CouponController extends Controller
                 }
             }
 
+            if ($request->has('first_order_only')) {
+                $query->where('first_order_only', filter_var($request->input('first_order_only'), FILTER_VALIDATE_BOOLEAN));
+            }
+
+            if ($request->filled('customer_type')) {
+                if ($request->input('customer_type') === 'new') {
+                    $query->where('first_order_only', true);
+                } elseif ($request->input('customer_type') === 'all') {
+                    $query->where('first_order_only', false);
+                }
+            }
+
             $perPage = $request->input('per_page', 15);
             $coupons = $query->orderBy('created_at', 'desc')->paginate($perPage);
 

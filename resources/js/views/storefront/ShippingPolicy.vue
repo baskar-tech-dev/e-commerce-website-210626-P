@@ -59,7 +59,7 @@
             <h2 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #4a0e2e; border-bottom: 1px solid #f3ece3; padding-bottom: 6px; margin-bottom: 12px; font-weight: 600;">3. Estimated Delivery Timelines</h2>
             <p style="margin-bottom: 12px;">Standard transit timelines following dispatch:</p>
             <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-              <li><strong>South India (Tamil Nadu, Kerala, Karnataka, Andhra/Telangana):</strong> 2 to 4 business days.</li>
+              <li><strong>Southern States (Tamil Nadu, Kerala, Karnataka, Andhra/Telangana):</strong> 2 to 4 business days.</li>
               <li><strong>Metro Cities (Mumbai, Delhi, Kolkata, Bangalore):</strong> 3 to 5 business days.</li>
               <li><strong>Rest of India (North, West & East regions):</strong> 4 to 7 business days.</li>
               <li><strong>North-East & Remote areas:</strong> 7 to 10 business days.</li>

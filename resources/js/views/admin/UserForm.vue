@@ -77,20 +77,28 @@
 
           <!-- Roles Selection -->
           <div class="form-group">
-            <label class="form-label" style="margin-bottom: 0.5rem;">Assign Roles *</label>
-            <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+            <label class="form-label" style="margin-bottom: 0.5rem; font-weight: 600;">Assign Access Roles *</label>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
               <label 
                 v-for="role in roles" 
                 :key="role.id" 
-                style="display: flex; align-items: center; gap: var(--spacing-xs); color: #1e293b; font-size: 0.85rem; cursor: pointer;"
+                style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #faf8f5; cursor: pointer; transition: all 0.15s ease;"
+                :style="form.roles.includes(role.id) ? { borderColor: '#6E1F3A', background: '#fdf2f4' } : {}"
               >
                 <input 
                   type="checkbox" 
                   :value="role.id" 
                   v-model="form.roles" 
-                  style="cursor: pointer;" 
+                  style="cursor: pointer; margin-top: 3px;" 
                 />
-                <span style="text-transform: capitalize;">{{ role.name.replace('_', ' ') }}</span>
+                <div style="display: flex; flex-direction: column;">
+                  <span style="font-weight: 600; font-size: 0.88rem; color: #1e293b; text-transform: capitalize;">
+                    {{ role.name === 'super_admin' ? '👑 Super Admin' : (role.name === 'admin' ? '🛍️ Store Admin' : role.name.replace('_', ' ')) }}
+                  </span>
+                  <span style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                    {{ role.description || (role.name === 'super_admin' ? 'Full access to confidential settings, reports, users & catalog.' : 'Operational access to Orders & Product Catalog.') }}
+                  </span>
+                </div>
               </label>
             </div>
           </div>

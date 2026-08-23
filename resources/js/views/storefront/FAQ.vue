@@ -109,7 +109,7 @@ const faqs = [
 
   // Shipping
   { cat: 'shipping', q: 'How much are the shipping charges?', a: 'Shipping is completely FREE for all orders of ₹1,999 and above. For orders under ₹1,999, shipping charges vary based on your delivery state.' },
-  { cat: 'shipping', q: 'What is your delivery timeline?', a: 'We process and ship orders within 24 to 48 hours. Delivery takes 2 to 4 business days for South India, and 3 to 7 business days for other states.' },
+  { cat: 'shipping', q: 'What is your delivery timeline?', a: 'We process and ship orders within 24 to 48 hours. Delivery takes 2 to 4 business days for regional deliveries, and 3 to 7 business days for other states.' },
   { cat: 'shipping', q: 'Do you ship internationally?', a: 'Currently, we only ship within India. We plan to introduce international shipping soon.' },
 
   // Returns

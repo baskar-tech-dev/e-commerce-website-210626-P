@@ -164,7 +164,7 @@
           <!-- Caption -->
           <div class="form-group">
             <label class="form-label" style="font-weight: 600; color: #334155;">Caption / Description</label>
-            <input type="text" v-model="form.caption" class="form-input" placeholder="e.g. Elegant South Indian Saree Showcase" />
+            <input type="text" v-model="form.caption" class="form-input" placeholder="e.g. Elegant Festive Saree Showcase" />
           </div>
 
           <!-- Video Source Method (Upload vs Link) -->

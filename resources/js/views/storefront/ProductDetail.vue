@@ -442,7 +442,7 @@
                 </div>
               </div>
 
-              <!-- Default interactive South Indian sizing guide table when no custom image is uploaded -->
+              <!-- Default interactive sizing guide table when no custom image is uploaded -->
               <div v-else class="default-sizing-table-wrap">
                 <div class="table-responsive-box">
                   <table class="luxury-size-table">

@@ -77,6 +77,7 @@ class Product extends Model
         'mrp_display',
         'primary_image_url',
         'total_stock',
+        'stock_quantity',
         'is_sold_out',
         'is_low_stock',
     ];
@@ -284,6 +285,14 @@ class Product extends Model
             return (int) $this->variants->where('is_active', true)->sum('stock_quantity');
         }
         return (int) $this->variants()->where('is_active', true)->sum('stock_quantity');
+    }
+
+    /**
+     * Alias for stock_quantity.
+     */
+    public function getStockQuantityAttribute(): int
+    {
+        return $this->total_stock;
     }
 
     /**

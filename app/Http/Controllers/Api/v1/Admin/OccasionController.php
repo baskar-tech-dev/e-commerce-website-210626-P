@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Occasion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class OccasionController extends Controller
@@ -211,5 +212,131 @@ class OccasionController extends Controller
             'success' => true,
             'message' => 'Occasion deleted successfully'
         ]);
+    }
+
+    /**
+     * Upload and compress an occasion card image.
+     */
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp,avif|max:30720',
+        ]);
+
+        $file = $request->file('image');
+        $fileName = Str::uuid()->toString();
+        $folder = 'occasions';
+        
+        Storage::disk('public')->makeDirectory($folder);
+
+        $ext = $file->getClientOriginalExtension();
+        $tempPath = $file->storeAs("{$folder}/temp", "{$fileName}.{$ext}", 'public');
+        $sourcePath = Storage::disk('public')->path($tempPath);
+
+        $webpRelPath = "{$folder}/{$fileName}.webp";
+        $destPath = Storage::disk('public')->path($webpRelPath);
+
+        $resized = $this->resizeAndConvertWebp($sourcePath, $destPath, 800, 85);
+        if (!$resized && !file_exists($destPath)) {
+            @copy($sourcePath, $destPath);
+        }
+
+        // Clean up temp original
+        if (file_exists($sourcePath)) {
+            @unlink($sourcePath);
+        }
+
+        $url = '/storage/' . $webpRelPath;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Occasion image uploaded and optimized successfully.',
+            'data' => [
+                'url' => $url,
+            ]
+        ]);
+    }
+
+    /**
+     * Helper to resize and convert image to WebP format.
+     */
+    private function resizeAndConvertWebp(string $sourcePath, string $destinationPath, int $targetWidth = 800, int $quality = 85): bool
+    {
+        if (!extension_loaded('gd')) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $info = @getimagesize($sourcePath);
+        if (!$info) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $mime = $info['mime'] ?? '';
+        $width = $info[0] ?? 0;
+        $height = $info[1] ?? 0;
+
+        if ($width <= 0 || $height <= 0) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $image = null;
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                if (function_exists('imagecreatefromjpeg')) {
+                    $image = @imagecreatefromjpeg($sourcePath);
+                }
+                break;
+            case 'image/png':
+                if (function_exists('imagecreatefrompng')) {
+                    $image = @imagecreatefrompng($sourcePath);
+                    if ($image) {
+                        imagepalettetotruecolor($image);
+                        imagealphablending($image, true);
+                        imagesavealpha($image, true);
+                    }
+                }
+                break;
+            case 'image/webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    $image = @imagecreatefromwebp($sourcePath);
+                }
+                break;
+            default:
+                return @copy($sourcePath, $destinationPath);
+        }
+
+        if (!$image) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $aspectRatio = $width / $height;
+        if ($width > $targetWidth) {
+            $newWidth = $targetWidth;
+            $newHeight = intval($targetWidth / $aspectRatio);
+        } else {
+            $newWidth = $width;
+            $newHeight = $height;
+        }
+
+        $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        $success = false;
+
+        if ($newImage) {
+            imagealphablending($newImage, false);
+            imagesavealpha($newImage, true);
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+            if (function_exists('imagewebp')) {
+                $success = @imagewebp($newImage, $destinationPath, $quality);
+            } elseif (function_exists('imagejpeg')) {
+                $success = @imagejpeg($newImage, $destinationPath, $quality);
+            }
+            imagedestroy($newImage);
+        }
+
+        imagedestroy($image);
+
+        return $success || file_exists($destinationPath);
     }
 }

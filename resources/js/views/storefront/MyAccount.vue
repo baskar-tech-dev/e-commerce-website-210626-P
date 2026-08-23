@@ -303,7 +303,7 @@
               <span style="font-size: 3.5rem; display: block; margin-bottom: var(--spacing-sm);">🛍️</span>
               <h3 style="color: var(--color-primary); font-weight: 700; margin-bottom: 0.25rem;">No Orders Placed Yet</h3>
               <p style="color: #64748b; font-size: 0.9rem; max-width: 400px; margin: 0 auto 1.5rem auto;">
-                Explore our festive collection of South Indian ethnic wear, sarees, and readymade blouses.
+                Explore our festive collection of traditional ethnic wear, sarees, and readymade blouses.
               </p>
               <router-link to="/shop" class="btn btn--primary" style="padding: 0.75rem 2rem; font-weight: 600; text-decoration: none;">
                 Explore Collections ➔

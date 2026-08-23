@@ -123,7 +123,7 @@ class AuthController extends Controller
             'success' => true,
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user->load(['roles', 'customerProfile']),
+            'user' => $user->load(['roles.permissions', 'customerProfile']),
         ]);
     }
 

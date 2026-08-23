@@ -107,11 +107,11 @@ import { useMenuStore } from '@/stores/menu';
 import { 
   Shirt, ChevronRight, ChevronLeft, Menu as MenuIcon, Bell, MessageSquare, Maximize,
   LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings,
-  ChevronDown, LogOut, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck
+  ChevronDown, LogOut, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus
 } from 'lucide-vue-next';
 
 const iconMap = markRaw({
-  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck
+  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus
 });
 
 const authStore = useAuthStore();
@@ -124,7 +124,10 @@ const userInitials = computed(() => {
 
 const userRole = computed(() => {
   if (authStore.user?.roles && authStore.user.roles.length > 0) {
-    return authStore.user.roles[0].name.replace('_', ' ');
+    const isSuper = authStore.user.roles.some(r => r.name === 'super_admin') || authStore.user.role_id === 1;
+    if (isSuper) return '👑 Super Admin';
+    const roleName = authStore.user.roles[0].name.replace('_', ' ');
+    return `🛍️ ${roleName.charAt(0).toUpperCase() + roleName.slice(1)}`;
   }
   return 'Admin';
 });
@@ -158,7 +161,10 @@ const checkMobile = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  if (!authStore.user && localStorage.getItem('auth_token')) {
+    await authStore.fetchUser();
+  }
   menuStore.fetchMenus();
   checkMobile();
   window.addEventListener('resize', checkMobile);

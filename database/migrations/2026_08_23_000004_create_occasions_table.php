@@ -121,7 +121,7 @@ return new class extends Migration
                     'name' => 'Traditional',
                     'slug' => 'traditional',
                     'image_url' => '/asset/occasion/temple-collection.png',
-                    'subtitle' => 'Heritage South Indian classic weaves & patterns',
+                    'subtitle' => 'Heritage classic weaves & patterns',
                     'sort_order' => 10,
                     'is_active' => true,
                     'created_at' => now(),

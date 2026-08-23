@@ -11,7 +11,7 @@
 
     <div
         class="responsive-grid-1-3"
-        style="gap: var(--spacing-lg); margin-top: var(--spacing-md)"
+        style="gap: var(--spacing-lg); margin-top: var(--spacing-md); min-width: 0; max-width: 100%;"
     >
         <!-- Left Column: Tab list -->
         <div
@@ -22,10 +22,12 @@
                 display: flex;
                 flex-direction: column;
                 gap: var(--spacing-xs);
+                min-width: 220px;
+                max-width: 260px;
             "
         >
             <button
-                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews', 'edit_badges', 'occasions']"
+                v-for="tab in availableTabs"
                 :key="tab"
                 type="button"
                 @click="activeTab = tab"
@@ -58,11 +60,14 @@
                 <span v-else-if="tab === 'occasions'"
                     >🎉 Shop By Occasions</span
                 >
+                <span v-else-if="tab === 'hero_slides'" style="color: #6E1F3A; font-weight: 700;"
+                    >👑 🖼️ Hero Banner Slides</span
+                >
             </button>
         </div>
 
         <!-- Right Column: Settings Tab Pane Form -->
-        <div class="glass-panel" style="padding: var(--spacing-lg)">
+        <div class="glass-panel" style="padding: var(--spacing-lg); min-width: 0; max-width: 100%; overflow: hidden;">
             <div v-if="loading" style="text-align: center; padding: 4rem">
                 <div class="stat-card__value" style="font-size: 1.2rem">
                     Loading store settings...
@@ -262,7 +267,7 @@
                                     @click="applyZonePreset('south', 50)"
                                     title="Set TN, KL, KA, AP, TS, PY to ₹50"
                                 >
-                                    🌴 Set South India to ₹50
+                                    🌴 Set Zone 1 (Regional) to ₹50
                                 </button>
                                 <button
                                     type="button"
@@ -286,8 +291,8 @@
                             />
                         </div>
 
-                        <div style="border: 1px solid #E8DDD3; border-radius: 10px; overflow: hidden; background: #ffffff;">
-                            <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                        <div style="border: 1px solid #E8DDD3; border-radius: 10px; overflow-x: auto; max-width: 100%; background: #ffffff; scrollbar-width: thin;">
+                            <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; min-width: 600px;">
                                 <thead>
                                     <tr style="background: #FAF8F5; border-bottom: 2px solid #E8DDD3; color: #64748b; font-size: 0.78rem; text-transform: uppercase;">
                                         <th style="padding: 10px 14px; width: 50px;">#</th>
@@ -1283,14 +1288,16 @@
                                 class="form-input"
                                 @change="onCouponSelect"
                             >
+                                <option value="" disabled>-- Select New Customer Coupon (From Coupon Master) --</option>
                                 <option v-for="c in availableCoupons" :key="c.id" :value="c.code">
                                     {{ c.code }} — {{ c.name }} ({{ c.type === 'percentage' ? c.value + '% OFF' : (c.type === 'flat' ? '₹' + c.value + ' OFF' : 'Free Shipping') }})
                                 </option>
-                                <option value="WELCOME10">WELCOME10 — Welcome 10% OFF</option>
-                                <option value="FIRST20">FIRST20 — 20% OFF First Order</option>
                             </select>
-                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                Choose which discount code is revealed when customers open their welcome gift.
+                            <span v-if="availableCoupons.length === 0" style="font-size: 0.78rem; color: #b91c1c; display: block; margin-top: 4px;">
+                                ⚠️ No active "New Customers Only" coupons found in Coupon Master. Please create one in <router-link to="/admin/coupons" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Coupon Master</router-link>.
+                            </span>
+                            <span v-else style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                Loaded from Coupon Master (Filtered strictly for New Customer Type only).
                             </span>
                         </div>
 
@@ -1385,15 +1392,12 @@
                     </div>
                 </div>
 
-                <!-- Add / Edit Modal -->
+                <!-- Add / Edit Announcement Modal -->
                 <div
                     v-if="modal.isOpen"
                     style="
                         position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
+                        inset: 0;
                         background: rgba(15, 23, 42, 0.6);
                         display: flex;
                         align-items: center;
@@ -1401,76 +1405,82 @@
                         z-index: 9999;
                         padding: 16px;
                     "
+                    @click.self="modal.isOpen = false"
                 >
                     <div
                         style="
                             background: #ffffff;
-                            border-radius: 12px;
+                            border-radius: 14px;
                             width: 100%;
                             max-width: 500px;
-                            padding: 24px;
-                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                            max-height: calc(100vh - 40px);
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                             display: flex;
                             flex-direction: column;
-                            gap: 16px;
+                            overflow: hidden;
                         "
                     >
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                        <!-- Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; flex-shrink: 0; background: #ffffff;">
                             <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
                                 {{ modal.isEditing ? '✏️ Edit Announcement' : '➕ New Announcement' }}
                             </h3>
                             <button
                                 type="button"
                                 @click="modal.isOpen = false"
-                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        <form @submit.prevent="submitModal" style="display: flex; flex-direction: column; gap: 14px;">
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Announcement Text *</label>
-                                <textarea
-                                    v-model="modal.form.text"
-                                    class="form-input"
-                                    rows="3"
-                                    placeholder="e.g. 🚚 Free Shipping Above ₹1999 across South India"
-                                    required
-                                    style="width: 100%; font-family: 'Poppins', sans-serif;"
-                                ></textarea>
-                            </div>
-
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Redirect Link (Optional)</label>
-                                <input
-                                    type="text"
-                                    v-model="modal.form.link"
-                                    class="form-input"
-                                    placeholder="e.g. /shop or /categories/sarees"
-                                />
-                            </div>
-
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div class="form-group" style="margin: 0; flex: 1;">
-                                    <label class="form-label" style="font-weight: bold;">Sort Order</label>
-                                    <input
-                                        type="number"
-                                        v-model.number="modal.form.sort_order"
+                        <!-- Body & Footer inside Form -->
+                        <form @submit.prevent="submitModal" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; margin: 0;">
+                            <div style="padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; scrollbar-width: thin;">
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Announcement Text *</label>
+                                    <textarea
+                                        v-model="modal.form.text"
                                         class="form-input"
-                                        placeholder="0"
+                                        rows="3"
+                                        placeholder="e.g. 🚚 Free Shipping on Orders Above ₹1999"
+                                        required
+                                        style="width: 100%; font-family: 'Poppins', sans-serif;"
+                                    ></textarea>
+                                </div>
+
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Redirect Link (Optional)</label>
+                                    <input
+                                        type="text"
+                                        v-model="modal.form.link"
+                                        class="form-input"
+                                        placeholder="e.g. /shop or /categories/sarees"
                                     />
                                 </div>
 
-                                <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
-                                        <input type="checkbox" v-model="modal.form.is_active" />
-                                        <span style="font-weight: bold; color: #1e293b;">Active Status</span>
-                                    </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <div class="form-group" style="margin: 0; flex: 1;">
+                                        <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                                        <input
+                                            type="number"
+                                            v-model.number="modal.form.sort_order"
+                                            class="form-input"
+                                            placeholder="0"
+                                        />
+                                    </div>
+
+                                    <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                            <input type="checkbox" v-model="modal.form.is_active" />
+                                            <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                            <!-- Footer -->
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0; padding: 12px 20px; background: #FAF8F5; flex-shrink: 0;">
                                 <button
                                     type="button"
                                     @click="modal.isOpen = false"
@@ -1497,10 +1507,7 @@
                     v-if="badgeModal.isOpen"
                     style="
                         position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
+                        inset: 0;
                         background: rgba(15, 23, 42, 0.6);
                         display: flex;
                         align-items: center;
@@ -1508,88 +1515,94 @@
                         z-index: 9999;
                         padding: 16px;
                     "
+                    @click.self="badgeModal.isOpen = false"
                 >
                     <div
                         style="
                             background: #ffffff;
-                            border-radius: 12px;
+                            border-radius: 14px;
                             width: 100%;
                             max-width: 500px;
-                            padding: 24px;
-                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                            max-height: calc(100vh - 40px);
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                             display: flex;
                             flex-direction: column;
-                            gap: 16px;
+                            overflow: hidden;
                         "
                     >
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                        <!-- Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; flex-shrink: 0; background: #ffffff;">
                             <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
                                 {{ badgeModal.isEditing ? '✏️ Edit Section Badge' : '➕ New Section Badge' }}
                             </h3>
                             <button
                                 type="button"
                                 @click="badgeModal.isOpen = false"
-                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        <form @submit.prevent="submitBadgeModal" style="display: flex; flex-direction: column; gap: 14px;">
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Badge / Tab Title *</label>
-                                <input
-                                    type="text"
-                                    v-model="badgeModal.form.title"
-                                    class="form-input"
-                                    placeholder="e.g. Mirror Work, Velvet Edit, Bridal Special"
-                                    required
-                                />
-                            </div>
-
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Filter Behavior *</label>
-                                <select v-model="badgeModal.form.filter_type" class="form-input">
-                                    <option value="badge">🏷️ Custom Assigned Badge / Tag Match</option>
-                                    <option value="new_arrival">⚡ Auto New Arrivals Filter</option>
-                                    <option value="bestseller">🏆 Auto Best Sellers Filter</option>
-                                    <option value="featured">✨ Auto Trending Filter</option>
-                                </select>
-                            </div>
-
-                            <div v-if="badgeModal.form.filter_type === 'badge'" class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Product Tag / Occasion Match Key</label>
-                                <input
-                                    type="text"
-                                    v-model="badgeModal.form.badge_key"
-                                    class="form-input"
-                                    placeholder="Leave blank to match Badge Title automatically"
-                                />
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                    Products assigned this tag or badge name will appear under this tab.
-                                </span>
-                            </div>
-
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div class="form-group" style="margin: 0; flex: 1;">
-                                    <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                        <!-- Body & Footer inside Form -->
+                        <form @submit.prevent="submitBadgeModal" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; margin: 0;">
+                            <div style="padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; scrollbar-width: thin;">
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Badge / Tab Title *</label>
                                     <input
-                                        type="number"
-                                        v-model.number="badgeModal.form.sort_order"
+                                        type="text"
+                                        v-model="badgeModal.form.title"
                                         class="form-input"
-                                        placeholder="1"
+                                        placeholder="e.g. Mirror Work, Velvet Edit, Bridal Special"
+                                        required
                                     />
                                 </div>
 
-                                <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
-                                        <input type="checkbox" v-model="badgeModal.form.is_active" />
-                                        <span style="font-weight: bold; color: #1e293b;">Active Status</span>
-                                    </label>
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Filter Behavior *</label>
+                                    <select v-model="badgeModal.form.filter_type" class="form-input">
+                                        <option value="badge">🏷️ Custom Assigned Badge / Tag Match</option>
+                                        <option value="new_arrival">⚡ Auto New Arrivals Filter</option>
+                                        <option value="bestseller">🏆 Auto Best Sellers Filter</option>
+                                        <option value="featured">✨ Auto Trending Filter</option>
+                                    </select>
+                                </div>
+
+                                <div v-if="badgeModal.form.filter_type === 'badge'" class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Product Tag / Occasion Match Key</label>
+                                    <input
+                                        type="text"
+                                        v-model="badgeModal.form.badge_key"
+                                        class="form-input"
+                                        placeholder="Leave blank to match Badge Title automatically"
+                                    />
+                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                        Products assigned this tag or badge name will appear under this tab.
+                                    </span>
+                                </div>
+
+                                <div style="display: gap: 16px; align-items: center; display: flex;">
+                                    <div class="form-group" style="margin: 0; flex: 1;">
+                                        <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                                        <input
+                                            type="number"
+                                            v-model.number="badgeModal.form.sort_order"
+                                            class="form-input"
+                                            placeholder="1"
+                                        />
+                                    </div>
+
+                                    <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                            <input type="checkbox" v-model="badgeModal.form.is_active" />
+                                            <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                            <!-- Footer -->
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0; padding: 12px 20px; background: #FAF8F5; flex-shrink: 0;">
                                 <button
                                     type="button"
                                     @click="badgeModal.isOpen = false"
@@ -1616,10 +1629,7 @@
                     v-if="occasionModal.isOpen"
                     style="
                         position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
+                        inset: 0;
                         background: rgba(15, 23, 42, 0.6);
                         display: flex;
                         align-items: center;
@@ -1627,112 +1637,170 @@
                         z-index: 9999;
                         padding: 16px;
                     "
+                    @click.self="occasionModal.isOpen = false"
                 >
                     <div
                         style="
                             background: #ffffff;
-                            border-radius: 12px;
+                            border-radius: 14px;
                             width: 100%;
                             max-width: 520px;
-                            padding: 24px;
-                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                            max-height: calc(100vh - 40px);
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                             display: flex;
                             flex-direction: column;
-                            gap: 16px;
+                            overflow: hidden;
                         "
                     >
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                        <!-- Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; flex-shrink: 0; background: #ffffff;">
                             <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
                                 {{ occasionModal.isEditing ? '✏️ Edit Occasion Category' : '➕ New Occasion Category' }}
                             </h3>
                             <button
                                 type="button"
                                 @click="occasionModal.isOpen = false"
-                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+                                style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;"
                             >
                                 ✕
                             </button>
                         </div>
 
-                        <form @submit.prevent="submitOccasionModal" style="display: flex; flex-direction: column; gap: 14px;">
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Occasion Name *</label>
-                                <input
-                                    type="text"
-                                    v-model="occasionModal.form.name"
-                                    class="form-input"
-                                    placeholder="e.g. Bridal, Wedding Guest, Festive Wear, Reception Special"
-                                    required
-                                />
-                            </div>
-
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold;">Subtitle / Tagline</label>
-                                <input
-                                    type="text"
-                                    v-model="occasionModal.form.subtitle"
-                                    class="form-input"
-                                    placeholder="e.g. Royal heavy work & bridal stretchable blouses"
-                                />
-                            </div>
-
-                            <!-- Image Preset Selector -->
-                            <div class="form-group" style="margin: 0">
-                                <label class="form-label" style="font-weight: bold; margin-bottom: 4px; display: block;">
-                                    Card Image
-                                </label>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-                                    <div
-                                        v-for="img in presetOccasionImages"
-                                        :key="img.url"
-                                        @click="occasionModal.form.image_url = img.url"
-                                        :style="{
-                                            cursor: 'pointer',
-                                            padding: '4px',
-                                            borderRadius: '8px',
-                                            border: occasionModal.form.image_url === img.url ? '2px solid #6E1F3A' : '1px solid #e2e8f0',
-                                            background: '#f8fafc',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            width: '60px'
-                                        }"
-                                    >
-                                        <img :src="img.url" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px;" />
-                                        <span style="font-size: 0.65rem; color: #64748b; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px;">
-                                            {{ img.label }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <input
-                                    type="text"
-                                    v-model="occasionModal.form.image_url"
-                                    class="form-input"
-                                    placeholder="/asset/occasion/wedding-Collection.png or image URL"
-                                />
-                            </div>
-
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div class="form-group" style="margin: 0; flex: 1;">
-                                    <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                        <!-- Body & Footer inside Form -->
+                        <form @submit.prevent="submitOccasionModal" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; margin: 0;">
+                            <div style="padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; scrollbar-width: thin;">
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Occasion Name *</label>
                                     <input
-                                        type="number"
-                                        v-model.number="occasionModal.form.sort_order"
+                                        type="text"
+                                        v-model="occasionModal.form.name"
                                         class="form-input"
-                                        placeholder="1"
+                                        placeholder="e.g. Bridal, Wedding Guest, Festive Wear, Reception Special"
+                                        required
                                     />
                                 </div>
 
-                                <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
-                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
-                                        <input type="checkbox" v-model="occasionModal.form.is_active" />
-                                        <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Subtitle / Tagline</label>
+                                    <input
+                                        type="text"
+                                        v-model="occasionModal.form.subtitle"
+                                        class="form-input"
+                                        placeholder="e.g. Royal heavy work & bridal stretchable blouses"
+                                    />
+                                </div>
+
+                                <!-- Image Upload & Preset Selector -->
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold; margin-bottom: 6px; display: block;">
+                                        Occasion Image
                                     </label>
+                                    
+                                    <!-- Upload Box & Current Preview -->
+                                    <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px; background: #faf8f5; border: 1px dashed #d1c7bd; border-radius: 10px; padding: 12px;">
+                                        <div style="position: relative; width: 70px; height: 85px; flex-shrink: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                            <img 
+                                                v-if="occasionModal.form.image_url" 
+                                                :src="occasionModal.form.image_url" 
+                                                alt="Preview" 
+                                                style="width: 100%; height: 100%; object-fit: cover;" 
+                                            />
+                                            <span v-else style="font-size: 1.5rem; color: #94a3b8;">🖼️</span>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <input 
+                                                type="file" 
+                                                ref="occasionImageInput" 
+                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/avif" 
+                                                style="display: none;" 
+                                                @change="handleOccasionImageUpload" 
+                                            />
+                                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                                <button 
+                                                    type="button" 
+                                                    class="btn btn--secondary btn--sm" 
+                                                    :disabled="uploadingOccasionImage"
+                                                    @click="$refs.occasionImageInput.click()"
+                                                    style="padding: 6px 14px; font-size: 0.82rem; background: #ffffff; cursor: pointer;"
+                                                >
+                                                    {{ uploadingOccasionImage ? '⏳ Uploading...' : '📁 Upload Image from PC' }}
+                                                </button>
+                                                <span v-if="uploadingOccasionImage" style="font-size: 0.75rem; color: #B68D40; font-weight: 600;">
+                                                    Optimizing to WebP...
+                                                </span>
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 6px;">
+                                                JPG, PNG, WebP (up to 30MB). Auto-compressed into lightweight WebP.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Preset Quick Picker -->
+                                    <div style="margin-bottom: 8px;">
+                                        <span style="font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 6px; display: block;">
+                                            Or pick from preset occasion themes:
+                                        </span>
+                                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                            <div
+                                                v-for="img in presetOccasionImages"
+                                                :key="img.url"
+                                                @click="occasionModal.form.image_url = img.url"
+                                                :style="{
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    borderRadius: '8px',
+                                                    border: occasionModal.form.image_url === img.url ? '2px solid #6E1F3A' : '1px solid #e2e8f0',
+                                                    background: occasionModal.form.image_url === img.url ? '#fdf2f4' : '#ffffff',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '3px',
+                                                    width: '58px',
+                                                    transition: 'all 0.15s ease'
+                                                }"
+                                            >
+                                                <img :src="img.url" style="width: 46px; height: 46px; object-fit: cover; border-radius: 4px;" />
+                                                <span style="font-size: 0.65rem; color: #475569; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px;">
+                                                    {{ img.label }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Direct URL input fallback -->
+                                    <div style="margin-top: 6px;">
+                                        <input
+                                            type="text"
+                                            v-model="occasionModal.form.image_url"
+                                            class="form-input"
+                                            style="font-size: 0.8rem; padding: 6px 10px;"
+                                            placeholder="Image URL (e.g. /storage/occasions/... or /asset/occasion/...)"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <div class="form-group" style="margin: 0; flex: 1;">
+                                        <label class="form-label" style="font-weight: bold;">Sort Order</label>
+                                        <input
+                                            type="number"
+                                            v-model.number="occasionModal.form.sort_order"
+                                            class="form-input"
+                                            placeholder="1"
+                                        />
+                                    </div>
+
+                                    <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                            <input type="checkbox" v-model="occasionModal.form.is_active" />
+                                            <span style="font-weight: bold; color: #1e293b;">Active Status</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                            <!-- Footer -->
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0; padding: 12px 20px; background: #FAF8F5; flex-shrink: 0;">
                                 <button
                                     type="button"
                                     @click="occasionModal.isOpen = false"
@@ -1845,7 +1913,7 @@
                 </div>
 
                 <!-- TAB 8: THE MAYA SREE EDIT SECTION BADGES DATABASE TABLE -->
-                <div v-if="activeTab === 'edit_badges'">
+                <div v-if="activeTab === 'edit_badges'" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--spacing-md);">
                         <div>
                             <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
@@ -1869,11 +1937,11 @@
                     </div>
 
                     <!-- Live Storefront Pills Preview Strip -->
-                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem;">
+                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem; width: 100%; max-width: 100%; overflow: hidden;">
                         <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #B68D40; margin-bottom: 8px;">
                             👁️ Live Storefront Tab Bar Preview (Active Badges: {{ sectionBadgeMeta.active_count }})
                         </div>
-                        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                        <div style="display: flex; gap: 8px; overflow-x: auto; width: 100%; max-width: 100%; padding-bottom: 6px; scrollbar-width: thin;">
                             <span
                                 v-for="(b, idx) in activeBadgesPreview"
                                 :key="b.id"
@@ -1895,7 +1963,7 @@
                     </div>
 
                     <!-- Active / Inactive Filter View Tabs -->
-                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem; overflow-x: auto; max-width: 100%;">
                         <button
                             type="button"
                             @click="setBadgeFilter('all')"
@@ -1952,7 +2020,7 @@
                     </div>
 
                     <!-- Badges Database Table -->
-                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; margin-bottom: var(--spacing-md);">
+                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; width: 100%; max-width: 100%; margin-bottom: var(--spacing-md); scrollbar-width: thin;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 680px;">
                             <thead>
                                 <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
@@ -2074,7 +2142,7 @@
                 </div>
 
                 <!-- TAB 9: SHOP BY OCCASIONS DATABASE TABLE -->
-                <div v-if="activeTab === 'occasions'">
+                <div v-if="activeTab === 'occasions'" style="min-width: 0; max-width: 100%; overflow: hidden;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: var(--spacing-md);">
                         <div>
                             <div class="card-header-title" style="margin-bottom: var(--spacing-xs)">
@@ -2098,11 +2166,11 @@
                     </div>
 
                     <!-- Live Storefront Occasions Strip Preview -->
-                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem;">
+                    <div style="background: #FFFDF9; border: 1px solid #EADBCE; border-radius: 12px; padding: 14px 18px; margin-bottom: 1.25rem; width: 100%; max-width: 100%; overflow: hidden;">
                         <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #B68D40; margin-bottom: 10px;">
                             👁️ Live Storefront Cards Preview (Active Occasions: {{ occasionMeta.active_count }})
                         </div>
-                        <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;">
+                        <div style="display: flex; gap: 12px; overflow-x: auto; width: 100%; max-width: 100%; padding-bottom: 8px; scrollbar-width: thin;">
                             <div
                                 v-for="occ in activeOccasionsPreview"
                                 :key="occ.id"
@@ -2135,7 +2203,7 @@
                     </div>
 
                     <!-- Active / Inactive Filter View Tabs -->
-                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 1rem; overflow-x: auto; max-width: 100%;">
                         <button
                             type="button"
                             @click="setOccasionFilter('all')"
@@ -2192,7 +2260,7 @@
                     </div>
 
                     <!-- Occasions Database Table -->
-                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; margin-bottom: var(--spacing-md);">
+                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; width: 100%; max-width: 100%; margin-bottom: var(--spacing-md); scrollbar-width: thin;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 720px;">
                             <thead>
                                 <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
@@ -2300,6 +2368,211 @@
                     </div>
                 </div>
 
+                <!-- Tab 10: Hero Banner Slides (Super Admin Only) -->
+                <div
+                    v-if="activeTab === 'hero_slides' && isSuperAdmin"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-lg);
+                    "
+                >
+                    <!-- Header Section -->
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            flex-wrap: wrap;
+                            gap: var(--spacing-sm);
+                            border-bottom: 1px solid var(--color-border);
+                            padding-bottom: var(--spacing-sm);
+                        "
+                    >
+                        <div>
+                            <div
+                                class="card-header-title"
+                                style="margin-bottom: 2px;"
+                            >
+                                👑 🖼️ Storefront Hero Banner & Carousel Slides (Super Admin Only)
+                            </div>
+                            <span style="font-size: 0.85rem; color: var(--color-text-muted);">
+                                Manage images, headlines, sub-headings, and action buttons shown on the storefront homepage hero carousel.
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn--primary"
+                            @click="openAddHeroSlideModal"
+                            style="display: flex; align-items: center; gap: 6px;"
+                        >
+                            ➕ Add Hero Slide
+                        </button>
+                    </div>
+
+                    <!-- Slide Filter Tabs -->
+                    <div style="display: flex; gap: 8px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; margin-bottom: 0.5rem; overflow-x: auto;">
+                        <button
+                            type="button"
+                            @click="heroSlideFilter = 'all'"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: heroSlideFilter === 'all' ? '#6E1F3A' : '#f1f5f9',
+                                color: heroSlideFilter === 'all' ? '#ffffff' : '#64748b',
+                            }"
+                        >
+                            All Slides ({{ heroSlidesList.length }})
+                        </button>
+                        <button
+                            type="button"
+                            @click="heroSlideFilter = 'active'"
+                            :style="{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                backgroundColor: heroSlideFilter === 'active' ? '#10b981' : '#f1f5f9',
+                                color: heroSlideFilter === 'active' ? '#ffffff' : '#64748b',
+                            }"
+                        >
+                            Active Only ({{ heroSlidesList.filter(s => s.is_active).length }})
+                        </button>
+                    </div>
+
+                    <!-- Slides Table -->
+                    <div style="background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; overflow-x: auto; width: 100%; max-width: 100%; margin-bottom: var(--spacing-md); scrollbar-width: thin;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 780px;">
+                            <thead>
+                                <tr style="background: #FAF8F5; border-bottom: 1px solid var(--color-border); text-align: left;">
+                                    <th style="padding: 12px 14px; width: 45px;">#</th>
+                                    <th style="padding: 12px 14px; width: 140px;">Banner Images</th>
+                                    <th style="padding: 12px 14px;">Slide Details & Headline</th>
+                                    <th style="padding: 12px 14px; width: 140px;">CTA Button</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 90px;">Status</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 80px;">Toggle</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 90px;">Order</th>
+                                    <th style="padding: 12px 14px; text-align: center; width: 110px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr 
+                                    v-for="(slide, index) in filteredHeroSlides" 
+                                    :key="slide.id"
+                                    style="border-bottom: 1px solid #f1e9df; transition: background 0.15s ease;"
+                                    :style="{ background: slide.is_active ? '#ffffff' : '#fafafa' }"
+                                >
+                                    <td style="padding: 12px 14px; font-weight: bold; color: var(--color-text-muted);">
+                                        {{ index + 1 }}
+                                    </td>
+                                    <td style="padding: 8px 14px;">
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <div title="Main Left Image" style="width: 48px; height: 64px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; background: #FAF8F5; display: flex; align-items: center; justify-content: center;">
+                                                <img :src="slide.left_image" alt="Main Banner" style="width: 100%; height: 100%; object-fit: cover;" />
+                                            </div>
+                                            <div v-if="slide.right_image" title="Showcase Sub Image" style="width: 40px; height: 54px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; background: #FAF8F5; display: flex; align-items: center; justify-content: center;">
+                                                <img :src="slide.right_image" alt="Showcase Sub" style="width: 100%; height: 100%; object-fit: cover;" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px;">
+                                        <div v-if="slide.tag" style="font-size: 0.72rem; color: #B68D40; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            🏷️ {{ slide.tag }}
+                                        </div>
+                                        <div v-if="slide.script_text" style="font-size: 0.8rem; color: #6E1F3A; font-style: italic; font-weight: 600;">
+                                            {{ slide.script_text }}
+                                        </div>
+                                        <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem; line-height: 1.3; margin: 2px 0;" v-html="slide.title"></div>
+                                        <div v-if="slide.description" style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.3; max-width: 320px;">
+                                            {{ slide.description }}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px;">
+                                        <span class="badge" style="background: #fdf2f4; color: #6E1F3A; border: 1px solid #fecdd3; font-weight: 600; font-size: 0.75rem;">
+                                            {{ slide.button_text || 'SHOP NOW' }}
+                                        </span>
+                                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                                            {{ slide.button_link || '/shop' }}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <span :class="['badge', slide.is_active ? 'badge--success' : 'badge--secondary']" style="font-size: 0.75rem;">
+                                            {{ slide.is_active ? '🟢 Active' : '⚪ Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <input 
+                                            type="checkbox" 
+                                            :checked="slide.is_active" 
+                                            @change="toggleHeroSlideActive(slide)"
+                                            style="width: 18px; height: 18px; cursor: pointer;" 
+                                            title="Toggle Status"
+                                        />
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 4px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === 0" 
+                                                @click="moveHeroSlide(index, -1)"
+                                                title="Move Up"
+                                            >
+                                                ▲
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                :disabled="index === heroSlidesList.length - 1" 
+                                                @click="moveHeroSlide(index, 1)"
+                                                title="Move Down"
+                                            >
+                                                ▼
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center;">
+                                        <div style="display: flex; gap: 6px; justify-content: center;">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; font-size: 0.75rem;" 
+                                                @click="openEditHeroSlideModal(slide)"
+                                                title="Edit Hero Slide"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn--secondary btn--sm" 
+                                                style="padding: 2px 8px; color: #e11d48; border-color: rgba(225,29,72,0.3); font-size: 0.75rem;" 
+                                                @click="deleteHeroSlide(slide)" 
+                                                title="Delete Hero Slide"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredHeroSlides.length === 0">
+                                    <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--color-text-muted);">
+                                        No hero slides found in this view. Click "Add Hero Slide" to create one.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div
                     style="
@@ -2335,6 +2608,233 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Hero Slide Modal (Super Admin Only) -->
+            <div
+                v-if="heroSlideModal.isOpen"
+                style="
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    padding: 16px;
+                "
+                @click.self="heroSlideModal.isOpen = false"
+            >
+                <div
+                    style="
+                        background: #ffffff;
+                        border-radius: 14px;
+                        width: 100%;
+                        max-width: 620px;
+                        max-height: calc(100vh - 40px);
+                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                        display: flex;
+                        flex-direction: column;
+                        overflow: hidden;
+                    "
+                >
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; flex-shrink: 0; background: #ffffff;">
+                        <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: #6E1F3A; font-size: 1.25rem;">
+                            {{ heroSlideModal.isEditing ? '✏️ Edit Hero Slide' : '➕ Add New Hero Slide' }}
+                        </h3>
+                        <button
+                            type="button"
+                            @click="heroSlideModal.isOpen = false"
+                            style="border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #64748b; padding: 4px;"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <!-- Form -->
+                    <form @submit.prevent="submitHeroSlideModal" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; margin: 0;">
+                        <div style="padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; scrollbar-width: thin;">
+                            
+                            <!-- Main Image (Left) -->
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold; margin-bottom: 4px; display: block;">
+                                    Main Left Card Image *
+                                </label>
+                                <div style="display: flex; gap: 14px; align-items: center; background: #faf8f5; border: 1px dashed #d1c7bd; border-radius: 10px; padding: 12px;">
+                                    <div style="width: 70px; height: 95px; flex-shrink: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                        <img 
+                                            v-if="heroSlideModal.form.left_image" 
+                                            :src="heroSlideModal.form.left_image" 
+                                            alt="Main Preview" 
+                                            style="width: 100%; height: 100%; object-fit: cover;"
+                                        />
+                                        <span v-else style="font-size: 1.5rem; color: #cbd5e1;">🖼️</span>
+                                    </div>
+                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="btn btn--secondary btn--sm" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; width: fit-content;">
+                                            <span>{{ heroSlideModal.uploadingLeft ? 'Uploading...' : '📁 Choose Image File' }}</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                @change="(e) => handleHeroImageUpload(e, 'left')" 
+                                                style="display: none;" 
+                                                :disabled="heroSlideModal.uploadingLeft"
+                                            />
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            v-model="heroSlideModal.form.left_image" 
+                                            class="form-input" 
+                                            placeholder="Or enter image URL (e.g. /asset/Bottle-Green...)" 
+                                            style="font-size: 0.82rem; padding: 6px 10px;"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Showcase Image (Right Sub Card) -->
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold; margin-bottom: 4px; display: block;">
+                                    Showcase Sub-Card Image (Optional Close-Up)
+                                </label>
+                                <div style="display: flex; gap: 14px; align-items: center; background: #faf8f5; border: 1px dashed #d1c7bd; border-radius: 10px; padding: 12px;">
+                                    <div style="width: 60px; height: 80px; flex-shrink: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                        <img 
+                                            v-if="heroSlideModal.form.right_image" 
+                                            :src="heroSlideModal.form.right_image" 
+                                            alt="Sub Preview" 
+                                            style="width: 100%; height: 100%; object-fit: cover;"
+                                        />
+                                        <span v-else style="font-size: 1.3rem; color: #cbd5e1;">🔍</span>
+                                    </div>
+                                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="btn btn--secondary btn--sm" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; width: fit-content;">
+                                            <span>{{ heroSlideModal.uploadingRight ? 'Uploading...' : '📁 Choose Image File' }}</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                @change="(e) => handleHeroImageUpload(e, 'right')" 
+                                                style="display: none;" 
+                                                :disabled="heroSlideModal.uploadingRight"
+                                            />
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            v-model="heroSlideModal.form.right_image" 
+                                            class="form-input" 
+                                            placeholder="Or enter image URL (e.g. /asset/hero-bottle-green-sub.png)" 
+                                            style="font-size: 0.82rem; padding: 6px 10px;"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tag & Script Subtitle -->
+                            <div class="responsive-grid-1-1" style="gap: 12px;">
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Badge / Tag Text</label>
+                                    <input
+                                        type="text"
+                                        v-model="heroSlideModal.form.tag"
+                                        class="form-input"
+                                        placeholder="e.g. SIGNATURE STRETCHABLE BLOUSE"
+                                    />
+                                </div>
+
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Script / Sub-Heading</label>
+                                    <input
+                                        type="text"
+                                        v-model="heroSlideModal.form.script_text"
+                                        class="form-input"
+                                        placeholder="e.g. Signature Craftsmanship"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Headline / Title -->
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">
+                                    Headline / Title * <span style="font-weight: normal; font-size: 0.75rem; color: #64748b;">(Use &lt;br&gt; for line break, &lt;span class="highlight"&gt;text&lt;/span&gt; for gold highlight)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    v-model="heroSlideModal.form.title"
+                                    class="form-input"
+                                    placeholder='e.g. Stretchable Bottle Green Blouse<br><span class="highlight">Peacock & Flute Art</span>'
+                                    required
+                                />
+                            </div>
+
+                            <!-- Description -->
+                            <div class="form-group" style="margin: 0">
+                                <label class="form-label" style="font-weight: bold;">Description Text</label>
+                                <textarea
+                                    v-model="heroSlideModal.form.description"
+                                    class="form-input"
+                                    rows="2"
+                                    placeholder="e.g. Engineered with breathable 4-way cotton lycra, exquisite peacock embroidery..."
+                                ></textarea>
+                            </div>
+
+                            <!-- CTA Button & Link -->
+                            <div class="responsive-grid-1-1" style="gap: 12px;">
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Button Text</label>
+                                    <input
+                                        type="text"
+                                        v-model="heroSlideModal.form.button_text"
+                                        class="form-input"
+                                        placeholder="e.g. SHOP THIS BLOUSE"
+                                    />
+                                </div>
+
+                                <div class="form-group" style="margin: 0">
+                                    <label class="form-label" style="font-weight: bold;">Button Redirect URL</label>
+                                    <input
+                                        type="text"
+                                        v-model="heroSlideModal.form.button_link"
+                                        class="form-input"
+                                        placeholder="e.g. /shop or /products/1"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Active Checkbox & Sort Order -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid #f1f5f9;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #1e293b;">
+                                    <input type="checkbox" v-model="heroSlideModal.form.is_active" style="width: 18px; height: 18px; cursor: pointer;" />
+                                    <span>Active on Storefront Hero</span>
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.8rem; color: #64748b;">Order:</span>
+                                    <input type="number" v-model.number="heroSlideModal.form.sort_order" class="form-input" style="width: 65px; padding: 4px 8px; text-align: center;" />
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="border-top: 1px solid #e2e8f0; padding: 14px 20px; background: #faf8f5; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;">
+                            <button
+                                type="button"
+                                class="btn btn--secondary"
+                                @click="heroSlideModal.isOpen = false"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn--primary"
+                                :disabled="heroSlideModal.submitting"
+                            >
+                                {{ heroSlideModal.submitting ? 'Saving...' : (heroSlideModal.isEditing ? 'Update Slide' : 'Create Slide') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -2343,6 +2843,34 @@
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import StorefrontAnnouncementBar from "../../components/StorefrontAnnouncementBar.vue";
+import { useAuthStore } from "../../stores/auth";
+
+const authStore = useAuthStore();
+const isSuperAdmin = computed(() => {
+    if (!authStore.user) return false;
+    return (
+        authStore.user.role_id === 1 ||
+        (authStore.user.roles && authStore.user.roles.some((r) => r.name === "super_admin"))
+    );
+});
+
+const availableTabs = computed(() => {
+    const tabs = [
+        "general",
+        "shipping",
+        "payment",
+        "email",
+        "announcement",
+        "welcome_gift",
+        "reviews",
+        "edit_badges",
+        "occasions",
+    ];
+    if (isSuperAdmin.value) {
+        tabs.push("hero_slides");
+    }
+    return tabs;
+});
 
 const activeTab = ref("general");
 const loading = ref(true);
@@ -2353,12 +2881,12 @@ const successMsg = ref("");
 const stateSearchQuery = ref("");
 
 const INDIAN_STATES_REGIONS = [
-    { name: "Tamil Nadu", region: "South India", isSouth: true },
-    { name: "Puducherry", region: "South India", isSouth: true },
-    { name: "Kerala", region: "South India", isSouth: true },
-    { name: "Karnataka", region: "South India", isSouth: true },
-    { name: "Andhra Pradesh", region: "South India", isSouth: true },
-    { name: "Telangana", region: "South India", isSouth: true },
+    { name: "Tamil Nadu", region: "Southern", isSouth: true },
+    { name: "Puducherry", region: "Southern", isSouth: true },
+    { name: "Kerala", region: "Southern", isSouth: true },
+    { name: "Karnataka", region: "Southern", isSouth: true },
+    { name: "Andhra Pradesh", region: "Southern", isSouth: true },
+    { name: "Telangana", region: "Southern", isSouth: true },
     { name: "Maharashtra", region: "Western", isSouth: false },
     { name: "Goa", region: "Western", isSouth: false },
     { name: "Gujarat", region: "Western", isSouth: false },
@@ -2717,6 +3245,38 @@ const setOccasionFilter = (filter) => {
     fetchOccasionsList();
 };
 
+const occasionImageInput = ref(null);
+const uploadingOccasionImage = ref(false);
+
+const handleOccasionImageUpload = async (event) => {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+
+    uploadingOccasionImage.value = true;
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+        const response = await axios.post("/api/admin/occasions/upload-image", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
+        if (response.data && response.data.success && response.data.data?.url) {
+            occasionModal.value.form.image_url = response.data.data.url;
+        }
+    } catch (err) {
+        console.error("Failed to upload occasion image:", err);
+        alert(err.response?.data?.message || "Failed to upload image. Please try again.");
+    } finally {
+        uploadingOccasionImage.value = false;
+        if (event.target) {
+            event.target.value = "";
+        }
+    }
+};
+
 const toggleOccasionActive = async (occ) => {
     try {
         const response = await axios.patch(`/api/admin/occasions/${occ.id}/toggle`);
@@ -2819,12 +3379,18 @@ const moveOccasion = async (index, direction) => {
 const availableCoupons = ref([]);
 const fetchCoupons = async () => {
     try {
-        const response = await axios.get("/api/admin/coupons");
+        const response = await axios.get("/api/admin/coupons", {
+            params: {
+                first_order_only: 1,
+                status: "active",
+                per_page: 100
+            }
+        });
         if (response.data && response.data.data) {
             availableCoupons.value = response.data.data;
         }
     } catch (err) {
-        console.error("Failed to load coupons list:", err);
+        console.error("Failed to load coupons list from Coupon Master:", err);
     }
 };
 
@@ -3115,11 +3681,210 @@ const saveSettings = async () => {
     }
 };
 
+// Hero Slides (Super Admin Only)
+const heroSlidesList = ref([]);
+const heroSlideFilter = ref("all");
+const heroSlideModal = ref({
+    isOpen: false,
+    isEditing: false,
+    submitting: false,
+    uploadingLeft: false,
+    uploadingRight: false,
+    form: {
+        id: null,
+        tag: "",
+        script_text: "",
+        title: "",
+        description: "",
+        left_image: "",
+        right_image: "",
+        button_text: "SHOP THIS BLOUSE",
+        button_link: "/shop",
+        sort_order: 1,
+        is_active: true,
+    },
+});
+
+const filteredHeroSlides = computed(() => {
+    if (heroSlideFilter.value === "active") {
+        return heroSlidesList.value.filter((s) => s.is_active);
+    }
+    return heroSlidesList.value;
+});
+
+const fetchHeroSlides = async () => {
+    if (!isSuperAdmin.value) return;
+    try {
+        const response = await axios.get("/api/admin/hero-slides");
+        if (response.data && response.data.success) {
+            heroSlidesList.value = response.data.data || [];
+        }
+    } catch (err) {
+        console.error("Failed to load hero slides:", err);
+    }
+};
+
+const openAddHeroSlideModal = () => {
+    const nextOrder = heroSlidesList.value.length + 1;
+    heroSlideModal.value = {
+        isOpen: true,
+        isEditing: false,
+        submitting: false,
+        uploadingLeft: false,
+        uploadingRight: false,
+        form: {
+            id: null,
+            tag: "",
+            script_text: "",
+            title: "",
+            description: "",
+            left_image: "",
+            right_image: "",
+            button_text: "SHOP THIS BLOUSE",
+            button_link: "/shop",
+            sort_order: nextOrder,
+            is_active: true,
+        },
+    };
+};
+
+const openEditHeroSlideModal = (slide) => {
+    heroSlideModal.value = {
+        isOpen: true,
+        isEditing: true,
+        submitting: false,
+        uploadingLeft: false,
+        uploadingRight: false,
+        form: {
+            id: slide.id,
+            tag: slide.tag || "",
+            script_text: slide.script_text || "",
+            title: slide.title || "",
+            description: slide.description || "",
+            left_image: slide.left_image || "",
+            right_image: slide.right_image || "",
+            button_text: slide.button_text || "SHOP NOW",
+            button_link: slide.button_link || "/shop",
+            sort_order: slide.sort_order || 1,
+            is_active: !!slide.is_active,
+        },
+    };
+};
+
+const handleHeroImageUpload = async (event, side = "left") => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    if (side === "left") heroSlideModal.value.uploadingLeft = true;
+    else heroSlideModal.value.uploadingRight = true;
+
+    try {
+        const res = await axios.post("/api/admin/hero-slides/upload-image", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (res.data && res.data.url) {
+            if (side === "left") {
+                heroSlideModal.value.form.left_image = res.data.url;
+            } else {
+                heroSlideModal.value.form.right_image = res.data.url;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to upload hero banner image:", err);
+        alert(err.response?.data?.message || "Failed to upload image.");
+    } finally {
+        if (side === "left") heroSlideModal.value.uploadingLeft = false;
+        else heroSlideModal.value.uploadingRight = false;
+        event.target.value = "";
+    }
+};
+
+const submitHeroSlideModal = async () => {
+    if (!heroSlideModal.value.form.title.trim() || !heroSlideModal.value.form.left_image.trim()) {
+        alert("Please provide both a Title and Main Left Card Image.");
+        return;
+    }
+
+    heroSlideModal.value.submitting = true;
+    try {
+        if (heroSlideModal.value.isEditing) {
+            await axios.put(`/api/admin/hero-slides/${heroSlideModal.value.form.id}`, heroSlideModal.value.form);
+        } else {
+            await axios.post("/api/admin/hero-slides", heroSlideModal.value.form);
+        }
+        heroSlideModal.value.isOpen = false;
+        await fetchHeroSlides();
+    } catch (err) {
+        console.error("Failed to save hero slide:", err);
+        alert(err.response?.data?.message || "Failed to save hero slide.");
+    } finally {
+        heroSlideModal.value.submitting = false;
+    }
+};
+
+const toggleHeroSlideActive = async (slide) => {
+    const oldVal = slide.is_active;
+    slide.is_active = !oldVal;
+    try {
+        await axios.put(`/api/admin/hero-slides/${slide.id}`, {
+            ...slide,
+            is_active: slide.is_active,
+        });
+    } catch (err) {
+        slide.is_active = oldVal;
+        console.error("Failed to toggle hero slide active state:", err);
+        alert("Failed to update status.");
+    }
+};
+
+const moveHeroSlide = async (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= heroSlidesList.value.length) return;
+
+    const list = [...heroSlidesList.value];
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+
+    const reordered = list.map((item, idx) => ({
+        id: item.id,
+        sort_order: idx + 1,
+    }));
+
+    heroSlidesList.value = list.map((item, idx) => ({
+        ...item,
+        sort_order: idx + 1,
+    }));
+
+    try {
+        await axios.post("/api/admin/hero-slides/reorder", {
+            slides: reordered,
+        });
+    } catch (err) {
+        console.error("Failed to reorder hero slides:", err);
+    }
+};
+
+const deleteHeroSlide = async (slide) => {
+    if (!confirm(`Are you sure you want to delete this hero slide?`)) return;
+
+    try {
+        await axios.delete(`/api/admin/hero-slides/${slide.id}`);
+        await fetchHeroSlides();
+    } catch (err) {
+        console.error("Failed to delete hero slide:", err);
+        alert("Failed to delete hero slide.");
+    }
+};
+
 onMounted(() => {
     fetchSettings();
     fetchAnnouncementsList();
     fetchSectionBadgesList();
     fetchOccasionsList();
     fetchCoupons();
+    fetchHeroSlides();
 });
 </script>

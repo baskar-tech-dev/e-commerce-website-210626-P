@@ -15,7 +15,7 @@
         <span class="about-hero__tagline">Since 2017</span>
         <h1 class="about-hero__title">A Legacy of Love,<br>Woven into Every Thread</h1>
         <p class="about-hero__subtitle">
-          From a mother’s dream to a global tribute to South Indian heritage. We craft comfortable, premium garments designed for modern families who cherish elegance and quality.
+          From a mother’s dream to a global tribute to Indian textile heritage. We craft comfortable, premium garments designed for modern families who cherish elegance and quality.
         </p>
         <router-link to="/shop" class="about-btn about-btn--primary">
           Shop the Collection
@@ -29,7 +29,7 @@
         <div class="who-we-are__grid">
           <div class="who-we-are__text reveal">
             <span class="section-tag">Who We Are</span>
-            <h2 class="section-title">Crafting the Modern Heritage of South India</h2>
+            <h2 class="section-title">Crafting Modern Heritage & Elegance</h2>
             <p class="section-paragraph">
               Maya Sree Fashion is an elegant, family-focused apparel brand born in Erode, with our main studio in Tirupur. We specialize in high-quality traditional sarees, comfort-first kurtis, and our signature stretchable readymade blouses.
             </p>
@@ -83,7 +83,7 @@
             </div>
             <h3 class="mv-card__title">Our Mission</h3>
             <p class="mv-card__text">
-              Preserving South Indian textile heritage by creating exceptionally comfortable, high-quality, and premium ethnic wear that is accessible to families worldwide.
+              Preserving Indian textile heritage by creating exceptionally comfortable, high-quality, and premium ethnic wear that is accessible to families worldwide.
             </p>
           </div>
           <div class="mv-card">
@@ -92,7 +92,7 @@
             </div>
             <h3 class="mv-card__title">Our Vision</h3>
             <p class="mv-card__text">
-              To become the global standard for modern South Indian fashion, celebrated for our innovation in comfort, premium fabric selections, and absolute trust.
+              To become the global standard for modern ethnic fashion, celebrated for our innovation in comfort, premium fabric selections, and absolute trust.
             </p>
           </div>
         </div>
@@ -112,7 +112,7 @@
           <div class="why-card">
             <div class="why-card__num">02</div>
             <h4 class="why-card__title">Trend-Inspired Collections</h4>
-            <p class="why-card__text">Melding classic South Indian silhouettes with contemporary details for a fresh aesthetic.</p>
+            <p class="why-card__text">Melding classic ethnic silhouettes with contemporary details for a fresh aesthetic.</p>
           </div>
           <div class="why-card">
             <div class="why-card__num">03</div>
@@ -156,7 +156,7 @@
           <div class="stat-item">
             <span class="stat-item__num">15,000+</span>
             <span class="stat-item__label">Families Served Globally</span>
-            <p class="stat-item__desc">Spreading the warmth of South Indian fashion to homes across the world.</p>
+            <p class="stat-item__desc">Spreading the warmth of Maya Sree fashion to homes across the world.</p>
           </div>
           <div class="stat-item">
             <span class="stat-item__num">500+</span>
@@ -165,8 +165,8 @@
           </div>
           <div class="stat-item">
             <span class="stat-item__num">100%</span>
-            <span class="stat-item__label">South Indian Soul</span>
-            <p class="stat-item__desc">Designed in Tirupur, keeping traditional craftsmanship alive.</p>
+            <span class="stat-item__label">Authentic Heritage Soul</span>
+            <p class="stat-item__desc">Designed with care, keeping traditional craftsmanship alive.</p>
           </div>
         </div>
       </section>

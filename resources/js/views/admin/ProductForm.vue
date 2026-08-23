@@ -1075,7 +1075,7 @@
               <span style="color: #5f6368; font-size: 0.8rem;">› products › {{ form.slug || 'readymade-stretchable-saree-blouse' }}</span>
             </div>
             <div style="color: #1a0dab; font-size: 1.15rem; font-weight: 500; text-decoration: underline; margin-bottom: 4px; cursor: pointer;">
-              {{ form.meta_title || form.name || 'Readymade Stretchable Saree Blouse | Maya Sree South Indian Fashion' }}
+              {{ form.meta_title || form.name || 'Readymade Stretchable Saree Blouse | Maya Sree Fashion' }}
             </div>
             <div style="color: #4d5156; font-size: 0.85rem; line-height: 1.4;">
               {{ form.meta_description || form.short_description || 'Shop premium 4-way cotton lycra readymade stretchable saree blouses with comfortable fit and rich Indian festive styling at Maya Sree.' }}

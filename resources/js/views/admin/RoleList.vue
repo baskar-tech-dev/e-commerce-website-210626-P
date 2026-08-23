@@ -1,209 +1,195 @@
 <template>
   <div class="admin-page__header">
     <div class="admin-page__title-section">
-      <h1 class="admin-page__title">Access Control (RBAC)</h1>
-      <span class="admin-page__subtitle">Configure security roles and manage granular permissions assigned to back-office staff.</span>
+      <h1 class="admin-page__title" style="font-family: 'Playfair Display', serif; color: #6E1F3A;">Access Control (RBAC)</h1>
+      <span class="admin-page__subtitle" style="font-family: 'Poppins', sans-serif;">Manage security access tiers and configure menu-wise permissions (View, Create, Edit, Delete).</span>
+    </div>
+    <div class="admin-page__actions">
+      <router-link 
+        to="/admin/roles/create" 
+        class="btn btn--primary"
+        style="background: #6E1F3A; color: #ffffff; padding: 0.65rem 1.25rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(110, 31, 58, 0.2);"
+      >
+        ➕ Add New Role
+      </router-link>
     </div>
   </div>
 
-  <div class="responsive-grid-3-2" style="gap: var(--spacing-lg); margin-top: var(--spacing-md);">
-    <!-- Left Panel: Defined Roles list -->
-    <div class="glass-panel" style="overflow: hidden; padding: var(--spacing-md);">
-      <div style="padding: 0.5rem 0.5rem 1rem; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-        <div class="card-header-title">Defined Security Roles</div>
-        <button class="btn btn--primary btn--sm" @click="initNewRole">➕ Add New Role</button>
+  <!-- Search Filter Bar -->
+  <div class="glass-panel" style="padding: 14px 20px; margin-top: var(--spacing-md); margin-bottom: var(--spacing-lg); background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0;">
+    <div style="display: flex; gap: 14px; align-items: center;">
+      <div style="flex: 1; position: relative;">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="Search security roles by title or description..." 
+          class="form-input" 
+          style="padding-left: 2.25rem; width: 100%; font-family: 'Poppins', sans-serif;" 
+        />
+        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;">🔍</span>
       </div>
+      <button 
+        v-if="searchQuery" 
+        @click="searchQuery = ''" 
+        class="btn btn--secondary btn--sm" 
+        style="padding: 8px 12px;"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
 
-      <div v-if="loading" style="text-align: center; padding: 3rem;">
-        <div class="stat-card__value" style="font-size: 1.2rem;">Loading role parameters...</div>
-      </div>
+  <!-- Loading State -->
+  <div v-if="loading" style="text-align: center; padding: 4rem;">
+    <div class="stat-card__value" style="font-size: 1.2rem; color: #6E1F3A;">⏳ Loading defined roles...</div>
+  </div>
 
-      <div v-else>
-        <!-- Mobile Cards View -->
-        <div class="mobile-data-list">
-          <div class="mobile-data-card" v-for="role in roles" :key="role.id" :class="{'table-row--selected': selectedRole?.id === role.id}">
-            <div class="mdc-header">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div>
-                  <div class="mdc-title" style="text-transform: uppercase;">{{ role.name.replace('_', ' ') }}</div>
-                </div>
+  <!-- Roles Main Table Panel -->
+  <div v-else class="glass-panel" style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    
+    <!-- Mobile Cards View -->
+    <div class="mobile-data-list">
+      <div class="mobile-data-card" v-for="role in filteredRoles" :key="role.id">
+        <div class="mdc-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div>
+              <div class="mdc-title" style="text-transform: uppercase;">
+                {{ getRoleDisplay(role.name) }}
               </div>
-            </div>
-            
-            <div class="mdc-body">
-              <div class="mdc-customer">
-                <span class="mdc-name">{{ role.description || '—' }}</span>
-              </div>
-              <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
-                <span>Permissions: <strong>{{ role.permissions ? role.permissions.length : 0 }}</strong></span>
-                <span>Staff: <strong>{{ role.users_count }}</strong></span>
-              </div>
-            </div>
-            
-            <div class="mdc-footer">
-              <div class="mdc-badges">
-              </div>
-              <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn--secondary btn--sm" @click="selectRoleForEdit(role)">⚙️ Edit</button>
-                <button class="btn btn--danger btn--sm" :disabled="role.name === 'super_admin'" @click="deleteRole(role.id)">🗑️ Delete</button>
-              </div>
+              <div class="mdc-date" style="font-family: monospace; font-size: 0.72rem;">{{ role.name }}</div>
             </div>
           </div>
         </div>
-
-        <!-- Desktop Table View -->
-        <table class="data-table desktop-data-table">
-          <thead>
-            <tr>
-              <th>Role Name</th>
-              <th>Description</th>
-              <th style="text-align: right;">Permissions</th>
-              <th style="text-align: right;">Assigned Users</th>
-              <th style="text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="role in roles" :key="role.id" :class="{'table-row--selected': selectedRole?.id === role.id}">
-              <td style="font-weight: bold; color: var(--color-primary); text-transform: uppercase;">
-                {{ role.name.replace('_', ' ') }}
-              </td>
-              <td>{{ role.description || '—' }}</td>
-              <td style="text-align: right; font-weight: bold; color: #1e293b;">
-                {{ role.permissions ? role.permissions.length : 0 }}
-              </td>
-              <td style="text-align: right;">
-                {{ role.users_count }} staff
-              </td>
-              <td style="text-align: right;">
-                <div style="display: flex; gap: var(--spacing-xs); justify-content: flex-end;">
-                  <button class="btn btn--secondary btn--sm" @click="selectRoleForEdit(role)">
-                    ⚙️ Edit Permissions
-                  </button>
-                  <button 
-                    class="btn btn--danger btn--sm" 
-                    :disabled="role.name === 'super_admin'"
-                    @click="deleteRole(role.id)"
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        
+        <div class="mdc-body">
+          <div class="mdc-customer">
+            <span class="mdc-name">{{ role.description || '—' }}</span>
+          </div>
+          <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
+            <span>Permissions: <strong>{{ role.permissions ? role.permissions.length : 0 }}</strong></span>
+            <span>Staff Assigned: <strong>{{ role.users_count }}</strong></span>
+          </div>
+        </div>
+        
+        <div class="mdc-footer">
+          <div class="mdc-badges">
+            <span v-if="role.name === 'super_admin'" class="badge badge--danger" style="font-size: 0.65rem;">
+              👑 Super Admin
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <router-link 
+              :to="`/admin/roles/${role.id}/edit`" 
+              class="btn btn--secondary btn--sm"
+              title="Edit Permissions"
+              style="padding: 6px 10px; font-size: 0.85rem;"
+            >
+              ✏️
+            </router-link>
+            <button 
+              class="btn btn--danger btn--sm" 
+              :disabled="role.name === 'super_admin'" 
+              @click="deleteRole(role.id)"
+              :title="role.name === 'super_admin' ? 'Super Admin cannot be deleted' : 'Delete Role'"
+              style="padding: 6px 10px; font-size: 0.85rem;"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Right Panel: Edit Permissions panel -->
-    <div class="glass-panel" style="padding: var(--spacing-lg);">
-      <div v-if="!selectedRole && !isCreating" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
-        <span style="font-size: 3rem; display: block; margin-bottom: var(--spacing-md);">🔑</span>
-        Select a role or add a new one to manage granular permissions logs.
-      </div>
-
-      <div v-else>
-        <div class="card-header-title" style="margin-bottom: var(--spacing-md);">
-          {{ isCreating ? 'Create New Security Role' : `Edit Permissions for: ${selectedRole.name.replace('_', ' ').toUpperCase()}` }}
-        </div>
-
-        <form @submit.prevent="saveRole">
-          <!-- Role Name -->
-          <div class="form-group" style="margin-bottom: var(--spacing-md);">
-            <label class="form-label">Role Name *</label>
-            <input 
-              type="text" 
-              v-model="roleForm.name" 
-              placeholder="e.g. sales_manager" 
-              class="form-input" 
-              :disabled="!isCreating && selectedRole?.name === 'super_admin'"
-              required 
-            />
-          </div>
+    <!-- Desktop Table View -->
+    <table class="data-table desktop-data-table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #FAF8F5; border-bottom: 1px solid #e2e8f0; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;">
+          <th style="padding: 14px 20px; font-weight: 600; text-align: left; width: 25%;">Role Name & Key</th>
+          <th style="padding: 14px 16px; font-weight: 600; text-align: left; width: 38%;">Description</th>
+          <th style="padding: 14px 16px; font-weight: 600; text-align: center; width: 15%;">Active Permissions</th>
+          <th style="padding: 14px 16px; font-weight: 600; text-align: center; width: 10%;">Assigned Staff</th>
+          <th style="padding: 14px 20px; font-weight: 600; text-align: right; width: 12%;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          v-for="role in filteredRoles" 
+          :key="role.id"
+          style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;"
+          onmouseover="this.style.background='#FDFBF7'"
+          onmouseout="this.style.background='transparent'"
+        >
+          <!-- Role Name & Key -->
+          <td style="padding: 16px 20px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-weight: 700; color: #6E1F3A; font-size: 0.95rem;">
+                {{ getRoleDisplay(role.name) }}
+              </span>
+              <span style="font-family: monospace; font-size: 0.75rem; color: #94a3b8;">
+                {{ role.name }}
+              </span>
+            </div>
+          </td>
 
           <!-- Description -->
-          <div class="form-group" style="margin-bottom: var(--spacing-md);">
-            <label class="form-label">Description</label>
-            <input 
-              type="text" 
-              v-model="roleForm.description" 
-              placeholder="Describe access privileges..." 
-              class="form-input" 
-            />
-          </div>
+          <td style="padding: 16px 16px; color: #475569; font-size: 0.85rem; line-height: 1.4;">
+            {{ role.description || '—' }}
+          </td>
 
-          <!-- Permissions Checkbox lists -->
-          <div class="form-group" style="margin-bottom: var(--spacing-lg);">
-            <label class="form-label" style="margin-bottom: 0.5rem;">Configure Access Permissions</label>
-            
-            <div 
-              v-if="!isCreating && selectedRole?.name === 'super_admin'" 
-              style="color: var(--color-success); font-size: 0.85rem; font-weight: 500;"
+          <!-- Active Permissions Count Badge -->
+          <td style="padding: 16px 16px; text-align: center;">
+            <span 
+              :class="[
+                'badge', 
+                role.name === 'super_admin' ? 'badge--danger' : (role.name === 'admin' ? 'badge--success' : 'badge--secondary')
+              ]" 
+              style="font-size: 0.82rem; padding: 4px 10px; font-weight: 600;"
             >
-              ⚠️ Super Admins always possess all permissions. Checkboxes are locked.
-            </div>
+              {{ role.name === 'super_admin' ? '90 / 90 (All)' : `${role.permissions ? role.permissions.length : 0} CRUD` }}
+            </span>
+          </td>
 
-            <div v-else style="display: flex; flex-direction: column; gap: var(--spacing-xs); background: rgba(0,0,0,0.1); border-radius: 6px; padding: var(--spacing-sm); border: 1px solid var(--color-border);">
-              <label 
-                v-for="p in allPermissions" 
-                :key="p.id" 
-                style="display: flex; align-items: flex-start; gap: var(--spacing-xs); color: #1e293b; font-size: 0.85rem; padding: 0.25rem 0; cursor: pointer;"
+          <!-- Assigned Staff Count -->
+          <td style="padding: 16px 16px; text-align: center; font-weight: 600; color: #1e293b; font-size: 0.9rem;">
+            {{ role.users_count }}
+          </td>
+
+          <!-- Action Buttons -->
+          <td style="padding: 16px 20px; text-align: right;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+              <router-link 
+                :to="`/admin/roles/${role.id}/edit`" 
+                class="btn btn--secondary btn--sm" 
+                title="Edit Permissions"
+                style="padding: 6px 10px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center;"
               >
-                <input 
-                  type="checkbox" 
-                  :value="p.id" 
-                  v-model="roleForm.permissions" 
-                  style="margin-top: 3px; cursor: pointer;" 
-                />
-                <div>
-                  <div style="font-weight: bold;">{{ p.name.replace('_', ' ').toUpperCase() }}</div>
-                  <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ p.description }}</div>
-                </div>
-              </label>
-            </div>
-          </div>
+                ✏️
+              </router-link>
 
-          <!-- Actions -->
-          <div style="display: flex; gap: var(--spacing-sm);">
-            <button 
-              type="submit" 
-              class="btn btn--primary" 
-              style="flex: 1;"
-              :disabled="saving || (!isCreating && selectedRole?.name === 'super_admin')"
-            >
-              {{ saving ? 'Saving Changes...' : '💾 Save Role' }}
-            </button>
-            <button 
-              type="button" 
-              class="btn btn--secondary" 
-              style="flex: 1;"
-              @click="cancelEdit"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <button 
+                class="btn btn--danger btn--sm" 
+                :disabled="role.name === 'super_admin'"
+                @click="deleteRole(role.id)"
+                :title="role.name === 'super_admin' ? 'Super Admin cannot be deleted' : 'Delete Role'"
+                style="padding: 6px 10px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center;"
+              >
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
 const roles = ref([]);
-const allPermissions = ref([]);
 const loading = ref(true);
-const saving = ref(false);
-
-const selectedRole = ref(null);
-const isCreating = ref(false);
-
-const roleForm = ref({
-  name: '',
-  description: '',
-  permissions: [],
-});
+const searchQuery = ref('');
 
 const fetchRoles = async () => {
   loading.value = true;
@@ -219,78 +205,29 @@ const fetchRoles = async () => {
   }
 };
 
-const fetchPermissions = async () => {
-  try {
-    const response = await axios.get('/api/admin/permissions');
-    if (response.data && response.data.success) {
-      allPermissions.value = response.data.data;
-    }
-  } catch (err) {
-    console.error('Failed to load system permissions:', err);
-  }
+const getRoleDisplay = (name) => {
+  if (name === 'super_admin') return '👑 Super Admin';
+  if (name === 'admin') return '🛍️ Store Admin';
+  return name.replace('_', ' ').toUpperCase();
 };
 
-const initNewRole = () => {
-  selectedRole.value = null;
-  isCreating.value = true;
-  roleForm.value = {
-    name: '',
-    description: '',
-    permissions: [],
-  };
-};
-
-const selectRoleForEdit = (role) => {
-  isCreating.value = false;
-  selectedRole.value = role;
-  roleForm.value = {
-    name: role.name,
-    description: role.description || '',
-    permissions: role.permissions ? role.permissions.map(p => p.id) : [],
-  };
-};
-
-const cancelEdit = () => {
-  selectedRole.value = null;
-  isCreating.value = false;
-};
-
-const saveRole = async () => {
-  saving.value = true;
-  try {
-    const payload = { ...roleForm.value };
-    payload.name = payload.name.trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_');
-    
-    let response;
-    if (isCreating.value) {
-      response = await axios.post('/api/admin/roles', payload);
-    } else {
-      response = await axios.put(`/api/admin/roles/${selectedRole.value.id}`, payload);
-    }
-
-    if (response.data && response.data.success) {
-      selectedRole.value = null;
-      isCreating.value = false;
-      await fetchRoles();
-    }
-  } catch (err) {
-    console.error('Failed to save role:', err);
-    alert(err.response?.data?.message || 'Error occurred while saving role configuration');
-  } finally {
-    saving.value = false;
-  }
-};
+const filteredRoles = computed(() => {
+  if (!searchQuery.value.trim()) return roles.value;
+  const q = searchQuery.value.toLowerCase();
+  return roles.value.filter(r => 
+    r.name.toLowerCase().includes(q) || 
+    (r.description && r.description.toLowerCase().includes(q))
+  );
+});
 
 const deleteRole = async (id) => {
-  if (!confirm('Are you sure you want to delete this security role? Assigned staff users will lose this role access.')) {
+  if (!confirm('Are you sure you want to delete this security role? Assigned staff members will lose permissions tied to this role.')) {
     return;
   }
 
   try {
     const response = await axios.delete(`/api/admin/roles/${id}`);
     if (response.data && response.data.success) {
-      selectedRole.value = null;
-      isCreating.value = false;
       await fetchRoles();
     }
   } catch (err) {
@@ -301,13 +238,5 @@ const deleteRole = async (id) => {
 
 onMounted(() => {
   fetchRoles();
-  fetchPermissions();
 });
 </script>
-
-<style scoped>
-.table-row--selected {
-  background: rgba(var(--color-primary-rgb), 0.1) !important;
-  border-left: 3px solid var(--color-primary);
-}
-</style>
