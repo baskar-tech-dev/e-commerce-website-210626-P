@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\Coupon;
 use App\Models\User;
+use App\Models\Setting;
 use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -214,8 +215,27 @@ class StorefrontCheckoutController extends Controller
                 }
             }
 
-            // 3. Shipping charge calculation (Free for orders >= 999, else 100)
-            $shipping = ($subtotal - $discount >= 999) ? 0.00 : 100.00;
+            // 3. Dynamic Shipping charge calculation (Free for orders >= threshold e.g. 1999, else state-specific rate)
+            $threshold = (float) (Setting::get('free_shipping_threshold', 'shipping') ?? 1999);
+            $defaultShipping = (float) (Setting::get('default_shipping_fee', 'shipping') ?? 100);
+            $stateRates = Setting::get('state_rates', 'shipping') ?? [];
+            if (is_string($stateRates)) {
+                $stateRates = json_decode($stateRates, true) ?: [];
+            }
+
+            if (($subtotal - $discount) >= $threshold) {
+                $shipping = 0.00;
+            } else {
+                $state = trim($validated['shipping_state']);
+                $matchedRate = null;
+                foreach ($stateRates as $sName => $sRate) {
+                    if (strcasecmp($sName, $state) === 0) {
+                        $matchedRate = (float) $sRate;
+                        break;
+                    }
+                }
+                $shipping = $matchedRate !== null ? $matchedRate : $defaultShipping;
+            }
             $grandTotal = $subtotal - $discount + $shipping;
 
             // 4. Generate order
@@ -389,6 +409,30 @@ class StorefrontCheckoutController extends Controller
         return response()->json([
             'success' => true,
             'data' => $states,
+        ]);
+    }
+
+    /**
+     * Get public shipping rates and threshold configurations.
+     */
+    public function getShippingRates(): JsonResponse
+    {
+        $threshold = (float) (Setting::get('free_shipping_threshold', 'shipping') ?? 1999);
+        $defaultShipping = (float) (Setting::get('default_shipping_fee', 'shipping') ?? 100);
+        $stateRates = Setting::get('state_rates', 'shipping') ?? [];
+        if (is_string($stateRates)) {
+            $stateRates = json_decode($stateRates, true) ?: [];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'free_shipping_threshold' => $threshold,
+                'default_shipping_fee' => $defaultShipping,
+                'state_rates' => $stateRates,
+                'shipping_banner_text' => Setting::get('shipping_banner_text', 'shipping', 'Free Shipping on orders above ₹1,999'),
+                'dispatch_time_text' => Setting::get('dispatch_time_text', 'shipping', '3-5 working days'),
+            ],
         ]);
     }
 }

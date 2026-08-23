@@ -1020,12 +1020,17 @@ const isProductLowStock = (product) => {
   return total > 0 && total <= 5;
 };
 
-const formatProductPrice = (product) => {
-  if (!product) return '₹0.00';
-  
-  if (product.price_display) {
-    return product.price_display;
+const formatCurrency = (val) => {
+  const n = parseFloat(val);
+  if (isNaN(n)) return '0';
+  if (Math.floor(n) === n) {
+    return n.toLocaleString('en-IN');
   }
+  return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const formatProductPrice = (product) => {
+  if (!product) return '₹0';
 
   if (product.variants && product.variants.length > 0) {
     const prices = product.variants
@@ -1036,22 +1041,26 @@ const formatProductPrice = (product) => {
       const min = Math.min(...prices);
       const max = Math.max(...prices);
       if (min < max) {
-        return `₹${min.toFixed(2)} - ₹${max.toFixed(2)}`;
+        return `₹${formatCurrency(min)} - ₹${formatCurrency(max)}`;
       }
-      return `₹${min.toFixed(2)}`;
+      return `₹${formatCurrency(min)}`;
     }
   }
 
-  const basePrice = parseFloat(product.selling_price || 0);
-  return `₹${basePrice.toFixed(2)}`;
+  if (product.min_price && product.max_price && parseFloat(product.min_price) < parseFloat(product.max_price)) {
+    return `₹${formatCurrency(product.min_price)} - ₹${formatCurrency(product.max_price)}`;
+  }
+
+  if (product.price_display) {
+    return product.price_display;
+  }
+
+  const basePrice = parseFloat(product.selling_price || product.min_price || 0);
+  return `₹${formatCurrency(basePrice)}`;
 };
 
 const formatProductMrp = (product) => {
   if (!product) return null;
-  
-  if (product.mrp_display) {
-    return product.mrp_display;
-  }
 
   if (product.variants && product.variants.length > 0) {
     const mrps = product.variants
@@ -1069,17 +1078,21 @@ const formatProductMrp = (product) => {
 
       if (maxMrp > maxSell || minMrp > minSell) {
         if (minMrp < maxMrp) {
-          return `₹${minMrp.toFixed(2)} - ₹${maxMrp.toFixed(2)}`;
+          return `₹${formatCurrency(minMrp)} - ₹${formatCurrency(maxMrp)}`;
         }
-        return `₹${maxMrp.toFixed(2)}`;
+        return `₹${formatCurrency(maxMrp)}`;
       }
     }
   }
 
-  const baseMrp = parseFloat(product.mrp || 0);
-  const baseSell = parseFloat(product.selling_price || 0);
+  if (product.mrp_display) {
+    return product.mrp_display;
+  }
+
+  const baseMrp = parseFloat(product.mrp || product.max_mrp || 0);
+  const baseSell = parseFloat(product.selling_price || product.min_price || 0);
   if (baseMrp > baseSell) {
-    return `₹${baseMrp.toFixed(2)}`;
+    return `₹${formatCurrency(baseMrp)}`;
   }
   return null;
 };
@@ -1918,45 +1931,64 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  padding-top: 4px;
+  gap: 6px;
 }
 
 .price-split-wrap {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
+  column-gap: 6px;
+  row-gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
 .card-selling-price {
-  font-size: 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: var(--color-primary);
+  color: #5B163A;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .card-mrp-price {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   text-decoration: line-through;
-  color: var(--color-text-muted);
+  color: #9C8A94;
+  font-weight: 400;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 /* Mobile Quick Add */
 .mobile-quick-add-btn {
-  background-color: var(--color-primary);
+  background-color: #5B163A;
   color: #ffffff;
   border: none;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: background-color 0.2s;
+  box-shadow: 0 2px 8px rgba(91, 22, 58, 0.22);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.mobile-quick-add-btn:hover {
+  background-color: #4a0e2e;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(91, 22, 58, 0.35);
 }
 
 .mobile-quick-add-btn:active {
-  background-color: var(--color-primary-hover);
-  transform: scale(0.95);
+  background-color: #3b0b24;
+  transform: scale(0.92);
 }
 
 /* Empty Panel */
@@ -2348,22 +2380,29 @@ onMounted(() => {
 
 /* Card sizes info styles */
 .card-sizes-info {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 6px;
   display: flex;
   gap: 4px;
-  align-items: center;
+  align-items: baseline;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sizes-info-label {
   font-weight: 600;
   color: var(--color-text-secondary);
+  flex-shrink: 0;
 }
 
 .sizes-info-list {
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============================================================

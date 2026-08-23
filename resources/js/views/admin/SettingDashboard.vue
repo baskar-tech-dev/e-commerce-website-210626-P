@@ -25,7 +25,7 @@
             "
         >
             <button
-                v-for="tab in ['general', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews']"
+                v-for="tab in ['general', 'shipping', 'payment', 'email', 'announcement', 'welcome_gift', 'reviews']"
                 :key="tab"
                 type="button"
                 @click="activeTab = tab"
@@ -40,6 +40,7 @@
                 "
             >
                 <span v-if="tab === 'general'">🏪 General Store</span>
+                <span v-else-if="tab === 'shipping'">🚚 Shipping & Delivery</span>
                 <span v-else-if="tab === 'payment'">💳 Payment Gateways</span>
                 <span v-else-if="tab === 'email'">✉️ Notifications (SMTP)</span>
                 <span v-else-if="tab === 'announcement'"
@@ -145,7 +146,203 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Payment Gateways -->
+                <!-- Tab: Shipping & Delivery Rates -->
+                <div
+                    v-if="activeTab === 'shipping'"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-md);
+                    "
+                >
+                    <div
+                        class="card-header-title"
+                        style="margin-bottom: var(--spacing-xs); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"
+                    >
+                        <span>🚚 State-Based Shipping & Delivery Rates</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-muted);">
+                            Configure state delivery charges and threshold for Free Delivery
+                        </span>
+                    </div>
+
+                    <!-- Highlights row: Free Shipping Threshold & Default Base Rate -->
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div style="background: #FAF8F5; border: 1px solid #E8DDD3; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <label class="form-label" style="font-weight: 700; color: #5B163A; margin: 0; font-size: 0.95rem;">
+                                    🎁 Free Delivery Minimum Order Amount (₹) *
+                                </label>
+                                <span class="badge badge--success" style="font-weight: bold; font-size: 0.75rem;">Active</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-weight: bold; font-size: 1.2rem; color: #5B163A;">₹</span>
+                                <input
+                                    type="number"
+                                    v-model.number="settings.shipping.free_shipping_threshold"
+                                    class="form-input"
+                                    style="font-size: 1.1rem; font-weight: 700; color: #5B163A;"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <span style="font-size: 0.78rem; color: #64748b;">
+                                Orders equal to or above ₹{{ settings.shipping.free_shipping_threshold }} will automatically get <strong>100% FREE delivery</strong> across all Indian states.
+                            </span>
+                        </div>
+
+                        <div style="background: #FAF8F5; border: 1px solid #E8DDD3; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <label class="form-label" style="font-weight: 700; color: #1e293b; margin: 0; font-size: 0.95rem;">
+                                    📦 Default Base Shipping Fee (₹) *
+                                </label>
+                                <span class="badge badge--secondary" style="font-size: 0.75rem;">Fallback Rate</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-weight: bold; font-size: 1.2rem; color: #1e293b;">₹</span>
+                                <input
+                                    type="number"
+                                    v-model.number="settings.shipping.default_shipping_fee"
+                                    class="form-input"
+                                    style="font-size: 1.1rem; font-weight: 700;"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <span style="font-size: 0.78rem; color: #64748b;">
+                                Applied as the delivery charge for orders under ₹{{ settings.shipping.free_shipping_threshold }} if no custom state rate is specified.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Dispatch Time & Banner Text -->
+                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">⏱️ Estimated Dispatch Time Text</label>
+                            <input
+                                type="text"
+                                v-model="settings.shipping.dispatch_time_text"
+                                class="form-input"
+                                placeholder="e.g. 3-5 working days"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">📢 Storefront Shipping Promo Text</label>
+                            <input
+                                type="text"
+                                v-model="settings.shipping.shipping_banner_text"
+                                class="form-input"
+                                placeholder="e.g. Free Shipping on orders above ₹1,999"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- State-wise Shipping Rates Configuration Table -->
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.05rem; color: #5B163A; font-weight: 700;">
+                                    State-Specific Delivery Rates (for orders under ₹{{ settings.shipping.free_shipping_threshold }})
+                                </h3>
+                                <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b;">
+                                    Set customized shipping costs per Indian State / Union Territory.
+                                </p>
+                            </div>
+
+                            <!-- Quick Preset Actions -->
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button
+                                    type="button"
+                                    class="btn btn--secondary btn--sm"
+                                    @click="applyZonePreset('south', 50)"
+                                    title="Set TN, KL, KA, AP, TS, PY to ₹50"
+                                >
+                                    🌴 Set South India to ₹50
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn--secondary btn--sm"
+                                    @click="applyZonePreset('rest', 100)"
+                                    title="Set other states to ₹100"
+                                >
+                                    🇮🇳 Set Rest of India to ₹100
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Filter for State Table -->
+                        <div style="margin-bottom: 0.75rem;">
+                            <input
+                                type="text"
+                                v-model="stateSearchQuery"
+                                placeholder="🔍 Search state name (e.g. Tamil Nadu, Kerala, Maharashtra)..."
+                                class="form-input"
+                                style="max-width: 380px; font-size: 0.85rem;"
+                            />
+                        </div>
+
+                        <div style="border: 1px solid #E8DDD3; border-radius: 10px; overflow: hidden; background: #ffffff;">
+                            <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                                <thead>
+                                    <tr style="background: #FAF8F5; border-bottom: 2px solid #E8DDD3; color: #64748b; font-size: 0.78rem; text-transform: uppercase;">
+                                        <th style="padding: 10px 14px; width: 50px;">#</th>
+                                        <th style="padding: 10px 14px;">State / Union Territory</th>
+                                        <th style="padding: 10px 14px; width: 140px;">Region</th>
+                                        <th style="padding: 10px 14px; width: 180px;">Shipping Charge (₹)</th>
+                                        <th style="padding: 10px 14px; width: 120px; text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr 
+                                        v-for="(st, idx) in filteredStatesList" 
+                                        :key="st.name"
+                                        style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;"
+                                        :style="{ background: st.isSouth ? 'rgba(212, 175, 55, 0.04)' : 'transparent' }"
+                                    >
+                                        <td style="padding: 10px 14px; color: #94a3b8; font-size: 0.8rem;">{{ idx + 1 }}</td>
+                                        <td style="padding: 10px 14px; font-weight: 600; color: #1e293b;">
+                                            {{ st.name }}
+                                        </td>
+                                        <td style="padding: 10px 14px;">
+                                            <span 
+                                                class="badge" 
+                                                :style="st.isSouth ? 'background: #5B163A; color: #fff;' : 'background: #f1f5f9; color: #475569;'"
+                                                style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;"
+                                            >
+                                                {{ st.region }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 10px 14px;">
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <span style="font-weight: bold; color: #5B163A;">₹</span>
+                                                <input
+                                                    type="number"
+                                                    v-model.number="settings.shipping.state_rates[st.name]"
+                                                    class="form-input"
+                                                    style="width: 100px; padding: 4px 8px; height: 34px; font-weight: 600;"
+                                                    min="0"
+                                                    :placeholder="String(settings.shipping.default_shipping_fee || 100)"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td style="padding: 10px 14px; text-align: right;">
+                                            <button
+                                                type="button"
+                                                class="btn btn--secondary btn--sm"
+                                                style="font-size: 0.75rem; padding: 3px 8px;"
+                                                @click="settings.shipping.state_rates[st.name] = settings.shipping.default_shipping_fee"
+                                                title="Reset to default fee"
+                                            >
+                                                Reset
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Payment Gateways -->
                 <div
                     v-if="activeTab === 'payment'"
                     style="
@@ -1419,7 +1616,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import StorefrontAnnouncementBar from "../../components/StorefrontAnnouncementBar.vue";
 
@@ -1427,6 +1624,70 @@ const activeTab = ref("general");
 const loading = ref(true);
 const saving = ref(false);
 const successMsg = ref("");
+
+// State Search & Indian States Regions
+const stateSearchQuery = ref("");
+
+const INDIAN_STATES_REGIONS = [
+    { name: "Tamil Nadu", region: "South India", isSouth: true },
+    { name: "Puducherry", region: "South India", isSouth: true },
+    { name: "Kerala", region: "South India", isSouth: true },
+    { name: "Karnataka", region: "South India", isSouth: true },
+    { name: "Andhra Pradesh", region: "South India", isSouth: true },
+    { name: "Telangana", region: "South India", isSouth: true },
+    { name: "Maharashtra", region: "Western", isSouth: false },
+    { name: "Goa", region: "Western", isSouth: false },
+    { name: "Gujarat", region: "Western", isSouth: false },
+    { name: "Madhya Pradesh", region: "Central", isSouth: false },
+    { name: "Chhattisgarh", region: "Central", isSouth: false },
+    { name: "Delhi (NCT)", region: "Northern", isSouth: false },
+    { name: "Haryana", region: "Northern", isSouth: false },
+    { name: "Punjab", region: "Northern", isSouth: false },
+    { name: "Rajasthan", region: "Northern", isSouth: false },
+    { name: "Uttar Pradesh", region: "Northern", isSouth: false },
+    { name: "Uttarakhand", region: "Northern", isSouth: false },
+    { name: "Himachal Pradesh", region: "Northern", isSouth: false },
+    { name: "Jammu and Kashmir", region: "Northern", isSouth: false },
+    { name: "Ladakh", region: "Northern", isSouth: false },
+    { name: "Chandigarh", region: "Northern", isSouth: false },
+    { name: "West Bengal", region: "Eastern", isSouth: false },
+    { name: "Odisha", region: "Eastern", isSouth: false },
+    { name: "Bihar", region: "Eastern", isSouth: false },
+    { name: "Jharkhand", region: "Eastern", isSouth: false },
+    { name: "Assam", region: "North-East", isSouth: false },
+    { name: "Sikkim", region: "North-East", isSouth: false },
+    { name: "Meghalaya", region: "North-East", isSouth: false },
+    { name: "Tripura", region: "North-East", isSouth: false },
+    { name: "Manipur", region: "North-East", isSouth: false },
+    { name: "Nagaland", region: "North-East", isSouth: false },
+    { name: "Mizoram", region: "North-East", isSouth: false },
+    { name: "Arunachal Pradesh", region: "North-East", isSouth: false },
+    { name: "Andaman and Nicobar Islands", region: "Union Territory", isSouth: false },
+    { name: "Dadra and Nagar Haveli and Daman and Diu", region: "Union Territory", isSouth: false },
+    { name: "Lakshadweep", region: "Union Territory", isSouth: false },
+];
+
+const filteredStatesList = computed(() => {
+    if (!stateSearchQuery.value.trim()) return INDIAN_STATES_REGIONS;
+    const q = stateSearchQuery.value.toLowerCase().trim();
+    return INDIAN_STATES_REGIONS.filter(
+        (st) =>
+            st.name.toLowerCase().includes(q) ||
+            st.region.toLowerCase().includes(q)
+    );
+});
+
+const applyZonePreset = (zone, rate) => {
+    INDIAN_STATES_REGIONS.forEach((st) => {
+        if (zone === "south" && st.isSouth) {
+            settings.value.shipping.state_rates[st.name] = Number(rate);
+        } else if (zone === "rest" && !st.isSouth) {
+            settings.value.shipping.state_rates[st.name] = Number(rate);
+        } else if (zone === "all") {
+            settings.value.shipping.state_rates[st.name] = Number(rate);
+        }
+    });
+};
 
 // Database Announcements State
 const announcementFilter = ref("all");
@@ -1453,6 +1714,13 @@ const settings = ref({
         contact_phone: "",
         currency: "INR",
         store_address: "",
+    },
+    shipping: {
+        free_shipping_threshold: 1999,
+        default_shipping_fee: 100,
+        shipping_banner_text: "Free Shipping on orders above ₹1,999",
+        dispatch_time_text: "3-5 working days",
+        state_rates: {},
     },
     payment: {
         cod_active: true,
@@ -1635,6 +1903,29 @@ const fetchSettings = async () => {
                     ...settings.value.general,
                     ...data.general,
                 };
+            if (data.shipping) {
+                settings.value.shipping = {
+                    free_shipping_threshold:
+                        data.shipping.free_shipping_threshold !== undefined
+                            ? Number(data.shipping.free_shipping_threshold)
+                            : 1999,
+                    default_shipping_fee:
+                        data.shipping.default_shipping_fee !== undefined
+                            ? Number(data.shipping.default_shipping_fee)
+                            : 100,
+                    shipping_banner_text:
+                        data.shipping.shipping_banner_text ||
+                        "Free Shipping on orders above ₹1,999",
+                    dispatch_time_text:
+                        data.shipping.dispatch_time_text ||
+                        "3-5 working days",
+                    state_rates:
+                        typeof data.shipping.state_rates === "object" &&
+                        data.shipping.state_rates !== null
+                            ? { ...data.shipping.state_rates }
+                            : {},
+                };
+            }
             if (data.payment) {
                 settings.value.payment = {
                     ...settings.value.payment,
@@ -1674,6 +1965,30 @@ const fetchSettings = async () => {
                     subtitle: data.welcome_gift.subtitle || "Every new member deserves a warm welcome.",
                 };
             }
+
+            if (data.reviews) {
+                settings.value.reviews = {
+                    ...settings.value.reviews,
+                    ...data.reviews,
+                    login_required: filterBool(data.reviews.login_required),
+                    verified_purchase_required: filterBool(data.reviews.verified_purchase_required),
+                    delivered_order_required: filterBool(data.reviews.delivered_order_required),
+                    one_review_per_product: filterBool(data.reviews.one_review_per_product),
+                    admin_approval_required: filterBool(data.reviews.admin_approval_required),
+                    customer_editing_allowed: filterBool(data.reviews.customer_editing_allowed),
+                    customer_deletion_allowed: filterBool(data.reviews.customer_deletion_allowed),
+                    customer_images_allowed: filterBool(data.reviews.customer_images_allowed),
+                    review_window_days: data.reviews.review_window_days !== undefined
+                        ? Number(data.reviews.review_window_days)
+                        : 0,
+                    max_images_per_review: data.reviews.max_images_per_review !== undefined
+                        ? Number(data.reviews.max_images_per_review)
+                        : 4,
+                    max_image_size_kb: data.reviews.max_image_size_kb !== undefined
+                        ? Number(data.reviews.max_image_size_kb)
+                        : 200,
+                };
+            }
         }
     } catch (err) {
         console.error("Failed to load store settings:", err);
@@ -1694,6 +2009,13 @@ const saveSettings = async () => {
         const payload = {
             settings: {
                 general: { ...settings.value.general },
+                shipping: {
+                    free_shipping_threshold: Number(settings.value.shipping.free_shipping_threshold || 1999),
+                    default_shipping_fee: Number(settings.value.shipping.default_shipping_fee || 100),
+                    shipping_banner_text: settings.value.shipping.shipping_banner_text,
+                    dispatch_time_text: settings.value.shipping.dispatch_time_text,
+                    state_rates: { ...settings.value.shipping.state_rates },
+                },
                 payment: {
                     ...settings.value.payment,
                     cod_active: settings.value.payment.cod_active ? "1" : "0",
@@ -1708,6 +2030,9 @@ const saveSettings = async () => {
                 welcome_gift: {
                     ...settings.value.welcome_gift,
                     is_enabled: settings.value.welcome_gift.is_enabled ? "1" : "0",
+                },
+                reviews: {
+                    ...settings.value.reviews,
                 },
             },
         };

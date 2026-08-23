@@ -73,17 +73,22 @@ class CategoryService
             if (empty($url) || !str_contains($url, '/temp/')) {
                 return $url;
             }
-            $relPath = preg_replace('/^\/?storage\//', '', parse_url($url, PHP_URL_PATH));
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relPath)) {
-                $dir = "categories/{$subfolder}";
-                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($dir);
-                $fileName = basename($relPath);
-                $newPath = "{$dir}/{$fileName}";
-                if (!@\Illuminate\Support\Facades\Storage::disk('public')->move($relPath, $newPath)) {
-                    @\Illuminate\Support\Facades\Storage::disk('public')->copy($relPath, $newPath);
-                    @\Illuminate\Support\Facades\Storage::disk('public')->delete($relPath);
+            try {
+                $pathOnly = parse_url($url, PHP_URL_PATH) ?? $url;
+                $relPath = preg_replace('/^\/?storage\//', '', $pathOnly);
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relPath)) {
+                    $dir = "categories/{$subfolder}";
+                    \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($dir);
+                    $fileName = basename($relPath);
+                    $newPath = "{$dir}/{$fileName}";
+                    if (!@\Illuminate\Support\Facades\Storage::disk('public')->move($relPath, $newPath)) {
+                        @\Illuminate\Support\Facades\Storage::disk('public')->copy($relPath, $newPath);
+                        @\Illuminate\Support\Facades\Storage::disk('public')->delete($relPath);
+                    }
+                    return '/storage/' . $newPath;
                 }
-                return '/storage/' . $newPath;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("processCategoryImage move failed: " . $e->getMessage());
             }
             return $url;
         };
@@ -115,7 +120,7 @@ class CategoryService
         $count = 1;
 
         while (true) {
-            $query = Category::where('slug', $slug);
+            $query = Category::withTrashed()->where('slug', $slug);
             if ($excludeId !== null) {
                 $query->where('id', '!=', $excludeId);
             }

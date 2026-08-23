@@ -84,6 +84,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/announcements', [\App\Http\Controllers\Api\v1\StorefrontAnnouncementController::class, 'index']);
     Route::get('storefront/welcome-gift', [\App\Http\Controllers\Api\v1\StorefrontWelcomeGiftController::class, 'index']);
     Route::get('storefront/indian-states', [StorefrontCheckoutController::class, 'getIndianStates']);
+    Route::get('storefront/shipping-rates', [StorefrontCheckoutController::class, 'getShippingRates']);
 
     // Public Product Reviews
     Route::get('products/{product}/reviews', [ProductReviewController::class, 'index']);

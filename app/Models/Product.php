@@ -220,16 +220,27 @@ class Product extends Model
     }
 
     /**
+     * Helper to format price cleanly without trailing .00
+     */
+    protected function formatPriceValue(float $amount): string
+    {
+        if (floor($amount) == $amount) {
+            return number_format($amount, 0);
+        }
+        return number_format($amount, 2);
+    }
+
+    /**
      * Formatted selling price range (e.g. ₹599 - ₹799 or ₹599).
      */
     public function getPriceDisplayAttribute(): string
     {
         if ($this->has_price_range) {
-            $min = number_format($this->min_price, 2);
-            $max = number_format($this->max_price, 2);
+            $min = $this->formatPriceValue($this->min_price);
+            $max = $this->formatPriceValue($this->max_price);
             return "₹{$min} - ₹{$max}";
         }
-        $val = number_format($this->min_price ?: (float)($this->selling_price ?? 0), 2);
+        $val = $this->formatPriceValue($this->min_price ?: (float)($this->selling_price ?? 0));
         return "₹{$val}";
     }
 
@@ -240,11 +251,11 @@ class Product extends Model
     {
         if ($this->min_mrp > $this->min_price || $this->max_mrp > $this->max_price) {
             if ($this->min_mrp < $this->max_mrp) {
-                $min = number_format($this->min_mrp, 2);
-                $max = number_format($this->max_mrp, 2);
+                $min = $this->formatPriceValue($this->min_mrp);
+                $max = $this->formatPriceValue($this->max_mrp);
                 return "₹{$min} - ₹{$max}";
             }
-            $val = number_format($this->max_mrp ?: (float)($this->mrp ?? 0), 2);
+            $val = $this->formatPriceValue($this->max_mrp ?: (float)($this->mrp ?? 0));
             return "₹{$val}";
         }
         return null;

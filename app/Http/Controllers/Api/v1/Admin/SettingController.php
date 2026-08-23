@@ -35,10 +35,12 @@ class SettingController extends Controller
             if (!is_array($pairs)) continue;
             foreach ($pairs as $key => $value) {
                 $type = null;
-                if ($group === 'announcement') {
+                if ($group === 'announcement' || ($group === 'shipping' && $key === 'state_rates')) {
                     $type = 'json';
                 } elseif ($group === 'welcome_gift' && $key === 'is_enabled') {
                     $type = 'boolean';
+                } elseif ($group === 'shipping' && in_array($key, ['free_shipping_threshold', 'default_shipping_fee'])) {
+                    $type = 'number';
                 }
                 Setting::set($key, $value, $group, $type);
             }

@@ -265,7 +265,7 @@
 
             <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 8px; font-size: 0.825rem; color: #475569; display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-size: 1.1rem;">📦</span>
-              <span><strong>Dispatch Time:</strong> 3-5 working days</span>
+              <span><strong>Dispatch Time:</strong> {{ dispatchTimeText }}</span>
             </div>
 
             <!-- Return Policy Notice -->
@@ -488,8 +488,41 @@ const calculateDiscount = () => {
   }
 };
 
+const freeShippingThreshold = ref(1999);
+const defaultShippingFee = ref(100);
+const stateRates = ref({});
+const dispatchTimeText = ref('3-5 working days');
+
+const fetchShippingConfig = async () => {
+  try {
+    const res = await axios.get('/api/storefront/shipping-rates');
+    if (res.data && res.data.success && res.data.data) {
+      freeShippingThreshold.value = Number(res.data.data.free_shipping_threshold || 1999);
+      defaultShippingFee.value = Number(res.data.data.default_shipping_fee || 100);
+      stateRates.value = res.data.data.state_rates || {};
+      dispatchTimeText.value = res.data.data.dispatch_time_text || '3-5 working days';
+    }
+  } catch (err) {
+    // fallback 1999
+  }
+};
+
 const shipping = computed(() => {
-  return (subtotal.value - discount.value >= 999) ? 0 : 100;
+  if (cartItems.value.length === 0) return 0;
+  const effectiveAmt = subtotal.value - discount.value;
+  if (effectiveAmt >= freeShippingThreshold.value) {
+    return 0;
+  }
+  if (form.value.shipping_state) {
+    const selectedState = form.value.shipping_state.trim();
+    const matchedKey = Object.keys(stateRates.value).find(
+      k => k.toLowerCase() === selectedState.toLowerCase()
+    );
+    if (matchedKey && stateRates.value[matchedKey] !== undefined) {
+      return Number(stateRates.value[matchedKey]);
+    }
+  }
+  return defaultShippingFee.value;
 });
 
 const grandTotal = computed(() => {
@@ -645,6 +678,7 @@ const submitCheckout = async () => {
 };
 
 onMounted(() => {
+  fetchShippingConfig();
   loadCart();
   fetchAddresses();
   calculateDiscount();

@@ -1414,12 +1414,17 @@ const isProductLowStock = (product) => {
   return total > 0 && total <= 5;
 };
 
-const formatProductPrice = (product) => {
-  if (!product) return '₹0.00';
-  
-  if (product.price_display) {
-    return product.price_display;
+const formatCurrency = (val) => {
+  const n = parseFloat(val);
+  if (isNaN(n)) return '0';
+  if (Math.floor(n) === n) {
+    return n.toLocaleString('en-IN');
   }
+  return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const formatProductPrice = (product) => {
+  if (!product) return '₹0';
 
   if (product.variants && product.variants.length > 0) {
     const prices = product.variants
@@ -1430,22 +1435,26 @@ const formatProductPrice = (product) => {
       const min = Math.min(...prices);
       const max = Math.max(...prices);
       if (min < max) {
-        return `₹${min.toFixed(2)} - ₹${max.toFixed(2)}`;
+        return `₹${formatCurrency(min)} - ₹${formatCurrency(max)}`;
       }
-      return `₹${min.toFixed(2)}`;
+      return `₹${formatCurrency(min)}`;
     }
   }
 
-  const basePrice = parseFloat(product.selling_price || 0);
-  return `₹${basePrice.toFixed(2)}`;
+  if (product.min_price && product.max_price && parseFloat(product.min_price) < parseFloat(product.max_price)) {
+    return `₹${formatCurrency(product.min_price)} - ₹${formatCurrency(product.max_price)}`;
+  }
+
+  if (product.price_display) {
+    return product.price_display;
+  }
+
+  const basePrice = parseFloat(product.selling_price || product.min_price || 0);
+  return `₹${formatCurrency(basePrice)}`;
 };
 
 const formatProductMrp = (product) => {
   if (!product) return null;
-  
-  if (product.mrp_display) {
-    return product.mrp_display;
-  }
 
   if (product.variants && product.variants.length > 0) {
     const mrps = product.variants
@@ -1463,17 +1472,21 @@ const formatProductMrp = (product) => {
 
       if (maxMrp > maxSell || minMrp > minSell) {
         if (minMrp < maxMrp) {
-          return `₹${minMrp.toFixed(2)} - ₹${maxMrp.toFixed(2)}`;
+          return `₹${formatCurrency(minMrp)} - ₹${formatCurrency(maxMrp)}`;
         }
-        return `₹${maxMrp.toFixed(2)}`;
+        return `₹${formatCurrency(maxMrp)}`;
       }
     }
   }
 
-  const baseMrp = parseFloat(product.mrp || 0);
-  const baseSell = parseFloat(product.selling_price || 0);
+  if (product.mrp_display) {
+    return product.mrp_display;
+  }
+
+  const baseMrp = parseFloat(product.mrp || product.max_mrp || 0);
+  const baseSell = parseFloat(product.selling_price || product.min_price || 0);
   if (baseMrp > baseSell) {
-    return `₹${baseMrp.toFixed(2)}`;
+    return `₹${formatCurrency(baseMrp)}`;
   }
   return null;
 };

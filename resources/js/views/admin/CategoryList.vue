@@ -369,15 +369,28 @@ function previewChart(cat) {
 async function saveCategory() {
   submitting.value = true;
   errorMsg.value = null;
+
+  const payload = {
+    name: form.value.name ? form.value.name.trim() : '',
+    slug: form.value.slug ? form.value.slug.trim() : null,
+    parent_id: form.value.parent_id ? Number(form.value.parent_id) : null,
+    description: form.value.description || null,
+    image: form.value.image || null,
+    size_chart_image: form.value.size_chart_image || null,
+    sort_order: Number(form.value.sort_order || 0),
+    is_active: !!form.value.is_active,
+    is_featured: !!form.value.is_featured,
+  };
+
   try {
     if (isEdit.value) {
-      await categoryStore.updateCategory(currentId.value, form.value);
+      await categoryStore.updateCategory(currentId.value, payload);
     } else {
-      await categoryStore.createCategory(form.value);
+      await categoryStore.createCategory(payload);
     }
     showModal.value = false;
   } catch (err) {
-    errorMsg.value = err.message || 'Operation failed';
+    errorMsg.value = err.message || (typeof err === 'string' ? err : 'Operation failed');
   } finally {
     submitting.value = false;
   }
@@ -417,6 +430,7 @@ async function handleImageUpload(event) {
     alert('Upload error: ' + (err.response?.data?.message || err.message));
   } finally {
     imageUploading.value = false;
+    if (event.target) event.target.value = '';
   }
 }
 
@@ -447,6 +461,7 @@ async function handleSizeChartUpload(event) {
     alert('Upload error: ' + (err.response?.data?.message || err.message));
   } finally {
     sizeChartUploading.value = false;
+    if (event.target) event.target.value = '';
   }
 }
 

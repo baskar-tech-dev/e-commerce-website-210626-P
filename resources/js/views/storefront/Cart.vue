@@ -81,7 +81,31 @@
 
         <!-- Summary panel -->
         <div class="glass-panel" style="padding: var(--spacing-lg);">
-          <div class="card-header-title" style="margin-bottom: var(--spacing-md);">Order Summary</div>
+          <div class="card-header-title" style="margin-bottom: var(--spacing-sm);">Order Summary</div>
+
+          <!-- Free Shipping Progress Tracker -->
+          <div style="background: #FFFDF9; border: 1px solid #E8DDD3; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: var(--spacing-md); display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+              <span v-if="freeShippingRemaining > 0" style="color: #5B163A; font-weight: 600;">
+                🚚 Add <strong style="color: #800020;">₹{{ freeShippingRemaining }}</strong> more for <strong>FREE Delivery</strong>!
+              </span>
+              <span v-else style="color: #0E6245; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                🎉 <strong>Congratulations! You unlocked FREE Delivery</strong>
+              </span>
+              <span style="font-weight: 700; color: #5B163A; font-size: 0.78rem;">{{ freeShippingProgress }}%</span>
+            </div>
+            <!-- Progress Bar Track -->
+            <div style="width: 100%; height: 6px; background: #F1E9DF; border-radius: 99px; overflow: hidden;">
+              <div 
+                :style="{ width: freeShippingProgress + '%' }" 
+                style="height: 100%; background: linear-gradient(90deg, #d4af37 0%, #5B163A 100%); border-radius: 99px; transition: width 0.4s ease;"
+              ></div>
+            </div>
+            <div style="font-size: 0.72rem; color: #64748b; display: flex; justify-content: space-between;">
+              <span>₹0</span>
+              <span>Free Delivery on ₹{{ freeShippingThreshold }}+</span>
+            </div>
+          </div>
 
           <div style="display: flex; flex-direction: column; gap: var(--spacing-xs); font-size: 0.9rem; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-md);">
             <!-- Subtotal -->
@@ -97,8 +121,11 @@
             </div>
 
             <!-- Shipping -->
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--color-text-muted);">Shipping Delivery</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="color: var(--color-text-muted);">Shipping Delivery</span>
+                <span v-if="shipping > 0" style="display: block; font-size: 0.72rem; color: #94a3b8;">State rates applied at checkout</span>
+              </div>
               <span v-if="shipping === 0" style="color: var(--color-success); font-weight: bold;">FREE</span>
               <span v-else style="color: var(--color-text-primary); font-weight: 500;">₹{{ shipping }}</span>
             </div>
@@ -201,8 +228,39 @@ const discount = computed(() => {
   }
 });
 
+const freeShippingThreshold = ref(1999);
+const defaultShippingFee = ref(100);
+
+const fetchShippingConfig = async () => {
+  try {
+    const res = await axios.get('/api/storefront/shipping-rates');
+    if (res.data && res.data.success && res.data.data) {
+      freeShippingThreshold.value = Number(res.data.data.free_shipping_threshold || 1999);
+      defaultShippingFee.value = Number(res.data.data.default_shipping_fee || 100);
+    }
+  } catch (err) {
+    // fallback 1999
+  }
+};
+
+const effectiveAmount = computed(() => {
+  return Math.max(0, subtotal.value - discount.value);
+});
+
+const freeShippingRemaining = computed(() => {
+  const diff = freeShippingThreshold.value - effectiveAmount.value;
+  return diff > 0 ? diff : 0;
+});
+
+const freeShippingProgress = computed(() => {
+  if (freeShippingThreshold.value <= 0) return 100;
+  const pct = Math.round((effectiveAmount.value / freeShippingThreshold.value) * 100);
+  return Math.min(100, Math.max(0, pct));
+});
+
 const shipping = computed(() => {
-  return (subtotal.value - discount.value >= 999) ? 0 : 100;
+  if (cartItems.value.length === 0) return 0;
+  return (effectiveAmount.value >= freeShippingThreshold.value) ? 0 : defaultShippingFee.value;
 });
 
 const grandTotal = computed(() => {
@@ -251,6 +309,7 @@ const goToCheckout = () => {
 };
 
 onMounted(() => {
+  fetchShippingConfig();
   loadCart();
   
   // Reload applied coupon from storage if present

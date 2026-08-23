@@ -97,12 +97,12 @@ class CategoryController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
-            'parent_id' => 'nullable|exists:categories,id|different:id',
+            'parent_id' => 'nullable|exists:categories,id',
             'name' => 'sometimes|required|string|max:150',
             'slug' => 'nullable|string|max:180',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|max:500',
-            'size_chart_image' => 'nullable|string|max:500',
+            'image' => 'nullable|string',
+            'size_chart_image' => 'nullable|string',
             'icon' => 'nullable|string|max:50',
             'meta_title' => 'nullable|string|max:200',
             'meta_description' => 'nullable|string|max:500',
@@ -110,6 +110,14 @@ class CategoryController extends Controller
             'is_active' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
         ]);
+
+        if (!empty($validated['parent_id']) && (int)$validated['parent_id'] === (int)$id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category cannot be its own parent category.',
+                'error_code' => 'INVALID_PARENT'
+            ], 422);
+        }
 
         try {
             $category = $this->categoryService->updateCategory($id, $validated);
@@ -127,11 +135,15 @@ class CategoryController extends Controller
                 'message' => 'Category updated successfully',
                 'data' => new CategoryResource($category)
             ]);
-        } catch (\Exception $e) {
-            Log::error('CategoryController@update failed: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('CategoryController@update failed: ' . $e->getMessage(), [
+                'id' => $id,
+                'payload' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update category',
+                'message' => 'Failed to update category: ' . $e->getMessage(),
                 'error_code' => 'SERVER_ERROR'
             ], 500);
         }
