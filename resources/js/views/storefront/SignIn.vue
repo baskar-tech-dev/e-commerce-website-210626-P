@@ -22,8 +22,8 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input type="email" id="email" v-model="form.email" class="form-input" :class="{ 'is-invalid': authStore.validationErrors.email }" placeholder="name@example.com" required>
+          <label class="form-label" for="email">Email Address or Mobile Number</label>
+          <input type="text" id="email" v-model="form.email" class="form-input" :class="{ 'is-invalid': authStore.validationErrors.email }" placeholder="name@example.com or mobile number" required>
           <span v-if="authStore.validationErrors.email" class="error-text">
             {{ authStore.validationErrors.email[0] }}
           </span>
@@ -32,7 +32,7 @@
         <div class="form-group">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label class="form-label" for="password">Password</label>
-            <a href="#" class="forgot-password-link">Forgot password?</a>
+            <a href="#" class="forgot-password-link" @click.prevent="openForgotModal">Forgot password?</a>
           </div>
           <input type="password" id="password" v-model="form.password" class="form-input" :class="{ 'is-invalid': authStore.validationErrors.password }" placeholder="••••••••" required>
           <span v-if="authStore.validationErrors.password" class="error-text">
@@ -63,10 +63,16 @@ const form = ref({
   password: ''
 });
 
+const openForgotModal = () => {
+  authStore.openAuthModal('forgot');
+};
+
 const handleLogin = async () => {
   try {
     const user = await authStore.login({ email: form.value.email, password: form.value.password });
-    if (user?.roles?.length || user?.role_id === 1) {
+    const hasAdminRole = user?.roles?.some(r => ['super_admin', 'admin', 'product_owner', 'sales_manager', 'editor', 'staff'].includes(r.name));
+    const isAdminRoleId = user?.role_id && [1, 2, 3, 4, 5, 7].includes(Number(user.role_id));
+    if (hasAdminRole || isAdminRoleId) {
       router.push('/admin');
     } else {
       router.push('/my-account');

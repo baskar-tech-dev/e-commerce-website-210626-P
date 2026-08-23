@@ -27,6 +27,14 @@ Route::get('storage/{path}', function (string $path) {
     abort(404);
 })->where('path', '.*');
 
+use App\Http\Controllers\Api\v1\AuthController;
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
 Route::get('{any}', function () {
     return view('app');
 })->where('any', '.*');

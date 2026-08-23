@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+use Illuminate\Support\Facades\Log;
+
 class AuthController extends Controller
 {
     /**
@@ -66,21 +68,27 @@ class AuthController extends Controller
             $user->last_login_at = now();
             $user->last_login_ip = $request->ip();
             $user->save();
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account created successfully',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => $user->load('customerProfile'),
+            ], 201);
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([
                 'phone' => ['An account with this mobile number or email already exists. Please sign in.'],
             ]);
+        } catch (\Throwable $e) {
+            Log::error('AuthController@register error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during registration. Please try again.',
+            ], 500);
         }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Account created successfully',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user->load('customerProfile'),
-        ], 201);
     }
 
     /**
@@ -94,37 +102,55 @@ class AuthController extends Controller
         ]);
 
         $loginId = trim($request->email);
+        $cleanedDigits = preg_replace('/[^0-9]/', '', $loginId);
 
-        // Find user by email or phone number
-        $user = User::where('email', strtolower($loginId))
-            ->orWhere('phone', $loginId)
-            ->first();
+        try {
+            // Find user by email or flexible phone number match
+            $user = User::where('email', strtolower($loginId))
+                ->orWhere('phone', $loginId)
+                ->when(!empty($cleanedDigits) && strlen($cleanedDigits) >= 8, function ($query) use ($cleanedDigits) {
+                    $lastDigits = substr($cleanedDigits, -10);
+                    $query->orWhere('phone', 'LIKE', "%{$lastDigits}%");
+                })
+                ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The email/phone or password you entered is incorrect.'],
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => ['The email/phone or password you entered is incorrect.'],
+                ]);
+            }
+
+            if (!$user->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => ['Your account is disabled. Please contact customer support.'],
+                ]);
+            }
+
+            // Update last login details
+            $user->last_login_at = now();
+            $user->last_login_ip = $request->ip();
+            $user->save();
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Load user relationships safely
+            $user->loadMissing(['roles.permissions', 'customerProfile']);
+
+            return response()->json([
+                'success' => true,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => $user,
             ]);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('AuthController@login error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to sign in at this time. Please check your credentials and try again.',
+            ], 500);
         }
-
-        if (!$user->is_active) {
-            throw ValidationException::withMessages([
-                'email' => ['Your account is disabled. Please contact customer support.'],
-            ]);
-        }
-
-        // Update last login details
-        $user->last_login_at = now();
-        $user->last_login_ip = $request->ip();
-        $user->save();
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user->load(['roles.permissions', 'customerProfile']),
-        ]);
     }
 
     /**
