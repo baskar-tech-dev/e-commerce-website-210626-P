@@ -792,6 +792,16 @@ const discountPct = computed(() => {
   return Math.round(((mrp - sell) / mrp) * 100);
 });
 
+const getPrimaryImage = (prod) => {
+  if (!prod) return '/asset/profile/logo.png';
+  if (prod.primary_image_url) return prod.primary_image_url;
+  if (prod.images && prod.images.length > 0) {
+    const primary = prod.images.find(img => img.is_primary);
+    return primary ? (primary.image_path || primary.url) : (prod.images[0].image_path || prod.images[0].url);
+  }
+  return '/asset/profile/logo.png';
+};
+
 const trackRecentlyViewed = (prod) => {
   if (!prod) return;
   try {
