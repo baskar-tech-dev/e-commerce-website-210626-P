@@ -79,10 +79,17 @@ class MediaController extends Controller
         $successWebp = $this->resizeAndConvertWebp($sourcePath, $fullWebpPath, 1200);
         $successThumb = $this->resizeAndConvertWebp($sourcePath, $fullThumbPath, 200);
 
-        if (!$successWebp || !$successThumb) {
+        if (!$successWebp && !file_exists($fullWebpPath)) {
+            @copy($sourcePath, $fullWebpPath);
+        }
+        if (!$successThumb && !file_exists($fullThumbPath)) {
+            @copy($sourcePath, $fullThumbPath);
+        }
+
+        if (!file_exists($fullWebpPath)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process and compress image using GD.',
+                'message' => 'Failed to save processed image on storage disk.',
             ], 500);
         }
 
@@ -219,39 +226,53 @@ class MediaController extends Controller
      */
     protected function resizeAndConvertWebp(string $sourcePath, string $destinationPath, int $targetWidth, int $quality = 80): bool
     {
-        if (!function_exists('imagecreatefromjpeg')) {
-            // Fallback: GD extension is disabled in XAMPP php.ini. Copy file directly without resizing.
+        if (!function_exists('getimagesize') || !function_exists('imagecreatetruecolor')) {
             return @copy($sourcePath, $destinationPath);
         }
 
-        $info = getimagesize($sourcePath);
-        if (!$info) return false;
+        $info = @getimagesize($sourcePath);
+        if (!$info) {
+            return @copy($sourcePath, $destinationPath);
+        }
 
-        $mime = $info['mime'];
-        $width = $info[0];
-        $height = $info[1];
+        $mime = $info['mime'] ?? '';
+        $width = $info[0] ?? 0;
+        $height = $info[1] ?? 0;
 
+        if ($width <= 0 || $height <= 0) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        $image = null;
         switch ($mime) {
             case 'image/jpeg':
             case 'image/jpg':
-                $image = @imagecreatefromjpeg($sourcePath);
+                if (function_exists('imagecreatefromjpeg')) {
+                    $image = @imagecreatefromjpeg($sourcePath);
+                }
                 break;
             case 'image/png':
-                $image = @imagecreatefrompng($sourcePath);
-                if ($image) {
-                    imagepalettetotruecolor($image);
-                    imagealphablending($image, true);
-                    imagesavealpha($image, true);
+                if (function_exists('imagecreatefrompng')) {
+                    $image = @imagecreatefrompng($sourcePath);
+                    if ($image) {
+                        imagepalettetotruecolor($image);
+                        imagealphablending($image, true);
+                        imagesavealpha($image, true);
+                    }
                 }
                 break;
             case 'image/webp':
-                $image = @imagecreatefromwebp($sourcePath);
+                if (function_exists('imagecreatefromwebp')) {
+                    $image = @imagecreatefromwebp($sourcePath);
+                }
                 break;
             default:
-                return false;
+                return @copy($sourcePath, $destinationPath);
         }
 
-        if (!$image) return false;
+        if (!$image) {
+            return @copy($sourcePath, $destinationPath);
+        }
 
         // Calculate aspect ratio
         $aspectRatio = $width / $height;
@@ -265,17 +286,27 @@ class MediaController extends Controller
 
         // Create canvas and preserve alpha values for transparent PNGs/WEBP
         $newImage = imagecreatetruecolor($newWidth, $newHeight);
+        $success = false;
+
         if ($newImage) {
             imagealphablending($newImage, false);
             imagesavealpha($newImage, true);
             imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            $success = imagewebp($newImage, $destinationPath, $quality);
+
+            if (function_exists('imagewebp')) {
+                $success = @imagewebp($newImage, $destinationPath, $quality);
+            } elseif (function_exists('imagejpeg')) {
+                $success = @imagejpeg($newImage, $destinationPath, $quality);
+            }
             imagedestroy($newImage);
-        } else {
-            $success = false;
         }
 
         imagedestroy($image);
-        return $success;
+
+        if (!$success) {
+            return @copy($sourcePath, $destinationPath);
+        }
+
+        return true;
     }
 }

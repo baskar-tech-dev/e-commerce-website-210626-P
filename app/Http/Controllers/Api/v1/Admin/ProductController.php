@@ -113,11 +113,14 @@ class ProductController extends Controller
             
             // Nested images
             'images' => 'nullable|array',
+            'images.*.id' => 'nullable|integer',
             'images.*.url' => 'required|string|max:500',
             'images.*.thumbnail_url' => 'nullable|string|max:500',
             'images.*.alt_text' => 'nullable|string|max:200',
             'images.*.sort_order' => 'nullable|integer',
             'images.*.is_primary' => 'nullable|boolean',
+            'images.*.color_group' => 'nullable|string|max:50',
+            'images.*.variant_id' => 'nullable|integer',
             'images.*.variant_sku' => 'nullable|string|max:100',
             'images.*.temp_path' => 'nullable|array',
             'images.*.temp_path.original' => 'nullable|string',
@@ -236,12 +239,14 @@ class ProductController extends Controller
             
             // Nested images
             'images' => 'nullable|array',
-            'images.*.id' => 'nullable|integer|exists:product_images,id',
+            'images.*.id' => 'nullable|integer',
             'images.*.url' => 'required|string|max:500',
             'images.*.thumbnail_url' => 'nullable|string|max:500',
             'images.*.alt_text' => 'nullable|string|max:200',
             'images.*.sort_order' => 'nullable|integer',
             'images.*.is_primary' => 'nullable|boolean',
+            'images.*.color_group' => 'nullable|string|max:50',
+            'images.*.variant_id' => 'nullable|integer',
             'images.*.variant_sku' => 'nullable|string|max:100',
             'images.*.temp_path' => 'nullable|array',
             'images.*.temp_path.original' => 'nullable|string',

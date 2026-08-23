@@ -195,35 +195,47 @@ class ProductService
      */
     protected function processUploadedTempImage($product, array $imageData, ?int $variantId = null)
     {
+        $moveFile = function ($from, $to) {
+            if (empty($from) || empty($to)) return false;
+            if (Storage::disk('public')->exists($from)) {
+                $targetDir = dirname($to);
+                Storage::disk('public')->makeDirectory($targetDir);
+                if (!@Storage::disk('public')->move($from, $to)) {
+                    @Storage::disk('public')->copy($from, $to);
+                    @Storage::disk('public')->delete($from);
+                }
+                return true;
+            }
+            return false;
+        };
+
+        Storage::disk('public')->makeDirectory("products/{$product->id}/original");
+        Storage::disk('public')->makeDirectory("products/{$product->id}/webp");
+        Storage::disk('public')->makeDirectory("products/{$product->id}/thumbnails");
+
         if (isset($imageData['temp_path']) && is_array($imageData['temp_path'])) {
             $temp = $imageData['temp_path'];
 
             // Move original
-            $origName = basename($temp['original']);
+            $origName = basename($temp['original'] ?? '');
             $newOrig = "products/{$product->id}/original/{$origName}";
-            if (Storage::disk('public')->exists($temp['original'])) {
-                Storage::disk('public')->move($temp['original'], $newOrig);
-            }
+            $moveFile($temp['original'] ?? '', $newOrig);
 
             // Move webp
-            $webpName = basename($temp['webp']);
+            $webpName = basename($temp['webp'] ?? '');
             $newWebp = "products/{$product->id}/webp/{$webpName}";
-            if (Storage::disk('public')->exists($temp['webp'])) {
-                Storage::disk('public')->move($temp['webp'], $newWebp);
-            }
+            $moveFile($temp['webp'] ?? '', $newWebp);
 
             // Move thumbnail
-            $thumbName = basename($temp['thumb']);
+            $thumbName = basename($temp['thumb'] ?? '');
             $newThumb = "products/{$product->id}/thumbnails/{$thumbName}";
-            if (Storage::disk('public')->exists($temp['thumb'])) {
-                Storage::disk('public')->move($temp['thumb'], $newThumb);
-            }
+            $moveFile($temp['thumb'] ?? '', $newThumb);
 
             $url = '/storage/' . $newWebp;
             $thumbnailUrl = '/storage/' . $newThumb;
 
             $imgRecord = $product->images()->create([
-                'variant_id' => $variantId,
+                'variant_id' => $variantId ?? ($imageData['variant_id'] ?? null),
                 'color_group' => $imageData['color_group'] ?? null,
                 'url' => $url,
                 'thumbnail_url' => $thumbnailUrl,
@@ -246,12 +258,35 @@ class ProductService
             return $imgRecord;
         }
 
+        // If URL points to temp folder, relocate it
+        $rawUrl = $imageData['url'] ?? '';
+        if (str_contains($rawUrl, '/temp/')) {
+            $tempPath = preg_replace('/^\/?storage\//', '', parse_url($rawUrl, PHP_URL_PATH));
+            if (Storage::disk('public')->exists($tempPath)) {
+                $fileName = basename($tempPath);
+                $newWebp = "products/{$product->id}/webp/{$fileName}";
+                $moveFile($tempPath, $newWebp);
+                $rawUrl = '/storage/' . $newWebp;
+            }
+        }
+
+        $rawThumb = $imageData['thumbnail_url'] ?? null;
+        if ($rawThumb && str_contains($rawThumb, '/temp/')) {
+            $tempThumbPath = preg_replace('/^\/?storage\//', '', parse_url($rawThumb, PHP_URL_PATH));
+            if (Storage::disk('public')->exists($tempThumbPath)) {
+                $thumbFileName = basename($tempThumbPath);
+                $newThumb = "products/{$product->id}/thumbnails/{$thumbFileName}";
+                $moveFile($tempThumbPath, $newThumb);
+                $rawThumb = '/storage/' . $newThumb;
+            }
+        }
+
         // Otherwise it is a simple image record
         $imgRecord = $product->images()->create([
-            'variant_id' => $variantId,
+            'variant_id' => $variantId ?? ($imageData['variant_id'] ?? null),
             'color_group' => $imageData['color_group'] ?? null,
-            'url' => $imageData['url'],
-            'thumbnail_url' => $imageData['thumbnail_url'] ?? null,
+            'url' => $rawUrl,
+            'thumbnail_url' => $rawThumb ?? $rawUrl,
             'alt_text' => $imageData['alt_text'] ?? null,
             'sort_order' => $imageData['sort_order'] ?? 0,
             'is_primary' => $imageData['is_primary'] ?? false,

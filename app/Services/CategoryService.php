@@ -42,6 +42,8 @@ class CategoryService
         // Handle unique slug constraint logic
         $data['slug'] = $this->makeSlugUnique($data['slug']);
 
+        $data = $this->processCategoryImage($data);
+
         return $this->categoryRepository->create($data);
     }
 
@@ -57,7 +59,30 @@ class CategoryService
             $data['slug'] = $this->makeSlugUnique($data['slug'], $id);
         }
 
+        $data = $this->processCategoryImage($data);
+
         return $this->categoryRepository->update($id, $data);
+    }
+
+    /**
+     * Move temp uploaded category image to permanent categories storage directory.
+     */
+    protected function processCategoryImage(array $data): array
+    {
+        if (!empty($data['image']) && str_contains($data['image'], '/temp/')) {
+            $relPath = preg_replace('/^\/?storage\//', '', parse_url($data['image'], PHP_URL_PATH));
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relPath)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('categories');
+                $fileName = basename($relPath);
+                $newPath = "categories/{$fileName}";
+                if (!@\Illuminate\Support\Facades\Storage::disk('public')->move($relPath, $newPath)) {
+                    @\Illuminate\Support\Facades\Storage::disk('public')->copy($relPath, $newPath);
+                    @\Illuminate\Support\Facades\Storage::disk('public')->delete($relPath);
+                }
+                $data['image'] = '/storage/' . $newPath;
+            }
+        }
+        return $data;
     }
 
     public function deleteCategory(int $id): bool
