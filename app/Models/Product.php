@@ -75,6 +75,8 @@ class Product extends Model
         'mrp_display',
         'primary_image_url',
     ];
+
+    /**
      * Boot function for auto-generating product UUID.
      */
     protected static function boot()
