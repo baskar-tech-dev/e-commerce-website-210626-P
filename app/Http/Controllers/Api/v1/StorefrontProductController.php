@@ -59,6 +59,13 @@ class StorefrontProductController extends Controller
             $query->where('selling_price', '<=', (float) $request->input('max_price'));
         }
 
+        // Availability / In Stock Only Filter
+        if ($request->has('in_stock_only') && filter_var($request->input('in_stock_only'), FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereHas('variants', function ($vQuery) {
+                $vQuery->where('is_active', true)->where('stock_quantity', '>', 0);
+            });
+        }
+
         // Sorting
         $sortBy = $request->input('sort_by', 'newest');
         switch ($sortBy) {
@@ -96,8 +103,10 @@ class StorefrontProductController extends Controller
         
         if (\Illuminate\Support\Str::isUuid($id)) {
             $product = $query->where('uuid', $id)->first();
+        } elseif (is_numeric($id)) {
+            $product = $query->where('id', (int)$id)->first();
         } else {
-            $product = $query->find((int)$id);
+            $product = $query->where('slug', $id)->first();
         }
 
         if (!$product) {

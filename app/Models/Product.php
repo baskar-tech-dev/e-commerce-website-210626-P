@@ -74,6 +74,9 @@ class Product extends Model
         'price_display',
         'mrp_display',
         'primary_image_url',
+        'total_stock',
+        'is_sold_out',
+        'is_low_stock',
     ];
 
     /**

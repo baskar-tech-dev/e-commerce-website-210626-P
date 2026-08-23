@@ -165,7 +165,7 @@
           </div>
         </div>
 
-        <!-- Availability Section (Mock) -->
+        <!-- Availability Section -->
         <div class="filter-card">
           <div class="filter-card-header" @click="toggleSection('availability')">
             <span class="filter-section-name">Availability</span>
@@ -174,7 +174,7 @@
           </div>
           <div v-show="openSections.availability" class="filter-card-body">
             <label class="custom-checkbox-option">
-              <input type="checkbox" v-model="mockFilters.inStockOnly" />
+              <input type="checkbox" v-model="filters.in_stock_only" @change="fetchProducts(1)" />
               <span class="checkbox-indicator"></span>
               <span class="option-label">In Stock Only</span>
             </label>
@@ -528,7 +528,7 @@
             </div>
           </div>
 
-          <!-- Availability Section (Mock) -->
+          <!-- Availability Section -->
           <div class="sheet-filter-group">
             <div class="sheet-group-header" @click="toggleSection('availability')">
               <span>Availability</span>
@@ -536,7 +536,7 @@
             </div>
             <div v-show="openSections.availability" class="sheet-group-body">
               <label class="sheet-checkbox-label">
-                <input type="checkbox" v-model="mockFilters.inStockOnly" />
+                <input type="checkbox" v-model="filters.in_stock_only" @change="fetchProducts(1)" />
                 <span class="option-title-text">In Stock Only</span>
               </label>
             </div>
@@ -702,6 +702,7 @@ const filters = ref({
   min_price: 0,
   max_price: 10000,
   sort_by: 'newest',
+  in_stock_only: false,
 });
 
 const PRICE_MIN = 0;
@@ -740,7 +741,7 @@ const openSections = ref({
   size: false,
   color: false,
   fabric: false,
-  availability: false,
+  availability: true,
 });
 
 const toggleSection = (section) => {
@@ -859,6 +860,7 @@ const fetchProducts = async (page = 1) => {
       min_price: filters.value.min_price,
       max_price: filters.value.max_price,
       sort_by: filters.value.sort_by === 'popularity' ? 'rating' : filters.value.sort_by,
+      in_stock_only: filters.value.in_stock_only ? 1 : undefined,
     };
 
     const response = await axios.get('/api/storefront/products', { params });
@@ -923,6 +925,7 @@ const resetFilters = () => {
     min_price: 0,
     max_price: 10000,
     sort_by: 'newest',
+    in_stock_only: false,
   };
   mockFilters.value = {
     size: '',

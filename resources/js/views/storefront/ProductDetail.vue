@@ -259,6 +259,18 @@
       </div>
     </div>
 
+    <!-- Product Not Found / Error State -->
+    <div v-else class="glass-panel" style="max-width: 600px; margin: 4rem auto; padding: 3rem 2rem; text-align: center; border-radius: 16px; border: 1px solid rgba(182, 141, 64, 0.25);">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">👗</div>
+      <h2 style="font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #5B163A; margin-bottom: 0.75rem;">Design Currently Unavailable</h2>
+      <p style="color: #7A726A; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
+        The requested fashion design could not be found or has been updated. Please explore our full designer catalog.
+      </p>
+      <router-link to="/shop" class="btn btn--primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 0.75rem 2rem; border-radius: 24px; text-decoration: none;">
+        Explore Collections ➔
+      </router-link>
+    </div>
+
     <!-- Ultra-HD Fullscreen Luxury Lightbox Studio -->
     <Teleport to="body">
       <Transition name="lightbox-fade">
@@ -813,12 +825,13 @@ const loadRecentlyViewed = () => {
 };
 
 const fetchDetails = async (id) => {
+  if (!id) return;
   loading.value = true;
   try {
     const response = await axios.get(`/api/storefront/products/${id}`);
     if (response.data && response.data.success) {
       product.value = response.data.data;
-      relatedProducts.value = response.data.related;
+      relatedProducts.value = response.data.related || [];
       activeImagePath.value = getPrimaryImage(product.value);
       
       // Auto select first variant if available
@@ -831,11 +844,12 @@ const fetchDetails = async (id) => {
       // Track this product & refresh recently viewed list
       trackRecentlyViewed(product.value);
       loadRecentlyViewed();
+    } else {
+      product.value = null;
     }
   } catch (err) {
     console.error('Failed to query product details:', err);
-    alert('Product details not available');
-    router.push('/shop');
+    product.value = null;
   } finally {
     loading.value = false;
   }
@@ -998,6 +1012,15 @@ const handleLightboxKeydown = (e) => {
 onMounted(() => {
   fetchDetails(route.params.uuid);
 });
+
+watch(
+  () => route.params.uuid,
+  (newUuid) => {
+    if (newUuid) {
+      fetchDetails(newUuid);
+    }
+  }
+);
 
 onUnmounted(() => {
   document.body.style.overflow = '';
