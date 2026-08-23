@@ -187,27 +187,38 @@
             </form>
           </div>
 
-          <!-- Step 2: Payment Toggles -->
+          <!-- Step 2: Payment Method -->
           <div class="glass-panel" style="padding: var(--spacing-lg);">
             <div class="card-header-title" style="margin-bottom: var(--spacing-md); border: none; padding-bottom: 0;">2. Payment Method</div>
             
             <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
-              <!-- COD option -->
-              <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: 6px; background: var(--blush-bg);">
-                <input type="radio" value="cod" v-model="form.payment_method" style="cursor: pointer;" />
-                💲 Cash on Delivery (COD)
-              </label>
+              <!-- Cashfree Secure Payment Gateway (All-in-One) -->
+              <label 
+                style="display: flex; flex-direction: column; gap: 0.85rem; color: var(--color-text-primary); cursor: pointer; padding: 1.15rem; border: 1.5px solid #5B163A; border-radius: 10px; background: #FAF5F0; box-shadow: 0 4px 14px rgba(91, 22, 58, 0.08); transition: all 0.2s;"
+              >
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <input type="radio" value="online" v-model="form.payment_method" checked style="cursor: pointer; accent-color: #5B163A; width: 18px; height: 18px;" />
+                    <span style="font-weight: 700; font-size: 1.05rem; color: #5B163A;">Cashfree Payments Gateway</span>
+                  </div>
+                  <span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(37, 211, 102, 0.15); color: #15803d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;">
+                    🔒 100% Secure
+                  </span>
+                </div>
 
-              <!-- Online option -->
-              <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: 6px; background: var(--blush-bg);">
-                <input type="radio" value="online" v-model="form.payment_method" style="cursor: pointer;" />
-                💳 Secure Online Checkout (Cards, NetBanking, Wallets)
-              </label>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-left: 1.8rem;">
+                  <span class="payment-badge-pill">📲 UPI</span>
+                  <span class="payment-badge-pill">Google Pay</span>
+                  <span class="payment-badge-pill">PhonePe</span>
+                  <span class="payment-badge-pill">Paytm</span>
+                  <span class="payment-badge-pill">💳 Credit / Debit Cards</span>
+                  <span class="payment-badge-pill">NetBanking</span>
+                  <span class="payment-badge-pill">Wallets</span>
+                </div>
 
-              <!-- UPI option -->
-              <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-text-primary); font-size: 0.95rem; font-weight: bold; cursor: pointer; padding: var(--spacing-sm); border: 1px solid var(--color-border); border-radius: 6px; background: var(--blush-bg);">
-                <input type="radio" value="upi" v-model="form.payment_method" style="cursor: pointer;" />
-                📲 Instant UPI (Google Pay, PhonePe, Paytm, BHIM)
+                <div style="font-size: 0.78rem; color: #7A726A; padding-left: 1.8rem; line-height: 1.4;">
+                  Fast, secure online checkout powered by Cashfree Payments with 256-bit SSL encryption.
+                </div>
               </label>
             </div>
           </div>
@@ -310,7 +321,7 @@ const form = ref({
   shipping_city: '',
   shipping_state: 'Tamil Nadu',
   shipping_postal_code: '',
-  payment_method: 'cod',
+  payment_method: 'online',
   coupon_code: '',
 });
 
@@ -731,5 +742,16 @@ onMounted(() => {
   font-weight: 500;
   margin-top: 4px;
   display: block;
+}
+
+.payment-badge-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5B163A;
+  background: #ffffff;
+  border: 1px solid rgba(91, 22, 58, 0.2);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
 }
 </style>

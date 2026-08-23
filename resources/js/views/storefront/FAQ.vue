@@ -98,17 +98,17 @@ const categories = [
 
 const faqs = [
   // Orders
-  { cat: 'orders', q: 'How do I place an order?', a: 'Browse our shop, select your size, and add items to your cart. Click Checkout, enter your shipping details, select your payment method (COD or Online), and confirm. You will receive an SMS and email order confirmation.' },
+  { cat: 'orders', q: 'How do I place an order?', a: 'Browse our shop, select your size, and add items to your cart. Click Checkout, enter your shipping details, select your payment method via Cashfree Secure Gateway, and confirm. You will receive an SMS and email order confirmation.' },
   { cat: 'orders', q: 'Can I modify or cancel my order after placing it?', a: 'You can cancel your order from your Customer Dashboard before it is dispatched. Once shipped, the order cannot be modified or cancelled.' },
   { cat: 'orders', q: 'How do I check my order status?', a: 'Log into your Customer Dashboard and select the My Orders tab. You will see real-time updates (Pending, Confirmed, Shipped, Delivered) and tracking numbers.' },
 
   // Payments
-  { cat: 'payments', q: 'What payment options do you support?', a: 'We support all major payment options via Cashfree Payments, including Credit/Debit Cards (Visa, MasterCard, RuPay), Instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Wallets. Cash on Delivery (COD) is also available for select pin codes.' },
+  { cat: 'payments', q: 'What payment options do you support?', a: 'We support all major payment options via Cashfree Payments, including Instant UPI (Google Pay, PhonePe, Paytm, BHIM), Credit & Debit Cards (Visa, MasterCard, RuPay), Net Banking, and Wallets. All transactions are 100% secure with 256-bit encryption.' },
   { cat: 'payments', q: 'Is it safe to pay online here?', a: 'Absolutely. We do not store any card credentials on our servers. All transactions are handled securely by Cashfree Payments using high-grade 256-bit SSL encryption and PCI-DSS Level 1 compliant standards.' },
   { cat: 'payments', q: 'What happens if my transaction fails but my money is deducted?', a: 'This is usually held in the bank network and automatically returned to your original payment source within 24 to 48 hours. You can contact support if the amount is not returned.' },
 
   // Shipping
-  { cat: 'shipping', q: 'How much are the shipping charges?', a: 'Standard shipping is ₹100 for orders under ₹999. Shipping is completely free for all orders of ₹999 and above.' },
+  { cat: 'shipping', q: 'How much are the shipping charges?', a: 'Shipping is completely FREE for all orders of ₹1,999 and above. For orders under ₹1,999, shipping charges vary based on your delivery state.' },
   { cat: 'shipping', q: 'What is your delivery timeline?', a: 'We process and ship orders within 24 to 48 hours. Delivery takes 2 to 4 business days for South India, and 3 to 7 business days for other states.' },
   { cat: 'shipping', q: 'Do you ship internationally?', a: 'Currently, we only ship within India. We plan to introduce international shipping soon.' },
 
