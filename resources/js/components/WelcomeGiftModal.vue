@@ -178,26 +178,6 @@
                 Already have an account? 
                 <router-link to="/signin" class="signin-link" @click="closeModal">Sign In</router-link>
               </div>
-
-              <!-- 4 Premium Benefit Icons -->
-              <div class="signup-benefits-grid">
-                <div class="benefit-item">
-                  <span class="benefit-icon">✓</span>
-                  <span class="benefit-text">10% Welcome Discount</span>
-                </div>
-                <div class="benefit-item">
-                  <span class="benefit-icon">✓</span>
-                  <span class="benefit-text">Faster Checkout</span>
-                </div>
-                <div class="benefit-item">
-                  <span class="benefit-icon">✓</span>
-                  <span class="benefit-text">Wishlist & Favorites</span>
-                </div>
-                <div class="benefit-item">
-                  <span class="benefit-icon">✓</span>
-                  <span class="benefit-text">Order Tracking</span>
-                </div>
-              </div>
             </div>
           </Transition>
         </div>
@@ -1201,42 +1181,6 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
-/* 4 Benefit Icons Grid */
-.signup-benefits-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding-top: 14px;
-  border-top: 1px solid #EAE3D9;
-}
-
-.benefit-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.benefit-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #FCFAF7;
-  border: 1px solid #C8A15A;
-  color: #C8A15A;
-  font-size: 0.65rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.benefit-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.74rem;
-  color: #2D2D2D;
-  font-weight: 500;
-}
-
 /* Mobile Responsiveness */
 @media (max-width: 576px) {
   .gift-modal-container {
@@ -1245,10 +1189,6 @@ onUnmounted(() => {
   }
   .gift-title {
     font-size: 1.55rem;
-  }
-  .signup-benefits-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
   }
   .gift-float-btn {
     bottom: 74px;

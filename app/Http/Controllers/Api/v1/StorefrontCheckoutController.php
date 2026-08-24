@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Setting;
 use App\Services\InventoryService;
+use App\Services\OrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,14 @@ use Exception;
 class StorefrontCheckoutController extends Controller
 {
     protected $inventoryService;
+    protected $orderNotificationService;
 
-    public function __construct(InventoryService $inventoryService)
-    {
+    public function __construct(
+        InventoryService $inventoryService,
+        OrderNotificationService $orderNotificationService
+    ) {
         $this->inventoryService = $inventoryService;
+        $this->orderNotificationService = $orderNotificationService;
     }
 
     public function placeOrder(Request $request): JsonResponse
@@ -336,6 +341,9 @@ class StorefrontCheckoutController extends Controller
             }
 
             DB::commit();
+
+            // Dispatch order placement email notification to admin & configured recipients
+            $this->orderNotificationService->sendOrderPlacedNotification($order);
 
             // Create login token for the user so they are authenticated automatically
             $token = $user->createToken('auth_token')->plainTextToken;

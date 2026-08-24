@@ -12,8 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(255) NULL");
-        DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(255) NULL");
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(255) NULL");
+            DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(255) NULL");
+        }
     }
 
     /**
@@ -21,7 +23,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(60) NULL");
-        DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(60) NULL");
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(60) NULL");
+            DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(60) NULL");
+        }
     }
 };

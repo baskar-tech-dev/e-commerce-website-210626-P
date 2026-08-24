@@ -279,6 +279,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
     Route::middleware('permission:manage_settings')->group(function () {
         Route::get('settings', [SettingController::class, 'index']);
         Route::post('settings/batch', [SettingController::class, 'updateBatch']);
+        Route::post('settings/test-email', [SettingController::class, 'testEmail']);
         Route::get('audit-logs', [AuditLogController::class, 'index']);
         
         // Announcement Management

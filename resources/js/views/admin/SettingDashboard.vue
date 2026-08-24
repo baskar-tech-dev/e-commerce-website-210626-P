@@ -502,99 +502,243 @@
                     </div>
                 </div>
 
-                <!-- Tab 3: Notification (SMTP) -->
+                <!-- Tab 3: Notification (SMTP & Order Alerts) -->
                 <div
                     v-if="activeTab === 'email'"
                     style="
                         display: flex;
                         flex-direction: column;
-                        gap: var(--spacing-md);
+                        gap: var(--spacing-lg);
                     "
                 >
-                    <div
-                        class="card-header-title"
-                        style="margin-bottom: var(--spacing-xs)"
-                    >
-                        Notifications (SMTP Host)
+                    <!-- Section 1: Order Placement Email Alerts -->
+                    <div style="background: #FAF8F5; border: 1px solid #E8DDD3; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #E8DDD3; padding-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; color: #5B163A; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    🛍️ Order Placement Email Notifications
+                                </h3>
+                                <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #64748B;">
+                                    Automatically send a detailed breakdown of newly placed orders (products, sizes, quantities, and cost totals) to your designated primary mailbox.
+                                </p>
+                            </div>
+                            <span
+                                class="badge"
+                                :style="settings.email.order_notification_enabled ? 'background: #DCFCE7; color: #166534;' : 'background: #F1F5F9; color: #64748B;'"
+                                style="font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px;"
+                            >
+                                {{ settings.email.order_notification_enabled ? '✓ Notifications Active' : '✕ Disabled' }}
+                            </span>
+                        </div>
+
+                        <!-- Enable/Disable Switch -->
+                        <div
+                            style="
+                                background: #FFFFFF;
+                                border: 1px solid #E8DDD3;
+                                border-radius: 8px;
+                                padding: var(--spacing-md);
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.25rem;
+                            "
+                        >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.6rem;
+                                    color: #1e293b;
+                                    font-weight: 700;
+                                    font-size: 0.95rem;
+                                    cursor: pointer;
+                                    user-select: none;
+                                "
+                            >
+                                <input
+                                    type="checkbox"
+                                    v-model="settings.email.order_notification_enabled"
+                                    style="width: 18px; height: 18px; cursor: pointer; accent-color: #5B163A;"
+                                />
+                                Enable Instant Email Alerts on New Orders
+                            </label>
+                            <span
+                                style="
+                                    font-size: 0.78rem;
+                                    color: var(--color-text-muted);
+                                    margin-left: 2rem;
+                                "
+                            >
+                                When enabled, an email notification is automatically dispatched upon order checkout with customer address, product variants, and total price breakdown.
+                            </span>
+                        </div>
+
+                        <!-- Recipient Email Configuration Inputs -->
+                        <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; color: #5B163A; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Primary Notification Email Address *</span>
+                                    <span class="badge" style="background: #5B163A; color: #FFFFFF; font-size: 0.7rem;">Primary Recipient</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    v-model="settings.email.primary_order_email"
+                                    placeholder="e.g. orders@mayasree.com or admin@mayasree.com"
+                                    class="form-input"
+                                    style="font-weight: 600;"
+                                    :required="settings.email.order_notification_enabled"
+                                />
+                                <span style="font-size: 0.75rem; color: #64748B;">
+                                    Main mailbox that will receive all customer order placement alerts and invoice summaries.
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; color: #1E293B;">
+                                    Additional Notification Emails (Optional CC)
+                                </label>
+                                <input
+                                    type="text"
+                                    v-model="settings.email.additional_order_emails"
+                                    placeholder="e.g. manager@mayasree.com, warehouse@mayasree.com"
+                                    class="form-input"
+                                />
+                                <span style="font-size: 0.75rem; color: #64748B;">
+                                    Separate multiple secondary email addresses with commas. They will receive copies (CC).
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Live Test Email Utility -->
+                        <div style="background: #FFFFFF; border: 1px dashed #D4AF37; border-radius: 8px; padding: 1rem; margin-top: 0.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <span style="font-weight: 700; font-size: 0.88rem; color: #5B163A; display: flex; align-items: center; gap: 6px;">
+                                        ⚡ Test Email Dispatch
+                                    </span>
+                                    <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: #64748B;">
+                                        Verify your outgoing mail server setup and ensure email deliverability.
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <input
+                                        type="email"
+                                        v-model="testEmailInput"
+                                        :placeholder="settings.email.primary_order_email || 'Enter test email...'"
+                                        class="form-input"
+                                        style="width: 240px; height: 38px; font-size: 0.85rem;"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="btn btn--secondary btn--sm"
+                                        :disabled="testingEmail"
+                                        @click="handleSendTestEmail"
+                                        style="height: 38px; padding: 0 16px; font-weight: 700;"
+                                    >
+                                        {{ testingEmail ? 'Sending...' : '🚀 Send Test Email' }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="testEmailStatus.show" style="margin-top: 10px;">
+                                <div
+                                    :class="testEmailStatus.success ? 'badge--success' : 'badge--danger'"
+                                    style="padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; display: inline-block; width: 100%; box-sizing: border-box;"
+                                >
+                                    {{ testEmailStatus.message }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div
-                        class="responsive-grid-3-1"
-                        style="gap: var(--spacing-md)"
-                    >
-                        <div class="form-group">
-                            <label class="form-label"
-                                >SMTP Mailer Hostserver *</label
-                            >
-                            <input
-                                type="text"
-                                v-model="settings.email.smtp_host"
-                                placeholder="smtp.mailgun.org"
-                                class="form-input"
-                                required
-                            />
+                    <!-- Section 2: Outgoing SMTP Mailer Settings -->
+                    <div>
+                        <div
+                            class="card-header-title"
+                            style="margin-bottom: var(--spacing-xs); font-size: 1.05rem;"
+                        >
+                            ⚙️ Outgoing SMTP Mailer Settings
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">SMTP Port *</label>
-                            <input
-                                type="number"
-                                v-model="settings.email.smtp_port"
-                                placeholder="587"
-                                class="form-input"
-                                required
-                            />
-                        </div>
-                    </div>
+                        <p style="margin: 0 0 var(--spacing-md) 0; font-size: 0.82rem; color: #64748B;">
+                            Configure your SMTP host and authentication credentials for sending transactional emails.
+                        </p>
 
-                    <div
-                        class="responsive-grid-1-1"
-                        style="gap: var(--spacing-md)"
-                    >
-                        <div class="form-group">
-                            <label class="form-label">SMTP Username *</label>
-                            <input
-                                type="text"
-                                v-model="settings.email.smtp_username"
-                                class="form-input"
-                                required
-                            />
+                        <div
+                            class="responsive-grid-3-1"
+                            style="gap: var(--spacing-md)"
+                        >
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >SMTP Mailer Hostserver</label
+                                >
+                                <input
+                                    type="text"
+                                    v-model="settings.email.smtp_host"
+                                    placeholder="e.g. smtp.mailgun.org or smtp.gmail.com"
+                                    class="form-input"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">SMTP Port</label>
+                                <input
+                                    type="number"
+                                    v-model.number="settings.email.smtp_port"
+                                    placeholder="587"
+                                    class="form-input"
+                                />
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">SMTP Password *</label>
-                            <input
-                                type="password"
-                                v-model="settings.email.smtp_password"
-                                class="form-input"
-                                required
-                            />
-                        </div>
-                    </div>
 
-                    <div
-                        class="responsive-grid-1-1"
-                        style="gap: var(--spacing-md)"
-                    >
-                        <div class="form-group">
-                            <label class="form-label"
-                                >Sender Name (display) *</label
-                            >
-                            <input
-                                type="text"
-                                v-model="settings.email.sender_name"
-                                class="form-input"
-                                required
-                            />
+                        <div
+                            class="responsive-grid-1-1"
+                            style="gap: var(--spacing-md); margin-top: var(--spacing-sm);"
+                        >
+                            <div class="form-group">
+                                <label class="form-label">SMTP Username</label>
+                                <input
+                                    type="text"
+                                    v-model="settings.email.smtp_username"
+                                    placeholder="Enter SMTP username or API key"
+                                    class="form-input"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">SMTP Password</label>
+                                <input
+                                    type="password"
+                                    v-model="settings.email.smtp_password"
+                                    placeholder="Enter SMTP password"
+                                    class="form-input"
+                                />
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label"
-                                >Sender Email Address *</label
-                            >
-                            <input
-                                type="email"
-                                v-model="settings.email.sender_email"
-                                class="form-input"
-                                required
-                            />
+
+                        <div
+                            class="responsive-grid-1-1"
+                            style="gap: var(--spacing-md); margin-top: var(--spacing-sm);"
+                        >
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Sender Name (Display Name)</label
+                                >
+                                <input
+                                    type="text"
+                                    v-model="settings.email.sender_name"
+                                    placeholder="e.g. Maya Sree Fashion"
+                                    class="form-input"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Sender Email Address</label
+                                >
+                                <input
+                                    type="email"
+                                    v-model="settings.email.sender_email"
+                                    placeholder="e.g. notifications@mayasree.com"
+                                    class="form-input"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2959,6 +3103,44 @@ const modal = ref({
     },
 });
 
+// Test Email Dispatch State
+const testEmailInput = ref("");
+const testingEmail = ref(false);
+const testEmailStatus = ref({ show: false, success: false, message: "" });
+
+const handleSendTestEmail = async () => {
+    const targetEmail = testEmailInput.value.trim() || (settings.value.email.primary_order_email ? settings.value.email.primary_order_email.trim() : "");
+    if (!targetEmail) {
+        testEmailStatus.value = {
+            show: true,
+            success: false,
+            message: "⚠️ Please enter a recipient email address to send the test email.",
+        };
+        return;
+    }
+
+    testingEmail.value = true;
+    testEmailStatus.value = { show: false, success: false, message: "" };
+    try {
+        const response = await axios.post("/api/admin/settings/test-email", {
+            email: targetEmail,
+        });
+        testEmailStatus.value = {
+            show: true,
+            success: true,
+            message: response.data.message || `✓ Test email successfully sent to ${targetEmail}!`,
+        };
+    } catch (err) {
+        testEmailStatus.value = {
+            show: true,
+            success: false,
+            message: err.response?.data?.message || "✕ Failed to send test email. Please verify your SMTP parameters.",
+        };
+    } finally {
+        testingEmail.value = false;
+    }
+};
+
 const settings = ref({
     general: {
         store_name: "",
@@ -2982,6 +3164,9 @@ const settings = ref({
         cashfree_environment: "sandbox",
     },
     email: {
+        order_notification_enabled: true,
+        primary_order_email: "",
+        additional_order_emails: "",
         smtp_host: "",
         smtp_port: 587,
         smtp_username: "",
@@ -3548,11 +3733,23 @@ const fetchSettings = async () => {
                     cashfree_environment: data.payment.cashfree_environment || "sandbox",
                 };
             }
-            if (data.email)
+            if (data.email) {
                 settings.value.email = {
                     ...settings.value.email,
                     ...data.email,
+                    order_notification_enabled: data.email.order_notification_enabled !== undefined
+                        ? filterBool(data.email.order_notification_enabled)
+                        : true,
+                    primary_order_email: data.email.primary_order_email || "",
+                    additional_order_emails: data.email.additional_order_emails || "",
+                    smtp_host: data.email.smtp_host || "",
+                    smtp_port: data.email.smtp_port ? Number(data.email.smtp_port) : 587,
+                    smtp_username: data.email.smtp_username || "",
+                    smtp_password: data.email.smtp_password || "",
+                    sender_name: data.email.sender_name || "",
+                    sender_email: data.email.sender_email || "",
                 };
+            }
 
             if (data.announcement && data.announcement.config) {
                 settings.value.announcement.config = {
@@ -3645,7 +3842,11 @@ const saveSettings = async () => {
                         ? "1"
                         : "0",
                 },
-                email: { ...settings.value.email },
+                email: {
+                    ...settings.value.email,
+                    order_notification_enabled: settings.value.email.order_notification_enabled ? "1" : "0",
+                    smtp_port: Number(settings.value.email.smtp_port || 587),
+                },
                 announcement: {
                     config: { ...settings.value.announcement.config },
                 },

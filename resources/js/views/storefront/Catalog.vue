@@ -306,9 +306,6 @@
                 <div class="card-badge-top-left badge-custom" v-else-if="product.badge">
                   {{ product.badge }}
                 </div>
-                <div class="card-badge-top-left badge-occasion" v-else-if="product.occasion">
-                  {{ product.occasion }}
-                </div>
                 <div class="card-badge-top-left" v-else-if="getProductDiscount(product)">
                   {{ getProductDiscount(product) }}% OFF
                 </div>

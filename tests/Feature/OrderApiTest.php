@@ -22,11 +22,25 @@ class OrderApiTest extends TestCase
     {
         parent::setUp();
 
+        $perm = \App\Models\Permission::firstOrCreate(['name' => 'manage_orders'], [
+            'display_name' => 'Manage Orders',
+            'group' => 'orders',
+        ]);
+        $role = \App\Models\Role::firstOrCreate(['name' => 'order_admin'], [
+            'display_name' => 'Order Admin',
+            'description' => 'Order Admin',
+            'is_system' => true,
+        ]);
+        $role->permissions()->syncWithoutDetaching([$perm->id]);
+
         $this->user = User::factory()->create([
+            'role_id' => $role->id,
             'first_name' => 'Alice',
             'last_name' => 'Tester',
             'email' => 'alice@test.com'
         ]);
+
+        $this->actingAs($this->user);
 
         $category = Category::factory()->create();
         $product = Product::factory()->create([
@@ -153,7 +167,7 @@ class OrderApiTest extends TestCase
             'status' => 'confirmed'
         ]);
         $response->assertStatus(200);
-        $this->assertEquals('confirmed', $order->fresh()->status);
+        $this->assertEquals('order_confirmed', $order->fresh()->status);
 
         // 2. Move confirmed -> processing (should trigger ledger OUT decrement of 2 units)
         $response = $this->putJson("/api/admin/orders/{$order->id}/status", [

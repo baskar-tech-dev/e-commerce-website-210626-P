@@ -90,7 +90,6 @@
             <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
             <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
             <span v-else-if="product.badge" class="product-tag selling-fast">{{ product.badge }}</span>
-            <span v-else-if="product.occasion" class="product-tag selling-fast">{{ product.occasion }}</span>
             <span v-else class="product-tag selling-fast">Featured</span>
             <div class="product-image-container">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
@@ -206,7 +205,6 @@
             <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
             <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
             <span v-else-if="product.badge" class="product-tag new-arrival">{{ product.badge }}</span>
-            <span v-else-if="product.occasion" class="product-tag new-arrival">{{ product.occasion }}</span>
             <span v-else class="product-tag new-arrival">New</span>
             <div class="product-image-container" :class="{ 'image-sold-out': isProductSoldOut(product) }">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">

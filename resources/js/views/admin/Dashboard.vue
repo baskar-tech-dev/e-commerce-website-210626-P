@@ -1,448 +1,577 @@
 <template>
-  <!-- Welcome and Date Filter Header -->
-  <div class="admin-page__header">
-    <div class="admin-page__title-section">
-      <h1 class="admin-page__title">Welcome back, John! 👋</h1>
-      <span class="admin-page__subtitle">Here's what's happening with your business today.</span>
-    </div>
-    <div class="admin-page__actions">
-      <div class="date-picker-select">
-        <span>📅</span>
-        <span>May 12, 2024 - Jun 12, 2024</span>
-        <span style="font-size: 0.75rem; color: var(--color-text-muted);">▼</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4-Column Stats Grid -->
-  <div class="stats-grid-4">
-    <!-- Total Revenue -->
-    <div class="stat-card-new">
-      <div class="stat-card__top">
-        <div class="stat-card__icon-wrap stat-card__icon-wrap--purple">
-          💵
+  <div class="dashboard-wrapper">
+    <!-- Brand Hero Section -->
+    <div class="brand-hero-card">
+      <div class="brand-hero-content">
+        <div class="brand-logo-container">
+          <img 
+            :src="'/asset/profile/logo.png'" 
+            alt="Maya Sree Fashion Logo" 
+            class="brand-logo-img" 
+          />
         </div>
-        <button class="stat-card__menu-btn">•••</button>
-      </div>
-      <div>
-        <div class="stat-card__title">Total Revenue</div>
-        <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">{{ kpis.revenue.value }}</div>
-      </div>
-      <div class="stat-card__trend-row">
-        <div :class="['stat-card__trend-info', kpis.revenue.trend_up ? 'stat-card__trend-info--up' : 'stat-card__trend-info--down']">
-          <span>{{ kpis.revenue.trend }}</span>
-          <span class="stat-card__trend-label">{{ kpis.revenue.label }}</span>
-        </div>
-        <!-- Sparkline SVG -->
-        <svg viewBox="0 0 100 24" width="70" height="20" style="overflow: visible;">
-          <path d="M 0 20 Q 15 5 30 15 T 60 5 T 90 12 T 100 2" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round"></path>
-          <path d="M 0 20 Q 15 5 30 15 T 60 5 T 90 12 T 100 2 L 100 24 L 0 24 Z" fill="url(#grad-revenue)" opacity="0.15"></path>
-          <defs>
-            <linearGradient id="grad-revenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6366f1"></stop>
-              <stop offset="100%" stop-color="transparent"></stop>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
-
-    <!-- New Customers -->
-    <div class="stat-card-new">
-      <div class="stat-card__top">
-        <div class="stat-card__icon-wrap stat-card__icon-wrap--green">
-          👥
-        </div>
-        <button class="stat-card__menu-btn">•••</button>
-      </div>
-      <div>
-        <div class="stat-card__title">New Customers</div>
-        <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">{{ kpis.customers.value }}</div>
-      </div>
-      <div class="stat-card__trend-row">
-        <div :class="['stat-card__trend-info', kpis.customers.trend_up ? 'stat-card__trend-info--up' : 'stat-card__trend-info--down']">
-          <span>{{ kpis.customers.trend }}</span>
-          <span class="stat-card__trend-label">{{ kpis.customers.label }}</span>
-        </div>
-        <!-- Sparkline SVG -->
-        <svg viewBox="0 0 100 24" width="70" height="20" style="overflow: visible;">
-          <path d="M 0 18 Q 20 8 40 12 T 80 5 T 100 15" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"></path>
-          <path d="M 0 18 Q 20 8 40 12 T 80 5 T 100 15 L 100 24 L 0 24 Z" fill="url(#grad-customers)" opacity="0.15"></path>
-          <defs>
-            <linearGradient id="grad-customers" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#10b981"></stop>
-              <stop offset="100%" stop-color="transparent"></stop>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Total Orders -->
-    <div class="stat-card-new">
-      <div class="stat-card__top">
-        <div class="stat-card__icon-wrap stat-card__icon-wrap--orange">
-          🛍️
-        </div>
-        <button class="stat-card__menu-btn">•••</button>
-      </div>
-      <div>
-        <div class="stat-card__title">Total Orders</div>
-        <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">{{ kpis.orders.value }}</div>
-      </div>
-      <div class="stat-card__trend-row">
-        <div :class="['stat-card__trend-info', kpis.orders.trend_up ? 'stat-card__trend-info--up' : 'stat-card__trend-info--down']">
-          <span>{{ kpis.orders.trend }}</span>
-          <span class="stat-card__trend-label">{{ kpis.orders.label }}</span>
-        </div>
-        <!-- Sparkline SVG -->
-        <svg viewBox="0 0 100 24" width="70" height="20" style="overflow: visible;">
-          <path d="M 0 20 L 20 15 L 40 18 L 60 8 L 80 12 L 100 5" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"></path>
-          <path d="M 0 20 L 20 15 L 40 18 L 60 8 L 80 12 L 100 5 L 100 24 L 0 24 Z" fill="url(#grad-orders)" opacity="0.15"></path>
-          <defs>
-            <linearGradient id="grad-orders" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#f59e0b"></stop>
-              <stop offset="100%" stop-color="transparent"></stop>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Conversion Rate -->
-    <div class="stat-card-new">
-      <div class="stat-card__top">
-        <div class="stat-card__icon-wrap stat-card__icon-wrap--red">
-          📈
-        </div>
-        <button class="stat-card__menu-btn">•••</button>
-      </div>
-      <div>
-        <div class="stat-card__title">Conversion Rate</div>
-        <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">{{ kpis.conversion.value }}</div>
-      </div>
-      <div class="stat-card__trend-row">
-        <div :class="['stat-card__trend-info', kpis.conversion.trend_up ? 'stat-card__trend-info--up' : 'stat-card__trend-info--down']">
-          <span>{{ kpis.conversion.trend }}</span>
-          <span class="stat-card__trend-label">{{ kpis.conversion.label }}</span>
-        </div>
-        <!-- Sparkline SVG -->
-        <svg viewBox="0 0 100 24" width="70" height="20" style="overflow: visible;">
-          <path d="M 0 5 Q 30 10 50 18 T 100 22" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"></path>
-          <path d="M 0 5 Q 30 10 50 18 T 100 22 L 100 24 L 0 24 Z" fill="url(#grad-conversion)" opacity="0.15"></path>
-          <defs>
-            <linearGradient id="grad-conversion" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#ef4444"></stop>
-              <stop offset="100%" stop-color="transparent"></stop>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Primary Middle Dashboard Row (Sales Overview & Top Products) -->
-  <div class="dashboard-grid">
-    <!-- Sales Overview Card -->
-    <div class="glass-panel" style="padding: var(--spacing-lg);">
-      <div class="card-header-flex">
-        <div class="card-header-title">Sales Overview</div>
-        <div class="date-picker-select" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">
-          <span>Weekly</span>
-          <span style="font-size: 0.6rem; color: var(--color-text-muted);">▼</span>
-        </div>
-      </div>
-
-      <!-- Line Chart Graphic (Pure SVG) -->
-      <div class="sales-chart-wrapper">
-        <svg viewBox="0 0 600 280" width="100%" height="100%" style="overflow: visible;">
-          <!-- Horizontal Grid Lines -->
-          <line x1="30" y1="20" x2="570" y2="20" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2"></line>
-          <line x1="30" y1="75" x2="570" y2="75" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2"></line>
-          <line x1="30" y1="130" x2="570" y2="130" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2"></line>
-          <line x1="30" y1="185" x2="570" y2="185" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2"></line>
-          <line x1="30" y1="240" x2="570" y2="240" stroke="var(--color-border)" stroke-width="1"></line>
-
-          <!-- Y-Axis Labels -->
-          <text x="0" y="24" fill="var(--color-text-muted)" font-size="10" alignment-baseline="middle">$40K</text>
-          <text x="0" y="79" fill="var(--color-text-muted)" font-size="10" alignment-baseline="middle">$30K</text>
-          <text x="0" y="134" fill="var(--color-text-muted)" font-size="10" alignment-baseline="middle">$20K</text>
-          <text x="0" y="189" fill="var(--color-text-muted)" font-size="10" alignment-baseline="middle">$10K</text>
-          <text x="5" y="244" fill="var(--color-text-muted)" font-size="10" alignment-baseline="middle">$0</text>
-
-          <!-- Chart Area Gradient Defs -->
-          <defs>
-            <linearGradient id="grad-sales" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"></stop>
-              <stop offset="100%" stop-color="#6366f1" stop-opacity="0"></stop>
-            </linearGradient>
-          </defs>
-
-          <!-- Last Period (Dashed Line) -->
-          <path d="M 40 210 Q 110 190 145 150 T 250 140 T 355 105 T 460 135 T 560 120" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,4" opacity="0.6"></path>
-
-          <!-- This Period Gradient Area Fill -->
-          <path d="M 40 240 L 40 180 C 90 170, 115 70, 145 120 C 175 170, 220 180, 250 145 C 280 110, 315 50, 360 80 C 405 110, 430 180, 460 115 C 490 50, 530 120, 560 100 L 560 240 Z" fill="url(#grad-sales)"></path>
-
-          <!-- This Period (Solid Line) -->
-          <path d="M 40 180 C 90 170, 115 70, 145 120 C 175 170, 220 180, 250 145 C 280 110, 315 50, 360 80 C 405 110, 430 180, 460 115 C 490 50, 530 120, 560 100" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"></path>
-
-          <!-- Active Dots and Guides -->
-          <line x1="360" y1="20" x2="360" y2="240" stroke="var(--color-primary)" stroke-width="1" stroke-opacity="0.3"></line>
-          <circle cx="360" cy="80" r="6" fill="#6366f1" stroke="#ffffff" stroke-width="2"></circle>
-          <circle cx="460" cy="115" r="4" fill="#6366f1" stroke="#ffffff" stroke-width="1.5"></circle>
-          <circle cx="145" cy="120" r="4" fill="#6366f1" stroke="#ffffff" stroke-width="1.5"></circle>
-
-          <!-- X-Axis Labels -->
-          <text x="40" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">May 12</text>
-          <text x="145" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">May 19</text>
-          <text x="250" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">May 26</text>
-          <text x="360" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">Jun 02</text>
-          <text x="460" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">Jun 09</text>
-          <text x="560" y="260" fill="var(--color-text-muted)" font-size="10" text-anchor="middle">Jun 12</text>
-        </svg>
-      </div>
-
-      <!-- Legend Indicator -->
-      <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-top: 1rem;">
-        <div style="display: flex; align-items: center; gap: var(--spacing-sm); font-size: 0.8rem; color: var(--color-text-secondary);">
-          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #6366f1;"></span>
-          <span>This Period</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: var(--spacing-sm); font-size: 0.8rem; color: var(--color-text-secondary);">
-          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px dashed #818cf8; background: transparent;"></span>
-          <span>Last Period</span>
+        <div class="brand-text-container">
+          <div class="brand-badge-row">
+            <span class="brand-tag">Official Admin Portal</span>
+            <span class="brand-status-pill">
+              <span class="pulse-dot"></span>
+              Storefront Online
+            </span>
+          </div>
+          <h1 class="brand-company-title">Maya Sree Fashion</h1>
+          <p class="brand-tagline">
+            Premium Ethnic Wear & Readymade Stretchable Blouses
+          </p>
         </div>
       </div>
     </div>
 
-    <!-- Top Products Card -->
-    <div class="glass-panel" style="padding: var(--spacing-lg);">
-      <div class="card-header-flex">
-        <div class="card-header-title">Top Products</div>
-        <a href="#" class="card-header-link" @click.prevent>View All</a>
-      </div>
-
-      <div class="top-products-list">
-        <div class="product-list-item">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img">🎧</div>
-            <div>
-              <div class="product-list-item__name">Wireless Headphones</div>
-              <div class="product-list-item__category">Electronics</div>
-            </div>
-          </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price">$4,950</div>
-            <div class="product-list-item__trend" style="color: #ef4444;">↓ 3.2%</div>
-          </div>
+    <!-- Under Construction Banner -->
+    <div class="construction-card">
+      <div class="construction-glow"></div>
+      <div class="construction-inner">
+        <div class="construction-icon-wrap">
+          <span class="construction-emoji">🚧</span>
         </div>
-
-        <div class="product-list-item">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img">⌚</div>
-            <div>
-              <div class="product-list-item__name">Smart Watch Series 5</div>
-              <div class="product-list-item__category">Electronics</div>
-            </div>
+        <div class="construction-details">
+          <div class="construction-pill-badge">
+            <span class="badge-icon">⚙️</span>
+            Dashboard Under Construction
           </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price">$4,120</div>
-            <div class="product-list-item__trend" style="color: #10b981;">↑ 5.7%</div>
-          </div>
-        </div>
-
-        <div class="product-list-item">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img">🎒</div>
-            <div>
-              <div class="product-list-item__name">Leather Backpack</div>
-              <div class="product-list-item__category">Accessories</div>
-            </div>
-          </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price">$2,850</div>
-            <div class="product-list-item__trend" style="color: #10b981;">↑ 2.4%</div>
-          </div>
-        </div>
-
-        <div class="product-list-item">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img">👟</div>
-            <div>
-              <div class="product-list-item__name">Minimalist Sneakers</div>
-              <div class="product-list-item__category">Footwear</div>
-            </div>
-          </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price">$2,450</div>
-            <div class="product-list-item__trend" style="color: #ef4444;">↓ 1.1%</div>
-          </div>
-        </div>
-
-        <div class="product-list-item">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img">🕶️</div>
-            <div>
-              <div class="product-list-item__name">Sunglasses UV Protect</div>
-              <div class="product-list-item__category">Accessories</div>
-            </div>
-          </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price">$1,850</div>
-            <div class="product-list-item__trend" style="color: #10b981;">↑ 4.3%</div>
+          <h2 class="construction-title">Live Analytics & Performance Metrics Coming Soon</h2>
+          <p class="construction-desc">
+            We are actively developing the real-time business intelligence suite, featuring advanced sales forecasting, customer cohort analysis, and revenue analytics for Maya Sree Fashion.
+          </p>
+          <div class="construction-meta">
+            <span class="meta-item">
+              <span class="meta-dot"></span>
+              Core ERP & Storefront modules are fully operational.
+            </span>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Secondary Bottom Dashboard Row (Recent Orders & Traffic Sources) -->
-  <div class="dashboard-grid">
-    <!-- Recent Orders Card -->
-    <div class="glass-panel" style="padding: var(--spacing-lg);">
-      <div class="card-header-flex">
-        <div class="card-header-title">Recent Orders</div>
-        <a href="#" class="card-header-link" @click.prevent>View All</a>
+    <!-- Quick Navigation Hub -->
+    <div class="quick-hub-section">
+      <div class="section-header">
+        <h2 class="section-title">Operational Management Modules</h2>
+        <span class="section-subtitle">Quick access to daily store operations and management tools</span>
       </div>
 
-      <div style="overflow-x: auto; width: 100%;">
-        <!-- Mobile Cards View -->
-        <div class="mobile-data-list">
-          <div class="mobile-data-card" v-for="order in recentOrders" :key="order.id">
-            <div class="mdc-header">
-              <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; flex-shrink: 0;">
-                  {{ order.customer_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() }}
-                </div>
-                <div>
-                  <div class="mdc-title">{{ order.order_id }}</div>
-                  <div class="mdc-date">{{ order.date }}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="mdc-body">
-              <div class="mdc-customer">
-                <span class="mdc-name">{{ order.customer_name }}</span>
-              </div>
-              <div class="mdc-totals" style="margin-top: 0.5rem; display: flex; justify-content: space-between;">
-                <span>Total: <strong>₹{{ parseFloat(order.amount).toFixed(2) }}</strong></span>
-              </div>
-            </div>
-            
-            <div class="mdc-footer">
-              <div class="mdc-badges">
-                <span :class="['badge', order.status_badge || 'badge--secondary']">
-                  {{ order.status_label || order.status }}
-                </span>
-              </div>
-            </div>
+      <div class="modules-grid">
+        <!-- Module: Orders -->
+        <router-link to="/admin/orders" class="module-card">
+          <div class="module-icon-wrap module-icon--maroon">
+            <span>🛍️</span>
           </div>
-        </div>
+          <div class="module-content">
+            <h3 class="module-name">Orders & Fulfillment</h3>
+            <p class="module-info">Track customer orders, process COD & Online payments, print invoices, and update shipping statuses.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
 
-        <!-- Desktop Table View -->
-        <table class="data-table desktop-data-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in recentOrders" :key="order.id">
-              <td><strong>{{ order.order_id }}</strong></td>
-              <td>
-                <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                  <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold;">
-                    {{ order.customer_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() }}
-                  </div>
-                  <span>{{ order.customer_name }}</span>
-                </div>
-              </td>
-              <td><strong>₹{{ parseFloat(order.amount).toFixed(2) }}</strong></td>
-              <td>
-                <span :class="['badge', order.status_badge || 'badge--secondary']">
-                  {{ order.status_label || order.status }}
-                </span>
-              </td>
-              <td>{{ order.date }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Module: Products -->
+        <router-link to="/admin/products" class="module-card">
+          <div class="module-icon-wrap module-icon--gold">
+            <span>👗</span>
+          </div>
+          <div class="module-content">
+            <h3 class="module-name">Products & Catalog</h3>
+            <p class="module-info">Manage stretchable blouses, silk sarees, sizing options, MRP, selling prices, and media galleries.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
+
+        <!-- Module: Stock Inward -->
+        <router-link to="/admin/stock-inward" class="module-card">
+          <div class="module-icon-wrap module-icon--blue">
+            <span>📥</span>
+          </div>
+          <div class="module-content">
+            <h3 class="module-name">Stock Inward</h3>
+            <p class="module-info">Record incoming manufacturer inventory batches, unit costs, invoice numbers, and supplier details.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
+
+        <!-- Module: Inventory -->
+        <router-link to="/admin/inventory" class="module-card">
+          <div class="module-icon-wrap module-icon--emerald">
+            <span>📊</span>
+          </div>
+          <div class="module-content">
+            <h3 class="module-name">Live Inventory Ledger</h3>
+            <p class="module-info">Real-time SKU quantities, stock adjustments, low stock alerts, and audit transaction logs.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
+
+        <!-- Module: Categories -->
+        <router-link to="/admin/categories" class="module-card">
+          <div class="module-icon-wrap module-icon--purple">
+            <span>🏷️</span>
+          </div>
+          <div class="module-content">
+            <h3 class="module-name">Categories & Occasions</h3>
+            <p class="module-info">Configure product categories, festive occasions, styling collections, and custom badges.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
+
+        <!-- Module: Settings -->
+        <router-link to="/admin/settings" class="module-card">
+          <div class="module-icon-wrap module-icon--slate">
+            <span>⚙️</span>
+          </div>
+          <div class="module-content">
+            <h3 class="module-name">Store & SMTP Settings</h3>
+            <p class="module-info">Configure order email alerts, dynamic SMTP credentials, payment gateways, and welcome promotions.</p>
+          </div>
+          <div class="module-arrow">→</div>
+        </router-link>
       </div>
     </div>
 
-    <!-- Low Stock Alerts Card -->
-    <div class="glass-panel" style="padding: var(--spacing-lg);">
-      <div class="card-header-flex">
-        <div class="card-header-title">Low Stock Alerts</div>
-        <router-link to="/admin/inventory" class="card-header-link">View Inventory</router-link>
-      </div>
-
-      <div class="top-products-list" v-if="lowStockAlerts.length > 0">
-        <div class="product-list-item" v-for="item in lowStockAlerts" :key="item.id">
-          <div class="product-list-item__left">
-            <div class="product-list-item__img" style="color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2);">⚠️</div>
-            <div>
-              <div class="product-list-item__name">{{ item.product_name }}</div>
-              <div class="product-list-item__category" style="font-family: monospace;">SKU: {{ item.sku }} | Size: {{ item.size }} | Color: {{ item.color }}</div>
-            </div>
-          </div>
-          <div class="product-list-item__right">
-            <div class="product-list-item__price" style="color: var(--color-danger);">{{ item.stock_quantity }} left</div>
-            <div class="product-list-item__trend" style="color: var(--color-text-muted);">Limit: {{ item.threshold }}</div>
-          </div>
+    <!-- Store Status Highlights -->
+    <div class="system-status-card">
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="status-label">Database & Storefront</span>
+          <span class="status-val status-val--online">● Operational</span>
         </div>
-      </div>
-      <div v-else style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
-        ✅ All inventory stocks are healthy.
+        <div class="status-item">
+          <span class="status-label">Order Placement Notifications</span>
+          <span class="status-val status-val--online">● Active</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Payment Gateway</span>
+          <span class="status-val status-val--online">● Cashfree & COD Ready</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Platform Version</span>
+          <span class="status-val">Maya Sree Enterprise v2.4</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-
-// Reactive states for stats data
-const loading = ref(true);
-const error = ref(null);
-
-const kpis = ref({
-  revenue: { value: '$24,750.00', trend: '↑ 12.5%', trend_up: true, label: 'vs last month' },
-  customers: { value: '0', trend: '↑ 8.2%', trend_up: true, label: 'vs last month' },
-  orders: { value: '0', trend: '↑ 15.3%', trend_up: true, label: 'vs last month' },
-  conversion: { value: '2.43%', trend: '↓ 2.1%', trend_up: false, label: 'vs last month' }
-});
-
-const lowStockAlerts = ref([]);
-const recentOrders = ref([]);
-
-const fetchStats = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const response = await axios.get('/api/admin/dashboard/stats');
-    if (response.data && response.data.success) {
-      const payload = response.data.data;
-      if (payload.kpis) kpis.value = payload.kpis;
-      if (payload.low_stock_alerts) lowStockAlerts.value = payload.low_stock_alerts;
-      if (payload.recent_orders) recentOrders.value = payload.recent_orders;
-    }
-  } catch (err) {
-    console.error('Failed to load dashboard stats:', err);
-    error.value = err.response?.data?.message || 'Failed to load dashboard statistics';
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchStats();
-});
+// Admin Dashboard for Maya Sree Fashion
 </script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 8px 0 32px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ==========================================================================
+   BRAND HERO CARD
+   ========================================================================== */
+.brand-hero-card {
+  background: linear-gradient(135deg, #FAF8F5 0%, #FFFFFF 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 10px 30px rgba(91, 22, 58, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.brand-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.brand-logo-container {
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(91, 22, 58, 0.08);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.brand-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #5B163A;
+}
+
+.brand-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: dotPulse 2s infinite ease-in-out;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.brand-company-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #5B163A;
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.brand-tagline {
+  font-size: 0.92rem;
+  color: #64748B;
+  margin: 0;
+}
+
+/* ==========================================================================
+   UNDER CONSTRUCTION CARD
+   ========================================================================== */
+.construction-card {
+  position: relative;
+  background: linear-gradient(135deg, #5B163A 0%, #3D0E26 100%);
+  border-radius: 20px;
+  padding: 32px;
+  color: #FAF8F5;
+  box-shadow: 0 16px 40px rgba(91, 22, 58, 0.22);
+  overflow: hidden;
+}
+
+.construction-glow {
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0) 70%);
+  pointer-events: none;
+}
+
+.construction-inner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.construction-icon-wrap {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.construction-emoji {
+  font-size: 2rem;
+}
+
+.construction-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.construction-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #F7E7B4;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  width: fit-content;
+}
+
+.construction-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.construction-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(250, 248, 245, 0.85);
+  margin: 0;
+  max-width: 820px;
+}
+
+.construction-meta {
+  margin-top: 4px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #F7E7B4;
+  font-weight: 500;
+}
+
+.meta-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #D4AF37;
+}
+
+/* ==========================================================================
+   QUICK NAVIGATION HUB SECTION
+   ========================================================================== */
+.quick-hub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: 0.82rem;
+  color: #64748B;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.module-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 28px rgba(91, 22, 58, 0.08);
+}
+
+.module-icon-wrap {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+}
+
+.module-icon--maroon { background: rgba(91, 22, 58, 0.08); }
+.module-icon--gold   { background: rgba(212, 175, 55, 0.12); }
+.module-icon--blue   { background: rgba(59, 130, 246, 0.1); }
+.module-icon--emerald { background: rgba(16, 185, 129, 0.1); }
+.module-icon--purple { background: rgba(139, 92, 246, 0.1); }
+.module-icon--slate  { background: rgba(100, 116, 139, 0.1); }
+
+.module-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.module-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+.module-card:hover .module-name {
+  color: #5B163A;
+}
+
+.module-info {
+  font-size: 0.78rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.module-arrow {
+  font-size: 1.15rem;
+  color: #94A3B8;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.module-card:hover .module-arrow {
+  transform: translateX(4px);
+  color: #5B163A;
+}
+
+/* ==========================================================================
+   SYSTEM STATUS FOOTER CARD
+   ========================================================================== */
+.system-status-card {
+  background: #FAF8F5;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.status-val {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.status-val--online {
+  color: #059669;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 768px) {
+  .brand-hero-card {
+    padding: 20px;
+  }
+  .brand-hero-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 14px;
+  }
+  .brand-badge-row {
+    justify-content: center;
+  }
+  .brand-company-title {
+    font-size: 1.65rem;
+  }
+  .construction-card {
+    padding: 20px;
+  }
+  .construction-inner {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .modules-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -275,6 +275,20 @@ class Order extends Model
     }
 
     /**
+     * Get tracking URL for this order.
+     */
+    public function getTrackingUrlAttribute(): ?string
+    {
+        if (!empty($this->courier_tracking_url)) {
+            return $this->courier_tracking_url;
+        }
+        if ($this->relationLoaded('courier') && $this->courier && !empty($this->courier->tracking_url_template) && !empty($this->tracking_number)) {
+            return str_replace('{tracking_number}', $this->tracking_number, $this->courier->tracking_url_template);
+        }
+        return null;
+    }
+
+    /**
      * Get human-friendly label for current status.
      */
     public function getStatusLabelAttribute(): string
