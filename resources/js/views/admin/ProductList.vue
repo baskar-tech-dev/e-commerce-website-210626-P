@@ -4,7 +4,7 @@
       <h1 class="admin-page__title">Product Catalog</h1>
       <span class="admin-page__subtitle">Manage products, pricing, and variant stock levels.</span>
     </div>
-    <router-link to="/admin/products/create" class="btn btn--primary" style="text-decoration: none;">
+    <router-link v-if="authStore.can('products.create')" to="/admin/products/create" class="btn btn--primary" style="text-decoration: none;">
       <span>➕</span> Add Product
     </router-link>
   </div>
@@ -118,8 +118,9 @@
             <span v-if="prod.is_bestseller" class="badge badge--warning">Bestseller</span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
-            <button v-if="!prod.is_active" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">🚀 Publish</button>
-            <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">Edit</router-link>
+            <button v-if="!prod.is_active && authStore.can('products.edit')" class="btn btn--success btn--sm" @click="activateProduct(prod.id)">🚀 Publish</button>
+            <router-link v-if="authStore.can('products.edit')" :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">Edit</router-link>
+            <button v-if="authStore.can('products.delete')" class="btn btn--danger btn--sm" @click="deleteProduct(prod.id)">🗑️</button>
           </div>
         </div>
       </div>
@@ -212,10 +213,10 @@
           </td>
           <td style="text-align: right;">
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-              <router-link :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">
+              <router-link v-if="authStore.can('products.edit')" :to="`/admin/products/${prod.id}/edit`" class="btn btn--secondary btn--sm">
                 ✏️ Edit
               </router-link>
-              <button class="btn btn--danger btn--sm" @click="deleteProduct(prod.id)">
+              <button v-if="authStore.can('products.delete')" class="btn btn--danger btn--sm" @click="deleteProduct(prod.id)">
                 🗑️ Delete
               </button>
             </div>
@@ -258,7 +259,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { useProductStore } from '../../stores/product';
 import { useCategoryStore } from '../../stores/category';
+import { useAuthStore } from '../../stores/auth';
 
+const authStore = useAuthStore();
 const productStore = useProductStore();
 const categoryStore = useCategoryStore();
 
@@ -324,6 +327,10 @@ function getPrimaryImage(product) {
 }
 
 async function deleteProduct(id) {
+  if (!authStore.can('products.delete')) {
+    alert('Access Denied: You do not have permission (products.delete) to delete products.');
+    return;
+  }
   if (confirm('are you sure to Delete ?')) {
     errorMsg.value = null;
     try {
@@ -347,6 +354,10 @@ async function deleteProduct(id) {
 }
 
 async function activateProduct(id) {
+  if (!authStore.can('products.edit')) {
+    alert('Access Denied: You do not have permission (products.edit) to publish products.');
+    return;
+  }
   errorMsg.value = null;
   try {
     await productStore.updateProduct(id, { is_active: true });

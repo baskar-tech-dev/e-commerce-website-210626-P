@@ -270,7 +270,7 @@
         <router-link to="/" class="drawer-nav-link" active-class="active" exact @click="mobileDrawerOpen = false">🏠 Home</router-link>
         <router-link to="/shop" class="drawer-nav-link" active-class="active" @click="mobileDrawerOpen = false">🛍️ Shop</router-link>
         <router-link to="/my-account" class="drawer-nav-link" active-class="active" @click="mobileDrawerOpen = false">👤 My Account</router-link>
-        <router-link to="/admin" class="drawer-nav-link admin-btn" @click="mobileDrawerOpen = false">⚙️ Admin Dashboard</router-link>
+        <router-link v-if="authStore.isAdminUser" to="/admin" class="drawer-nav-link admin-btn" @click="mobileDrawerOpen = false">⚙️ Admin Dashboard</router-link>
       </nav>
       <div class="drawer-footer">
         <p>📞 Helpline: 99442 85102</p>
@@ -375,8 +375,21 @@
         </div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; padding: var(--spacing-md) 40px; border-top: 1px solid #4a1936; margin-top: var(--spacing-lg); flex-wrap: wrap; gap: var(--spacing-md);">
-        <div style="font-size: 0.8rem; color: #a18a96;">
-          © 2026 MAYA SREE FASHION. All Rights Reserved.
+        <div style="font-size: 0.8rem; color: #a18a96; display: flex; flex-direction: column; gap: 4px;">
+          <div>© 2026 MAYA SREE FASHION. All Rights Reserved.</div>
+          <div style="font-size: 0.76rem; color: #c9b1bd;">
+            Designed &amp; Developed by 
+            <a 
+              href="https://futuremindstudio.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style="color: #D4AF37; text-decoration: none; font-weight: 500; transition: color 0.2s;" 
+              onmouseover="this.style.color='#fff'" 
+              onmouseout="this.style.color='#D4AF37'"
+            >
+              Future Mind Studio
+            </a>
+          </div>
         </div>
         <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
           <router-link to="/privacy-policy" style="color: #a18a96; text-decoration: none; font-size: 0.78rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a18a96'">Privacy Policy</router-link>

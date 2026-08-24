@@ -4,7 +4,7 @@
       <h1 class="admin-page__title">Tag Masters</h1>
       <span class="admin-page__subtitle">Add descriptive tags for search indexing and grouping.</span>
     </div>
-    <button class="btn btn--primary" @click="openCreateModal">
+    <button v-if="authStore.can('tags.create')" class="btn btn--primary" @click="openCreateModal">
       <span>➕</span> Add Tag
     </button>
   </div>
@@ -44,8 +44,8 @@
           <div class="mdc-badges">
           </div>
           <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn--secondary btn--sm" @click="openEditModal(tag)">Edit</button>
-            <button class="btn btn--danger btn--sm" @click="deleteTag(tag.id)">Delete</button>
+            <button v-if="authStore.can('tags.edit')" class="btn btn--secondary btn--sm" @click="openEditModal(tag)">Edit</button>
+            <button v-if="authStore.can('tags.delete')" class="btn btn--danger btn--sm" @click="deleteTag(tag.id)">Delete</button>
           </div>
         </div>
       </div>
@@ -72,10 +72,10 @@
           <td>{{ formatDate(tag.created_at) }}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 0.5rem;">
-              <button class="btn btn--secondary btn--sm" @click="openEditModal(tag)">
+              <button v-if="authStore.can('tags.edit')" class="btn btn--secondary btn--sm" @click="openEditModal(tag)">
                 ✏️ Edit
               </button>
-              <button class="btn btn--danger btn--sm" @click="deleteTag(tag.id)">
+              <button v-if="authStore.can('tags.delete')" class="btn btn--danger btn--sm" @click="deleteTag(tag.id)">
                 🗑️ Delete
               </button>
             </div>
@@ -125,7 +125,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useTagStore } from '../../stores/tag';
+import { useAuthStore } from '../../stores/auth';
 
+const authStore = useAuthStore();
 const tagStore = useTagStore();
 const showModal = ref(false);
 const isEdit = ref(false);
@@ -154,6 +156,10 @@ function formatDate(dateStr) {
 }
 
 function openCreateModal() {
+  if (!authStore.can('tags.create')) {
+    alert('Access Denied: You do not have permission (tags.create) to add tags.');
+    return;
+  }
   isEdit.value = false;
   currentId.value = null;
   form.value = {
@@ -165,6 +171,10 @@ function openCreateModal() {
 }
 
 function openEditModal(tag) {
+  if (!authStore.can('tags.edit')) {
+    alert('Access Denied: You do not have permission (tags.edit) to edit tags.');
+    return;
+  }
   isEdit.value = true;
   currentId.value = tag.id;
   form.value = {
@@ -180,6 +190,15 @@ function closeModal() {
 }
 
 async function saveTag() {
+  if (isEdit.value && !authStore.can('tags.edit')) {
+    alert('Access Denied: You do not have permission (tags.edit) to update tags.');
+    return;
+  }
+  if (!isEdit.value && !authStore.can('tags.create')) {
+    alert('Access Denied: You do not have permission (tags.create) to create tags.');
+    return;
+  }
+
   submitting.value = true;
   errorMsg.value = null;
   try {
@@ -197,6 +216,10 @@ async function saveTag() {
 }
 
 async function deleteTag(id) {
+  if (!authStore.can('tags.delete')) {
+    alert('Access Denied: You do not have permission (tags.delete) to delete tags.');
+    return;
+  }
   if (confirm('Are you sure you want to delete this tag?')) {
     errorMsg.value = null;
     try {

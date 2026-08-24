@@ -11,7 +11,12 @@
       <button class="btn btn--secondary" @click="printMockInvoice">
         🖨️ Print Invoice
       </button>
-      <button class="btn btn--danger" @click="showDeleteModal = true" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3);">
+      <button 
+        v-if="authStore.isSuperAdmin"
+        class="btn btn--danger" 
+        @click="showDeleteModal = true" 
+        style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3);"
+      >
         🗑️ Delete Order
       </button>
     </div>
@@ -432,7 +437,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import { useAuthStore } from '../../stores/auth';
 
+const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const orderId = route.params.id;

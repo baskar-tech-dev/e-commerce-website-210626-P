@@ -94,20 +94,38 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Mobile Number *</label>
-                <input 
-                  type="text" 
-                  v-model="form.shipping_phone" 
-                  @blur="validateField('shipping_phone')"
-                  @input="validateField('shipping_phone')"
-                  placeholder="9876543210" 
-                  class="form-input" 
-                  :class="{ 'form-input--error': errors.shipping_phone }"
-                />
-                <span v-if="errors.shipping_phone" class="form-error-msg">
-                  {{ errors.shipping_phone }}
-                </span>
+              <div class="checkout-form-row-2">
+                <div class="form-group">
+                  <label class="form-label">Mobile Number *</label>
+                  <input 
+                    type="tel" 
+                    v-model="form.shipping_phone" 
+                    @blur="validateField('shipping_phone')"
+                    @input="validateField('shipping_phone')"
+                    placeholder="9876543210" 
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_phone }"
+                  />
+                  <span v-if="errors.shipping_phone" class="form-error-msg">
+                    {{ errors.shipping_phone }}
+                  </span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email Address *</label>
+                  <input 
+                    type="email" 
+                    v-model="form.shipping_email" 
+                    @blur="validateField('shipping_email')"
+                    @input="validateField('shipping_email')"
+                    placeholder="you@example.com" 
+                    class="form-input" 
+                    :class="{ 'form-input--error': errors.shipping_email }"
+                  />
+                  <span v-if="errors.shipping_email" class="form-error-msg">
+                    {{ errors.shipping_email }}
+                  </span>
+                </div>
               </div>
 
               <div class="form-group">
@@ -315,6 +333,7 @@ const form = ref({
   shipping_first_name: '',
   shipping_last_name: '',
   shipping_phone: '',
+  shipping_email: '',
   shipping_address_line_1: '',
   shipping_address_line_2: '',
   shipping_city: '',
@@ -328,6 +347,7 @@ const errors = ref({
   shipping_first_name: '',
   shipping_last_name: '',
   shipping_phone: '',
+  shipping_email: '',
   shipping_address_line_1: '',
   shipping_city: '',
   shipping_state: '',
@@ -353,8 +373,17 @@ const validateField = (fieldName) => {
     const phone = form.value.shipping_phone ? form.value.shipping_phone.toString().trim() : '';
     if (!phone) {
       errors.value.shipping_phone = 'Mobile number is required';
-    } else if (!/^\d{10}$/.test(phone)) {
+    } else if (!/^\d{10}$/.test(phone.replace(/[^0-9]/g, '').slice(-10))) {
       errors.value.shipping_phone = 'Please enter a valid 10-digit mobile number';
+    }
+  }
+
+  if (fieldName === 'shipping_email') {
+    const email = form.value.shipping_email ? form.value.shipping_email.toString().trim() : '';
+    if (!email) {
+      errors.value.shipping_email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.value.shipping_email = 'Please enter a valid email address';
     }
   }
   
@@ -390,6 +419,7 @@ const validateForm = () => {
   validateField('shipping_first_name');
   validateField('shipping_last_name');
   validateField('shipping_phone');
+  validateField('shipping_email');
   validateField('shipping_address_line_1');
   validateField('shipping_city');
   validateField('shipping_state');
@@ -413,10 +443,11 @@ const fetchAddresses = async () => {
     if (response.data && response.data.success) {
       addressBook.value = response.data.data.addresses || [];
       
-      // Auto pre-fill first name and last name
+      // Auto pre-fill customer info
       form.value.shipping_first_name = response.data.data.first_name || '';
       form.value.shipping_last_name = response.data.data.last_name || '';
       form.value.shipping_phone = response.data.data.phone || '';
+      form.value.shipping_email = response.data.data.email || '';
       
       // Auto-apply default shipping address if exists
       const def = addressBook.value.find(a => a.is_default_shipping);

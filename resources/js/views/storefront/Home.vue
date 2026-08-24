@@ -698,7 +698,7 @@
           </div>
           
           <div class="whatsapp-club-box">
-            <span class="badge-discount">GET ₹150 OFF</span>
+            <span class="badge-discount">GET 5% OFF</span>
             <h5>ON YOUR FIRST ORDER</h5>
             <p>Join our WhatsApp Club & be the first to know about new launches & offers!</p>
             <form class="whatsapp-club-form" @submit.prevent="joinClub">
@@ -1359,7 +1359,7 @@ const joinClub = async () => {
       source: 'whatsapp_club'
     });
     if (res.data && res.data.success) {
-      alert(res.data.message || `Thank you for joining our WhatsApp Club! Code: MSF150 sent to ${clubPhone.value}.`);
+      alert(res.data.message || `Thank you for joining our WhatsApp Club! Code: MSF5 (5% OFF) sent to ${clubPhone.value}.`);
       clubPhone.value = '';
     }
   } catch (err) {

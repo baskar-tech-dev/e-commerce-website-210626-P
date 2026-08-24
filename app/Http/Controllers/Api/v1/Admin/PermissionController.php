@@ -26,6 +26,9 @@ class PermissionController extends Controller
             'Catalog' => [
                 ['key' => 'products', 'label' => 'Products Management', 'icon' => 'ShoppingBag'],
                 ['key' => 'categories', 'label' => 'Categories', 'icon' => 'Folder'],
+                ['key' => 'tags', 'label' => 'Product Tags', 'icon' => 'Tags'],
+                ['key' => 'inventory', 'label' => 'Inventory Stock Ledger', 'icon' => 'Package'],
+                ['key' => 'stock_entry', 'label' => 'Quick Stock Matrix Entry', 'icon' => 'Boxes'],
                 ['key' => 'colors', 'label' => 'Color Master', 'icon' => 'Palette'],
                 ['key' => 'sizes', 'label' => 'Size Master', 'icon' => 'Layers'],
                 ['key' => 'inward', 'label' => 'Stock Inward (Goods Receipt)', 'icon' => 'PackagePlus'],

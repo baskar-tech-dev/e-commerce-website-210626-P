@@ -149,7 +149,7 @@ Route::middleware(['throttle:payment_api'])->group(function () {
 Route::post('payment/cashfree/webhook', [\App\Http\Controllers\Api\v1\PaymentWebhookController::class, 'handleWebhook']);
 Route::post('payment/webhook', [\App\Http\Controllers\Api\v1\PaymentWebhookController::class, 'handleWebhook']);
 
-Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->group(function () {
+Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'])->group(function () {
     Route::get('menus', [MenuController::class, 'index']);
     Route::get('dashboard/stats', [DashboardController::class, 'stats']);
     

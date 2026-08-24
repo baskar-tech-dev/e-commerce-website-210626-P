@@ -63,6 +63,8 @@ class ProductController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->authorizePermission('products.create');
+
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:300',
@@ -190,6 +192,8 @@ class ProductController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        $this->authorizePermission('products.edit');
+
         $validated = $request->validate([
             'category_id' => 'sometimes|required|exists:categories,id',
             'name' => 'sometimes|required|string|max:300',
@@ -292,6 +296,8 @@ class ProductController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
+        $this->authorizePermission('products.delete');
+
         try {
             $deleted = $this->productService->deleteProduct($id);
 

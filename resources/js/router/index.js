@@ -193,13 +193,13 @@ const routes = [
         path: 'users/create',
         name: 'admin.users.create',
         component: UserForm,
-        meta: { permission: 'users' },
+        meta: { permission: 'users.create' },
       },
       {
         path: 'users/:id/edit',
         name: 'admin.users.edit',
         component: UserForm,
-        meta: { permission: 'users' },
+        meta: { permission: 'users.edit' },
       },
       {
         path: 'roles',
@@ -211,13 +211,13 @@ const routes = [
         path: 'roles/create',
         name: 'admin.roles.create',
         component: RoleForm,
-        meta: { permission: 'roles' },
+        meta: { permission: 'roles.create' },
       },
       {
         path: 'roles/:id/edit',
         name: 'admin.roles.edit',
         component: RoleForm,
-        meta: { permission: 'roles' },
+        meta: { permission: 'roles.edit' },
       },
       {
         path: 'blog/posts',
@@ -229,13 +229,13 @@ const routes = [
         path: 'blog/posts/create',
         name: 'admin.blog.posts.create',
         component: BlogPostForm,
-        meta: { permission: 'blog' },
+        meta: { permission: 'blog.create' },
       },
       {
         path: 'blog/posts/:id/edit',
         name: 'admin.blog.posts.edit',
         component: BlogPostForm,
-        meta: { permission: 'blog' },
+        meta: { permission: 'blog.edit' },
       },
       {
         path: 'couriers',
@@ -253,13 +253,13 @@ const routes = [
         path: 'coupons/create',
         name: 'admin.coupons.create',
         component: CouponForm,
-        meta: { permission: 'coupons' },
+        meta: { permission: 'coupons.create' },
       },
       {
         path: 'coupons/:id/edit',
         name: 'admin.coupons.edit',
         component: CouponForm,
-        meta: { permission: 'coupons' },
+        meta: { permission: 'coupons.edit' },
       },
       {
         path: 'instagram-reels',
@@ -301,13 +301,13 @@ const routes = [
         path: 'products/create',
         name: 'admin.products.create',
         component: ProductForm,
-        meta: { permission: 'products' },
+        meta: { permission: 'products.create' },
       },
       {
         path: 'products/:id/edit',
         name: 'admin.products.edit',
         component: ProductForm,
-        meta: { permission: 'products' },
+        meta: { permission: 'products.edit' },
       },
       {
         path: 'reviews',
@@ -325,19 +325,19 @@ const routes = [
         path: 'inward/create',
         name: 'admin.inward.create',
         component: InwardForm,
-        meta: { permission: 'inward' },
+        meta: { permission: 'inward.create' },
       },
       {
         path: 'inventory',
         name: 'admin.inventory',
         component: InventoryList,
-        meta: { permission: 'inward' },
+        meta: { permission: 'inventory' },
       },
       {
         path: 'stock-entry',
         name: 'admin.stock-entry',
         component: StockMatrixEntry,
-        meta: { permission: 'inward' },
+        meta: { permission: 'stock_entry' },
       },
       {
         path: 'purchase-orders',
@@ -349,19 +349,19 @@ const routes = [
         path: 'purchase-orders/create',
         name: 'admin.purchase-orders.create',
         component: PurchaseOrderForm,
-        meta: { permission: 'purchase_orders' },
+        meta: { permission: 'purchase_orders.create' },
       },
       {
         path: 'purchase-orders/:id/edit',
         name: 'admin.purchase-orders.edit',
         component: PurchaseOrderForm,
-        meta: { permission: 'purchase_orders' },
+        meta: { permission: 'purchase_orders.edit' },
       },
       {
         path: 'purchase-orders/:id/receive',
         name: 'admin.purchase-orders.receive',
         component: PurchaseOrderForm,
-        meta: { permission: 'purchase_orders' },
+        meta: { permission: 'purchase_orders.edit' },
       },
       {
         path: 'customers',
@@ -397,50 +397,70 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const isAuthenticated = localStorage.getItem('auth_token');
-  
-  if (to.matched.some(record => record.meta.requiresAuth)) {
+  const isAdminRoute = to.path.startsWith('/admin') || to.matched.some(record => record.meta.requiresAuth || record.meta.requiresAdmin);
+
+  if (isAdminRoute) {
     if (!isAuthenticated) {
-      return next({ name: 'storefront.login' });
+      return next({ name: 'storefront.login', query: { redirect: to.fullPath } });
     }
 
-    // Check permission restrictions for specific admin areas
-    const requiredPermission = to.meta.permission;
-    if (requiredPermission) {
-      try {
-        const authStore = useAuthStore();
-        if (!authStore.user) {
-          await authStore.fetchUser();
-        }
+    try {
+      const authStore = useAuthStore();
+      if (!authStore.user) {
+        await authStore.fetchUser();
+      }
 
-        if (authStore.user) {
-          const isSuperAdmin = 
-            authStore.user.roles?.some(r => r.name === 'super_admin') || 
-            authStore.user.role_id === 1;
+      if (!authStore.user) {
+        return next({ name: 'storefront.login', query: { redirect: to.fullPath } });
+      }
 
-          if (!isSuperAdmin) {
-            // Check if user has permission
-            const userPermissions = authStore.user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
-            
-            // Check if user has explicit permission, or any permission matching this module (e.g. products.view, products.create)
-            const hasAccess = 
-              userPermissions.includes(requiredPermission) ||
+      // Strictly check if user has an assigned staff/admin role
+      if (!authStore.isAdminUser) {
+        console.warn(`[RBAC] Access denied: User ${authStore.user.email} does not possess an administrative role.`);
+        alert('Access Denied: The Admin Dashboard is restricted to role-assigned personnel only.');
+        return next({ path: '/my-account' });
+      }
+
+      // Check granular permission restrictions for specific admin modules
+      const requiredPermission = to.meta.permission;
+      if (requiredPermission) {
+        const isSuperAdmin = 
+          authStore.user.roles?.some(r => r.name === 'super_admin') || 
+          authStore.user.role_id === 1;
+
+        if (!isSuperAdmin) {
+          const userPermissions = authStore.user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+          
+          let hasAccess = false;
+          if (requiredPermission.includes('.')) {
+            // Exact granular action check (e.g. 'products.create', 'products.edit')
+            hasAccess = userPermissions.includes(requiredPermission);
+          } else {
+            // Module-level check (e.g. 'products', 'categories')
+            hasAccess = userPermissions.includes(requiredPermission) ||
               userPermissions.some(p => p.startsWith(requiredPermission + '.') || p === requiredPermission);
+          }
 
-            if (!hasAccess) {
-              console.warn(`[RBAC] Access denied to ${to.path}. Required module permission: ${requiredPermission}`);
+          if (!hasAccess) {
+            console.warn(`[RBAC] Access denied to ${to.path}. Required permission: ${requiredPermission}`);
+            alert(`Access Denied: You do not have permission (${requiredPermission}) to perform this action.`);
+            if (from.path && from.path !== to.path && from.name) {
+              return next(false);
+            } else {
               return next({ path: '/admin' });
             }
           }
         }
-      } catch (err) {
-        console.error('RBAC permission evaluation failed:', err);
       }
+    } catch (err) {
+      console.error('RBAC permission evaluation failed:', err);
+      return next({ path: '/my-account' });
     }
 
-    next();
-  } else {
-    next();
+    return next();
   }
+
+  next();
 });
 
 export default router;

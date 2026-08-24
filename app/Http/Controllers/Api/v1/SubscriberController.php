@@ -40,8 +40,8 @@ class SubscriberController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Welcome to the Maya Sree WhatsApp Club! Your ₹150 OFF discount code is MSF150.',
-            'coupon_code' => 'MSF150',
+            'message' => 'Welcome to the Maya Sree WhatsApp Club! Your 5% OFF discount code is MSF5.',
+            'coupon_code' => 'MSF5',
             'data' => $subscriber,
         ]);
     }

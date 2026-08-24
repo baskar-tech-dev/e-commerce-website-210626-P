@@ -142,4 +142,47 @@ class CustomerAccountTest extends TestCase
 
         $responseDetail->assertStatus(404);
     }
+
+    public function test_customer_can_login_using_email_or_mobile_number(): void
+    {
+        $user = User::create([
+            'first_name' => 'Meena',
+            'last_name' => 'K',
+            'name' => 'Meena K',
+            'email' => 'meena@mayasree.com',
+            'phone' => '9876543210',
+            'password' => Hash::make('SecretPass123!'),
+            'is_active' => true,
+        ]);
+
+        // 1. Test Login with Email Address
+        $emailLoginRes = $this->postJson('/api/auth/login', [
+            'email' => 'meena@mayasree.com',
+            'password' => 'SecretPass123!',
+        ]);
+
+        $emailLoginRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure(['access_token', 'user']);
+
+        // 2. Test Login with Mobile Number (exact 10 digits)
+        $phoneLoginRes = $this->postJson('/api/auth/login', [
+            'email' => '9876543210',
+            'password' => 'SecretPass123!',
+        ]);
+
+        $phoneLoginRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('user.email', 'meena@mayasree.com');
+
+        // 3. Test Login with Mobile Number containing country code / spaces (+91 98765 43210)
+        $formattedPhoneLoginRes = $this->postJson('/api/auth/login', [
+            'email' => '+91 98765 43210',
+            'password' => 'SecretPass123!',
+        ]);
+
+        $formattedPhoneLoginRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('user.phone', '9876543210');
+    }
 }

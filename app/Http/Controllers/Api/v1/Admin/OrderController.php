@@ -399,6 +399,15 @@ class OrderController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        $user = auth()->user() ?? auth('sanctum')->user();
+        if (!$user || (!$user->hasRole('super_admin') && (int)$user->role_id !== 1)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access Denied. The Delete option is restricted to Super Admin only.',
+                'error_code' => 'FORBIDDEN'
+            ], 403);
+        }
+
         try {
             $order = Order::find($id);
 
@@ -413,7 +422,7 @@ class OrderController extends Controller
             $orderNo = $order->order_number;
             $order->delete();
 
-            Log::info("Order #{$orderNo} (ID: {$id}) deleted by Admin (User ID: " . (auth()->id() ?? 'system') . ")");
+            Log::info("Order #{$orderNo} (ID: {$id}) deleted by Super Admin (User ID: {$user->id})");
 
             return response()->json([
                 'success' => true,

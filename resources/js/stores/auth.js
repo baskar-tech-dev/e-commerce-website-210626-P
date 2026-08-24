@@ -16,6 +16,44 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
+    isSuperAdmin: (state) => {
+      if (!state.user) return false;
+      return state.user.roles?.some(r => r.name?.toLowerCase() === 'super_admin') || Number(state.user.role_id) === 1;
+    },
+    isAdminUser: (state) => {
+      if (!state.user) return false;
+      const adminRoleNames = ['super_admin', 'admin', 'product_owner', 'sales_manager', 'editor', 'staff'];
+      const hasNamedAdminRole = state.user.roles?.some(r => adminRoleNames.includes(r.name?.toLowerCase()));
+      const isStaffRoleId = state.user.role_id && Number(state.user.role_id) !== 6 && [1, 2, 3, 4, 5, 7].includes(Number(state.user.role_id));
+      const hasPermissions = (state.user.roles?.flatMap(r => r.permissions || []) || []).length > 0;
+      return hasNamedAdminRole || isStaffRoleId || hasPermissions;
+    },
+    can: (state) => (permissionOrAction, moduleName = null) => {
+      if (!state.user) return false;
+      // Super admin bypasses all action checks
+      if (state.user.roles?.some(r => r.name?.toLowerCase() === 'super_admin') || Number(state.user.role_id) === 1) {
+        return true;
+      }
+
+      let permName = permissionOrAction;
+      if (moduleName) {
+        permName = `${moduleName}.${permissionOrAction}`;
+      }
+
+      const userPermissions = state.user.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+
+      // Direct exact match (e.g. 'products.create')
+      if (userPermissions.includes(permName)) {
+        return true;
+      }
+
+      // If checking module view/access without dot (e.g. 'products')
+      if (!permName.includes('.')) {
+        return userPermissions.some(p => p === permName || p.startsWith(permName + '.'));
+      }
+
+      return false;
+    },
     userName: (state) => {
       if (!state.user) return 'Account';
       return state.user.first_name || state.user.name?.split(' ')[0] || 'Account';

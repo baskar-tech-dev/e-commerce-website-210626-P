@@ -42,6 +42,8 @@ class CategoryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorizePermission('categories.create');
+
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:categories,id',
             'name' => 'required|string|max:150',
@@ -96,6 +98,8 @@ class CategoryController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        $this->authorizePermission('categories.edit');
+
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:categories,id',
             'name' => 'sometimes|required|string|max:150',
@@ -151,6 +155,8 @@ class CategoryController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
+        $this->authorizePermission('categories.delete');
+
         try {
             $deleted = $this->categoryService->deleteCategory($id);
 

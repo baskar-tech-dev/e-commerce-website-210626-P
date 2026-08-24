@@ -37,6 +37,8 @@ class StorefrontCheckoutController extends Controller
             'shipping_first_name' => 'required|string|max:100',
             'shipping_last_name' => 'required|string|max:100',
             'shipping_phone' => 'required|string|max:20',
+            'shipping_email' => 'nullable|string|email|max:255',
+            'email' => 'nullable|string|email|max:255',
             'shipping_address_line_1' => 'required|string|max:255',
             'shipping_address_line_2' => 'nullable|string|max:255',
             'shipping_city' => 'required|string|max:100',
@@ -55,6 +57,9 @@ class StorefrontCheckoutController extends Controller
         $validated['shipping_first_name'] = strip_tags($validated['shipping_first_name']);
         $validated['shipping_last_name'] = strip_tags($validated['shipping_last_name']);
         $validated['shipping_phone'] = strip_tags($validated['shipping_phone']);
+        if (!empty($validated['shipping_email'])) {
+            $validated['shipping_email'] = strip_tags($validated['shipping_email']);
+        }
         $validated['shipping_address_line_1'] = strip_tags($validated['shipping_address_line_1']);
         if (isset($validated['shipping_address_line_2'])) {
             $validated['shipping_address_line_2'] = strip_tags($validated['shipping_address_line_2']);
@@ -68,23 +73,44 @@ class StorefrontCheckoutController extends Controller
             $rawPhone = trim($validated['shipping_phone']);
             $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
             $last10 = substr($cleanPhone, -10);
+            $customerEmail = !empty($validated['shipping_email']) ? strtolower(trim($validated['shipping_email'])) : (!empty($validated['email']) ? strtolower(trim($validated['email'])) : null);
 
-            $user = User::where('phone', $rawPhone)
-                ->orWhere('phone', $cleanPhone)
-                ->when($last10, function ($q) use ($last10) {
-                    $q->orWhere('phone', 'like', "%{$last10}");
-                })
-                ->first();
+            // 1. Try finding existing customer by Email ID
+            if ($customerEmail) {
+                $user = User::where('email', $customerEmail)->first();
+            }
 
+            // 2. Try finding existing customer by Mobile Number
             if (!$user) {
+                $user = User::where('phone', $rawPhone)
+                    ->orWhere('phone', $cleanPhone)
+                    ->when($last10, function ($q) use ($last10) {
+                        $q->orWhere('phone', 'like', "%{$last10}");
+                    })
+                    ->first();
+            }
+
+            if ($user) {
+                // If user exists, sync phone or email if missing
+                if (empty($user->phone) && !empty($rawPhone)) {
+                    $user->phone = $rawPhone;
+                    $user->save();
+                }
+                if ($customerEmail && str_contains($user->email, '@mayasree.com') && $customerEmail !== $user->email) {
+                    $user->email = $customerEmail;
+                    $user->save();
+                }
+            } else {
+                // 3. Create new Customer with provided Email ID or Mobile Number
                 $customerRole = \App\Models\Role::where('name', 'customer')->orWhere('name', 'Customer')->first();
-                $guestEmail = 'customer_' . ($last10 ?: time()) . '@mayasree.com';
+                $finalEmail = $customerEmail ?: ('customer_' . ($last10 ?: time()) . '@mayasree.com');
+                
                 $user = User::create([
                     'uuid' => (string) Str::uuid(),
                     'first_name' => $validated['shipping_first_name'],
                     'last_name' => $validated['shipping_last_name'],
                     'name' => trim("{$validated['shipping_first_name']} {$validated['shipping_last_name']}"),
-                    'email' => $guestEmail,
+                    'email' => $finalEmail,
                     'phone' => $rawPhone,
                     'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)),
                     'role_id' => $customerRole?->id,

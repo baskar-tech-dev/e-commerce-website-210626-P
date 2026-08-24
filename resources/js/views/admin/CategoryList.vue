@@ -4,7 +4,7 @@
       <h1 class="admin-page__title">Category Masters</h1>
       <span class="admin-page__subtitle">Organize and manage the product taxonomy tree.</span>
     </div>
-    <button class="btn btn--primary" @click="openCreateModal">
+    <button v-if="authStore.can('categories.create')" class="btn btn--primary" @click="openCreateModal">
       <span>➕</span> Add Category
     </button>
   </div>
@@ -61,8 +61,8 @@
             </span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn--secondary btn--sm" @click="openEditModal(category)">Edit</button>
-            <button class="btn btn--danger btn--sm" @click="deleteCategory(category.id)">Delete</button>
+            <button v-if="authStore.can('categories.edit')" class="btn btn--secondary btn--sm" @click="openEditModal(category)">Edit</button>
+            <button v-if="authStore.can('categories.delete')" class="btn btn--danger btn--sm" @click="deleteCategory(category.id)">Delete</button>
           </div>
         </div>
       </div>
@@ -127,10 +127,10 @@
           </td>
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 0.5rem;">
-              <button class="btn btn--secondary btn--sm" @click="openEditModal(category)">
+              <button v-if="authStore.can('categories.edit')" class="btn btn--secondary btn--sm" @click="openEditModal(category)">
                 ✏️ Edit
               </button>
-              <button class="btn btn--danger btn--sm" @click="deleteCategory(category.id)">
+              <button v-if="authStore.can('categories.delete')" class="btn btn--danger btn--sm" @click="deleteCategory(category.id)">
                 🗑️ Delete
               </button>
             </div>
@@ -280,9 +280,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useCategoryStore } from '../../stores/category';
+import { useAuthStore } from '../../stores/auth';
 import { compressImage } from '../../utils/imageCompressor';
 import axios from 'axios';
 
+const authStore = useAuthStore();
 const categoryStore = useCategoryStore();
 const showModal = ref(false);
 const isEdit = ref(false);
@@ -324,6 +326,10 @@ function getParentName(parentId) {
 }
 
 function openCreateModal() {
+  if (!authStore.can('categories.create')) {
+    alert('Access Denied: You do not have permission (categories.create) to add categories.');
+    return;
+  }
   isEdit.value = false;
   currentId.value = null;
   form.value = {
@@ -342,6 +348,10 @@ function openCreateModal() {
 }
 
 function openEditModal(category) {
+  if (!authStore.can('categories.edit')) {
+    alert('Access Denied: You do not have permission (categories.edit) to edit categories.');
+    return;
+  }
   isEdit.value = true;
   currentId.value = category.id;
   form.value = {
@@ -368,6 +378,15 @@ function previewChart(cat) {
 }
 
 async function saveCategory() {
+  if (isEdit.value && !authStore.can('categories.edit')) {
+    alert('Access Denied: You do not have permission (categories.edit) to update categories.');
+    return;
+  }
+  if (!isEdit.value && !authStore.can('categories.create')) {
+    alert('Access Denied: You do not have permission (categories.create) to create categories.');
+    return;
+  }
+
   submitting.value = true;
   errorMsg.value = null;
 
@@ -398,6 +417,10 @@ async function saveCategory() {
 }
 
 async function deleteCategory(id) {
+  if (!authStore.can('categories.delete')) {
+    alert('Access Denied: You do not have permission (categories.delete) to delete categories.');
+    return;
+  }
   if (confirm('Are you sure you want to delete this category?')) {
     errorMsg.value = null;
     try {

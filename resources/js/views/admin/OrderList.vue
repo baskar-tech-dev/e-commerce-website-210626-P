@@ -147,6 +147,7 @@
               View
             </router-link>
             <button 
+              v-if="authStore.isSuperAdmin"
               type="button" 
               @click="confirmDeleteOrder(order)" 
               class="btn btn--danger btn--sm" 
@@ -219,6 +220,7 @@
                 👁️ View Details
               </router-link>
               <button 
+                v-if="authStore.isSuperAdmin"
                 type="button" 
                 @click="confirmDeleteOrder(order)" 
                 class="btn btn--danger btn--sm" 
@@ -293,7 +295,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '../../stores/auth';
 
+const authStore = useAuthStore();
 const showStats = ref(true);
 const loading = ref(false);
 const orders = ref([]);

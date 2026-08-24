@@ -51,10 +51,8 @@ axios.interceptors.response.use(
         router.push('/login');
       }
     } else if (error.response && error.response.status === 403) {
-      if (router.currentRoute.value.path.startsWith('/admin')) {
-        alert('Forbidden: You do not have permission to access this resource.');
-        router.push('/login');
-      }
+      const msg = error.response.data?.message || 'Access Denied: You do not have permission to perform this action.';
+      alert(msg);
     }
     return Promise.reject(error);
   }

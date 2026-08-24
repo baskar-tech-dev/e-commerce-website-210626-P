@@ -40,6 +40,8 @@ class TagController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorizePermission('tags.create');
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'slug' => 'nullable|string|max:120',
@@ -84,6 +86,8 @@ class TagController extends Controller
 
     public function update(Request $request, int $id): JsonResponse
     {
+        $this->authorizePermission('tags.edit');
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:100',
             'slug' => 'nullable|string|max:120',
@@ -117,6 +121,8 @@ class TagController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
+        $this->authorizePermission('tags.delete');
+
         try {
             $deleted = $this->tagService->deleteTag($id);
 

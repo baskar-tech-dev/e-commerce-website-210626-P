@@ -163,7 +163,7 @@ class StorefrontApiTest extends TestCase
             'user_id' => $this->customer->id,
             'payment_method' => 'upi',
             'payment_status' => 'pending',
-            'status' => 'pending',
+            'status' => \App\Models\Order::STATUS_ORDER_PLACED,
         ]);
 
         // Assert Stock is reserved: stock_quantity is decremented to 8, and reserved_quantity = 2
