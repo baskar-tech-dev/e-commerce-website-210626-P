@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('badge', 60)->nullable()->after('is_bestseller');
-            $table->string('occasion', 60)->nullable()->after('badge')->index();
+            if (!Schema::hasColumn('products', 'badge')) {
+                $table->string('badge', 60)->nullable()->after('is_bestseller');
+            }
+            if (!Schema::hasColumn('products', 'occasion')) {
+                $table->string('occasion', 60)->nullable()->after('badge')->index();
+            }
         });
     }
 

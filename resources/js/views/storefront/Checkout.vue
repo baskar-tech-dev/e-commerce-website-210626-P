@@ -192,14 +192,34 @@
             <div class="card-header-title" style="margin-bottom: var(--spacing-md); border: none; padding-bottom: 0;">2. Payment Method</div>
             
             <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
-              <!-- Cashfree Secure Payment Gateway (All-in-One) -->
+              <!-- Cash on Delivery (COD) -->
               <label 
-                style="display: flex; flex-direction: column; gap: 0.85rem; color: var(--color-text-primary); cursor: pointer; padding: 1.15rem; border: 1.5px solid #5B163A; border-radius: 10px; background: #FAF5F0; box-shadow: 0 4px 14px rgba(91, 22, 58, 0.08); transition: all 0.2s;"
+                style="display: flex; flex-direction: column; gap: 0.6rem; color: var(--color-text-primary); cursor: pointer; padding: 1.15rem; border-radius: 10px; transition: all 0.2s;"
+                :style="form.payment_method === 'cod' ? 'border: 1.5px solid #5B163A; background: #FAF5F0; box-shadow: 0 4px 14px rgba(91, 22, 58, 0.08);' : 'border: 1px solid var(--color-border); background: #ffffff;'"
               >
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                   <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <input type="radio" value="online" v-model="form.payment_method" checked style="cursor: pointer; accent-color: #5B163A; width: 18px; height: 18px;" />
-                    <span style="font-weight: 700; font-size: 1.05rem; color: #5B163A;">Cashfree Payments Gateway</span>
+                    <input type="radio" value="cod" v-model="form.payment_method" style="cursor: pointer; accent-color: #5B163A; width: 18px; height: 18px;" />
+                    <span style="font-weight: 700; font-size: 1.05rem; color: #5B163A;">💵 Cash on Delivery (COD)</span>
+                  </div>
+                  <span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(212, 175, 55, 0.15); color: #854d0e; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;">
+                    Pay at Doorstep
+                  </span>
+                </div>
+                <div style="font-size: 0.8rem; color: #7A726A; padding-left: 1.8rem; line-height: 1.4;">
+                  Pay conveniently in cash when your parcel is delivered to your address.
+                </div>
+              </label>
+
+              <!-- Cashfree Secure Payment Gateway (All-in-One) -->
+              <label 
+                style="display: flex; flex-direction: column; gap: 0.85rem; color: var(--color-text-primary); cursor: pointer; padding: 1.15rem; border-radius: 10px; transition: all 0.2s;"
+                :style="form.payment_method === 'online' ? 'border: 1.5px solid #5B163A; background: #FAF5F0; box-shadow: 0 4px 14px rgba(91, 22, 58, 0.08);' : 'border: 1px solid var(--color-border); background: #ffffff;'"
+              >
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <input type="radio" value="online" v-model="form.payment_method" style="cursor: pointer; accent-color: #5B163A; width: 18px; height: 18px;" />
+                    <span style="font-weight: 700; font-size: 1.05rem; color: #5B163A;">💳 Cashfree Payments Gateway</span>
                   </div>
                   <span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(37, 211, 102, 0.15); color: #15803d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;">
                     🔒 100% Secure
@@ -211,9 +231,8 @@
                   <span class="payment-badge-pill">Google Pay</span>
                   <span class="payment-badge-pill">PhonePe</span>
                   <span class="payment-badge-pill">Paytm</span>
-                  <span class="payment-badge-pill">💳 Credit / Debit Cards</span>
+                  <span class="payment-badge-pill">💳 Cards</span>
                   <span class="payment-badge-pill">NetBanking</span>
-                  <span class="payment-badge-pill">Wallets</span>
                 </div>
 
                 <div style="font-size: 0.78rem; color: #7A726A; padding-left: 1.8rem; line-height: 1.4;">
@@ -321,7 +340,7 @@ const form = ref({
   shipping_city: '',
   shipping_state: 'Tamil Nadu',
   shipping_postal_code: '',
-  payment_method: 'online',
+  payment_method: 'cod',
   coupon_code: '',
 });
 

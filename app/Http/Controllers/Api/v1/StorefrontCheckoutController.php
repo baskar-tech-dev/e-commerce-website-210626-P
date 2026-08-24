@@ -63,21 +63,29 @@ class StorefrontCheckoutController extends Controller
         $validated['shipping_state'] = strip_tags($validated['shipping_state']);
         $validated['shipping_postal_code'] = strip_tags($validated['shipping_postal_code']);
 
-        $user = auth()->user();
+        $user = $request->user('sanctum') ?? auth('sanctum')->user() ?? auth()->user();
         if (!$user) {
-            $phone = $validated['shipping_phone'];
-            $user = User::where('phone', $phone)->first();
+            $rawPhone = trim($validated['shipping_phone']);
+            $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+            $last10 = substr($cleanPhone, -10);
+
+            $user = User::where('phone', $rawPhone)
+                ->orWhere('phone', $cleanPhone)
+                ->when($last10, function ($q) use ($last10) {
+                    $q->orWhere('phone', 'like', "%{$last10}");
+                })
+                ->first();
+
             if (!$user) {
                 $customerRole = \App\Models\Role::where('name', 'customer')->orWhere('name', 'Customer')->first();
-                $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-                $guestEmail = 'customer_' . ($cleanPhone ?: time()) . '@mayasree.com';
+                $guestEmail = 'customer_' . ($last10 ?: time()) . '@mayasree.com';
                 $user = User::create([
                     'uuid' => (string) Str::uuid(),
                     'first_name' => $validated['shipping_first_name'],
                     'last_name' => $validated['shipping_last_name'],
                     'name' => trim("{$validated['shipping_first_name']} {$validated['shipping_last_name']}"),
                     'email' => $guestEmail,
-                    'phone' => $phone,
+                    'phone' => $rawPhone,
                     'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)),
                     'role_id' => $customerRole?->id,
                     'is_active' => true,
@@ -288,6 +296,18 @@ class StorefrontCheckoutController extends Controller
             ]);
 
             Log::info("Order Created: #{$order->order_number}");
+
+            // Update customer profile metrics
+            try {
+                $customerProfile = \App\Models\CustomerProfile::firstOrCreate(['user_id' => $userId], [
+                    'total_orders' => 0,
+                    'total_spent' => 0.00,
+                ]);
+                $customerProfile->increment('total_orders');
+                $customerProfile->increment('total_spent', $grandTotal);
+            } catch (\Exception $cEx) {
+                Log::warning("Failed to update customer profile metrics: " . $cEx->getMessage());
+            }
 
             // Save coupon usage details
             if ($couponModel && $discount > 0) {
