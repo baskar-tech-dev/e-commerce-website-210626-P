@@ -243,7 +243,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:admin_api'])->grou
         Route::put('orders/{id}/status', [OrderController::class, 'updateStatus']);
         Route::put('orders/{id}/shipping', [OrderController::class, 'updateShipping']);
         Route::post('orders/{id}/notes', [OrderController::class, 'addAdminNote']);
-        Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
+        Route::apiResource('orders', OrderController::class)->only(['index', 'show', 'destroy']);
         
         Route::put('returns/{id}/status', [ReturnController::class, 'updateStatus']);
         Route::post('returns/{id}/notes', [ReturnController::class, 'addAdminNote']);

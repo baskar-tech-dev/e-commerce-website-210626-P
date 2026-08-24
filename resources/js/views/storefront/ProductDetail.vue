@@ -190,8 +190,209 @@
         </div>
       </div>
 
+      <!-- Frequently Bought Together Section (Bundle & Save) -->
+      <section v-if="boughtTogetherList && boughtTogetherList.length" class="bought-together-section">
+        <div class="section-header-wrap">
+          <div class="section-badge-pill">
+            <Sparkles :size="14" />
+            <span>Curated Ensemble</span>
+          </div>
+          <h3 class="bought-together-title">Frequently Bought Together</h3>
+          <p class="bought-together-subtitle">Pair this design with matching ethnic styles and complete your perfect look.</p>
+        </div>
+
+        <div class="bought-together-card">
+          <!-- Products Row / Bundle Grid -->
+          <div class="bought-together-items-wrap">
+            
+            <!-- Item 1: Main Product (Currently Viewed) -->
+            <div class="bundle-item-card bundle-item-card--main">
+              <div class="bundle-item-checkbox">
+                <input type="checkbox" checked disabled id="bt-main" class="custom-checkbox" />
+                <label for="bt-main" class="bundle-tag-main">This Item</label>
+              </div>
+              <div class="bundle-img-wrap">
+                <img 
+                  v-protect-image
+                  :src="activeImagePath || getPrimaryImage(product)" 
+                  :alt="product.name" 
+                  class="bundle-img" 
+                  loading="lazy"
+                />
+              </div>
+              <div class="bundle-info">
+                <h4 class="bundle-product-name" :title="product.name">{{ product.name }}</h4>
+                <div class="bundle-variant-tag">
+                  {{ selectedVariant ? `Size: ${selectedVariant.size || 'Free Size'}${selectedVariant.color ? ' • ' + selectedVariant.color : ''}` : 'Selected Size' }}
+                </div>
+                <div class="bundle-price-row">
+                  <span class="bundle-price-current">₹{{ selectedVariant?.selling_price || product.selling_price }}</span>
+                  <span v-if="selectedVariant?.mrp || product.mrp" class="bundle-price-old">MRP ₹{{ selectedVariant?.mrp || product.mrp }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loop Paired Items with '+' Connector -->
+            <template v-for="item in boughtTogetherList" :key="item.id">
+              <div class="bundle-plus-connector">
+                <Plus :size="18" />
+              </div>
+
+              <div 
+                class="bundle-item-card" 
+                :class="{ 'bundle-item-card--inactive': !bundleItemStates[item.id]?.checked }"
+              >
+                <div class="bundle-item-checkbox">
+                  <input 
+                    type="checkbox" 
+                    :id="'bt-' + item.id" 
+                    v-model="bundleItemStates[item.id].checked" 
+                    class="custom-checkbox" 
+                  />
+                  <label :for="'bt-' + item.id" class="bundle-checkbox-label">Include</label>
+                </div>
+                <div class="bundle-img-wrap" @click="reloadDetail(item.uuid)">
+                  <img 
+                    v-protect-image
+                    :src="getPrimaryImage(item)" 
+                    :alt="item.name" 
+                    class="bundle-img" 
+                    loading="lazy"
+                  />
+                </div>
+                <div class="bundle-info">
+                  <h4 class="bundle-product-name" @click="reloadDetail(item.uuid)" :title="item.name">{{ item.name }}</h4>
+                  
+                  <!-- Variant Selector for paired item -->
+                  <div v-if="item.variants && item.variants.length > 1" class="bundle-variant-select-wrap">
+                    <select 
+                      v-model="bundleItemStates[item.id].selectedVariantId" 
+                      class="bundle-select-input"
+                    >
+                      <option v-for="v in item.variants" :key="v.id" :value="v.id">
+                        Size: {{ v.size || 'OS' }} {{ v.color ? `(${v.color})` : '' }} - ₹{{ v.selling_price }}
+                      </option>
+                    </select>
+                  </div>
+                  <div v-else class="bundle-variant-tag">
+                    {{ item.variants?.[0]?.size ? `Size: ${item.variants[0].size}` : 'Standard Fit' }}
+                  </div>
+
+                  <div class="bundle-price-row">
+                    <span class="bundle-price-current">₹{{ getBundleItemPrice(item) }}</span>
+                    <span v-if="getBundleItemMrp(item)" class="bundle-price-old">MRP ₹{{ getBundleItemMrp(item) }}</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+          </div>
+
+          <!-- Bundle Summary Action Box -->
+          <div class="bundle-action-box">
+            <div class="bundle-summary-header">
+              <span class="bundle-summary-label">Bundle Total ({{ bundleSelectedCount }} Items)</span>
+              <div class="bundle-total-price-wrap">
+                <span class="bundle-total-price">₹{{ bundleTotalPrice }}</span>
+                <span v-if="parseFloat(bundleTotalMrp) > parseFloat(bundleTotalPrice)" class="bundle-total-mrp">MRP ₹{{ bundleTotalMrp }}</span>
+              </div>
+              <div v-if="parseFloat(bundleSavings) > 0" class="bundle-savings-badge">
+                🎉 You Save ₹{{ bundleSavings }} with this Combo
+              </div>
+            </div>
+
+            <button 
+              type="button"
+              class="btn-add-bundle"
+              :disabled="bundleAdding || isProductSoldOut"
+              @click="addBundleToCart"
+            >
+              <ShoppingBag :size="18" />
+              <span>{{ bundleAdding ? 'Adding Bundle...' : `Add Bundle to Cart (${bundleSelectedCount} Items)` }}</span>
+            </button>
+
+            <div v-if="bundleAddedSuccess" class="bundle-success-toast">
+              <Check :size="15" />
+              <span>{{ bundleSelectedCount }} items successfully added to cart!</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Customer Reviews Section -->
       <ReviewSection v-if="product" :product="product" />
+
+      <!-- More Products For You Section (Curated Recommendation Grid) -->
+      <section v-if="moreForYouProducts && moreForYouProducts.length" class="more-for-you-section">
+        <div class="section-header-wrap">
+          <div class="section-badge-pill">
+            <Sparkles :size="14" />
+            <span>Curated For You</span>
+          </div>
+          <h3 class="more-for-you-title">More Products For You</h3>
+          <p class="more-for-you-subtitle">Handpicked traditional & modern ethnic styles tailored to elevate your wardrobe.</p>
+        </div>
+
+        <div class="more-for-you-grid">
+          <div 
+            v-for="prod in moreForYouProducts" 
+            :key="prod.id" 
+            class="more-product-card"
+            @click="reloadDetail(prod.uuid)"
+          >
+            <!-- Image Wrap -->
+            <div class="more-card-img-wrap">
+              <img 
+                v-protect-image
+                :src="getPrimaryImage(prod)" 
+                class="more-card-img" 
+                :alt="prod.name"
+                loading="lazy"
+              />
+
+              <!-- Wishlist Floating Button -->
+              <button 
+                type="button" 
+                class="more-card-wishlist-btn"
+                :class="{ 'is-active': isInWishlist(prod.id) }"
+                @click.stop="toggleWishlist(prod)"
+                aria-label="Wishlist"
+              >
+                <Heart :size="17" :fill="isInWishlist(prod.id) ? '#B91C1C' : 'none'" :stroke="isInWishlist(prod.id) ? '#B91C1C' : '#5B163A'" />
+              </button>
+
+              <!-- Discount / Status Badge -->
+              <span v-if="getProductDiscountPct(prod) > 0" class="more-card-discount-badge">
+                {{ getProductDiscountPct(prod) }}% OFF
+              </span>
+              <span v-else-if="prod.badge" class="more-card-tag-badge">
+                {{ prod.badge }}
+              </span>
+            </div>
+
+            <!-- Product Card Info -->
+            <div class="more-card-info">
+              <span v-if="prod.category" class="more-card-category">{{ prod.category.name }}</span>
+              <h4 class="more-card-title" :title="prod.name">{{ prod.name }}</h4>
+
+              <div class="more-card-rating" v-if="prod.avg_rating || prod.rating">
+                <span class="rating-stars">★ {{ Number(prod.avg_rating || prod.rating || 4.8).toFixed(1) }}</span>
+                <span class="rating-count">({{ prod.reviews_count || 18 }})</span>
+              </div>
+
+              <div class="more-card-price-row">
+                <span class="more-price-current">{{ formatProductPrice(prod) }}</span>
+                <span v-if="formatProductMrp(prod)" class="more-price-old">{{ formatProductMrp(prod) }}</span>
+              </div>
+
+              <!-- Quick View / Explore Button -->
+              <button type="button" class="btn-more-card-action">
+                View Design &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <!-- Similar Products Section -->
       <section v-if="relatedProducts && relatedProducts.length" class="detail-recommend-section">
@@ -538,7 +739,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Heart, Check, Plus, ShoppingBag, Sparkles, Star } from 'lucide-vue-next';
 import ProductVariantSelector from '../../components/ProductVariantSelector.vue';
 import ReturnPolicyNotice from '../../components/ReturnPolicyNotice.vue';
 import ReviewSection from '../../components/ReviewSection.vue';
@@ -548,7 +749,7 @@ import { useAuthStore } from '../../stores/auth';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-const emit = defineEmits(['update-cart-count']);
+const emit = defineEmits(['update-cart-count', 'update-wishlist-count']);
 
 const showSizeGuideModal = ref(false);
 
@@ -558,6 +759,12 @@ const triggerSizeGuide = () => {
 
 const product = ref(null);
 const relatedProducts = ref([]);
+const boughtTogetherList = ref([]);
+const moreForYouProducts = ref([]);
+const bundleItemStates = ref({});
+const bundleAdding = ref(false);
+const bundleAddedSuccess = ref(false);
+const wishlist = ref([]);
 const recentlyViewed = ref([]);
 const loading = ref(true);
 
@@ -849,6 +1056,192 @@ const loadRecentlyViewed = () => {
   }
 };
 
+const loadWishlist = () => {
+  try {
+    wishlist.value = JSON.parse(localStorage.getItem('vibe_wishlist_items') || '[]');
+  } catch (e) {
+    wishlist.value = [];
+  }
+};
+
+const isInWishlist = (id) => {
+  return wishlist.value.some(item => item.id === id);
+};
+
+const toggleWishlist = async (prod) => {
+  const index = wishlist.value.findIndex(item => item.id === prod.id);
+  const isAdding = index < 0;
+
+  if (index >= 0) {
+    wishlist.value.splice(index, 1);
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.delete(`/api/customer/wishlist/${prod.uuid || prod.id}`);
+      } catch (err) {}
+    }
+  } else {
+    wishlist.value.push({
+      id: prod.id,
+      uuid: prod.uuid,
+      name: prod.name,
+      selling_price: prod.selling_price,
+      image: getPrimaryImage(prod)
+    });
+    if (authStore.isAuthenticated) {
+      try {
+        await axios.post('/api/customer/wishlist', { product_id: prod.id });
+      } catch (err) {}
+    }
+  }
+
+  localStorage.setItem('vibe_wishlist_items', JSON.stringify(wishlist.value));
+  emit('update-wishlist-count');
+
+  if (isAdding && !authStore.isAuthenticated) {
+    authStore.openAuthModal('register', 'wishlist');
+  }
+};
+
+const getProductDiscountPct = (p) => {
+  const sell = parseFloat(p.selling_price || 0);
+  const mrp = parseFloat(p.mrp || 0);
+  if (mrp > sell && mrp > 0) {
+    return Math.round(((mrp - sell) / mrp) * 100);
+  }
+  return 0;
+};
+
+const getBundleItemPrice = (item) => {
+  const vId = bundleItemStates.value[item.id]?.selectedVariantId;
+  if (vId && item.variants) {
+    const matched = item.variants.find(v => v.id === vId);
+    if (matched && matched.selling_price) return parseFloat(matched.selling_price).toFixed(2);
+  }
+  return parseFloat(item.selling_price || 0).toFixed(2);
+};
+
+const getBundleItemMrp = (item) => {
+  const vId = bundleItemStates.value[item.id]?.selectedVariantId;
+  if (vId && item.variants) {
+    const matched = item.variants.find(v => v.id === vId);
+    if (matched && matched.mrp) return parseFloat(matched.mrp).toFixed(2);
+  }
+  return item.mrp ? parseFloat(item.mrp).toFixed(2) : null;
+};
+
+const bundleSelectedCount = computed(() => {
+  let count = 1; // Main product
+  boughtTogetherList.value.forEach(item => {
+    if (bundleItemStates.value[item.id]?.checked) {
+      count++;
+    }
+  });
+  return count;
+});
+
+const bundleTotalPrice = computed(() => {
+  let total = parseFloat(selectedVariant.value?.selling_price || product.value?.selling_price || 0);
+  boughtTogetherList.value.forEach(item => {
+    if (bundleItemStates.value[item.id]?.checked) {
+      total += parseFloat(getBundleItemPrice(item));
+    }
+  });
+  return total.toFixed(2);
+});
+
+const bundleTotalMrp = computed(() => {
+  let total = parseFloat(selectedVariant.value?.mrp || product.value?.mrp || selectedVariant.value?.selling_price || product.value?.selling_price || 0);
+  boughtTogetherList.value.forEach(item => {
+    if (bundleItemStates.value[item.id]?.checked) {
+      const mrp = getBundleItemMrp(item);
+      total += (mrp ? parseFloat(mrp) : parseFloat(getBundleItemPrice(item)));
+    }
+  });
+  return total.toFixed(2);
+});
+
+const bundleSavings = computed(() => {
+  const diff = parseFloat(bundleTotalMrp.value) - parseFloat(bundleTotalPrice.value);
+  return diff > 0 ? diff.toFixed(2) : '0.00';
+});
+
+const addBundleToCart = () => {
+  if (!product.value) return;
+  bundleAdding.value = true;
+
+  try {
+    const cart = JSON.parse(localStorage.getItem('vibe_cart_items') || '[]');
+
+    // 1. Add Main product
+    const mainVariant = selectedVariant.value || product.value.variants?.[0];
+    if (mainVariant) {
+      const existMain = cart.findIndex(i => i.product_variant_id === mainVariant.id);
+      if (existMain >= 0) {
+        cart[existMain].quantity += 1;
+      } else {
+        cart.push({
+          product_id: product.value.id,
+          product_uuid: product.value.uuid,
+          product_variant_id: mainVariant.id,
+          sku: mainVariant.sku,
+          name: product.value.name,
+          size: mainVariant.size,
+          color: mainVariant.color,
+          image: activeImagePath.value || getPrimaryImage(product.value),
+          selling_price: mainVariant.selling_price || product.value.selling_price,
+          mrp: mainVariant.mrp || product.value.mrp,
+          quantity: 1,
+          stock_quantity: mainVariant.stock_quantity,
+        });
+      }
+    }
+
+    // 2. Add checked paired items
+    boughtTogetherList.value.forEach(item => {
+      if (bundleItemStates.value[item.id]?.checked) {
+        const vId = bundleItemStates.value[item.id]?.selectedVariantId;
+        const matchedVariant = item.variants?.find(v => v.id === vId) || item.variants?.[0];
+        if (matchedVariant) {
+          const existIdx = cart.findIndex(i => i.product_variant_id === matchedVariant.id);
+          if (existIdx >= 0) {
+            cart[existIdx].quantity += 1;
+          } else {
+            cart.push({
+              product_id: item.id,
+              product_uuid: item.uuid,
+              product_variant_id: matchedVariant.id,
+              sku: matchedVariant.sku,
+              name: item.name,
+              size: matchedVariant.size,
+              color: matchedVariant.color,
+              image: getPrimaryImage(item),
+              selling_price: matchedVariant.selling_price || item.selling_price,
+              mrp: matchedVariant.mrp || item.mrp,
+              quantity: 1,
+              stock_quantity: matchedVariant.stock_quantity,
+            });
+          }
+        }
+      }
+    });
+
+    localStorage.setItem('vibe_cart_items', JSON.stringify(cart));
+    emit('update-cart-count');
+    bundleAddedSuccess.value = true;
+    setTimeout(() => {
+      bundleAddedSuccess.value = false;
+    }, 4000);
+
+    if (!authStore.isAuthenticated) {
+      authStore.openAuthModal('register', 'cart');
+    }
+  } catch (e) {
+    console.error('Bundle add to cart error:', e);
+  } finally {
+    bundleAdding.value = false;
+  }
+};
+
 const fetchDetails = async (id) => {
   if (!id) return;
   loading.value = true;
@@ -857,8 +1250,21 @@ const fetchDetails = async (id) => {
     if (response.data && response.data.success) {
       product.value = response.data.data;
       relatedProducts.value = response.data.related || [];
+      boughtTogetherList.value = response.data.bought_together || [];
+      moreForYouProducts.value = response.data.more_for_you || [];
       activeImagePath.value = getPrimaryImage(product.value);
       
+      // Initialize bundle states for each bought together item
+      const states = {};
+      boughtTogetherList.value.forEach(item => {
+        const firstVariantId = item.variants?.[0]?.id || null;
+        states[item.id] = {
+          checked: true,
+          selectedVariantId: firstVariantId
+        };
+      });
+      bundleItemStates.value = states;
+
       // Auto select first variant if available
       if (product.value.variants && product.value.variants.length) {
         const firstVariant = product.value.variants[0];
@@ -869,6 +1275,7 @@ const fetchDetails = async (id) => {
       // Track this product & refresh recently viewed list
       trackRecentlyViewed(product.value);
       loadRecentlyViewed();
+      loadWishlist();
     } else {
       product.value = null;
     }
@@ -2000,5 +2407,521 @@ onUnmounted(() => {
 
 .price-muted {
   opacity: 0.6;
+}
+
+/* ==========================================================================
+   Frequently Bought Together (Curated Ensemble) Styles
+   ========================================================================== */
+.bought-together-section {
+  margin: 2.5rem 0;
+  padding: 2rem;
+  background: #FAF8F5;
+  border: 1px solid rgba(182, 141, 64, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(91, 22, 58, 0.04);
+}
+
+.section-header-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.section-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(182, 141, 64, 0.12);
+  color: #8A6418;
+  border: 1px solid rgba(182, 141, 64, 0.25);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 0.5rem;
+}
+
+.bought-together-title,
+.more-for-you-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1E293B;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.3px;
+}
+
+.bought-together-subtitle,
+.more-for-you-subtitle {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.bought-together-card {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .bought-together-card {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.bought-together-items-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bundle-plus-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #D4AF37;
+  color: #5B163A;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+}
+
+.bundle-item-card {
+  flex: 1;
+  min-width: 170px;
+  max-width: 220px;
+  background: #ffffff;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.bundle-item-card:hover {
+  border-color: #5B163A;
+  box-shadow: 0 6px 18px rgba(91, 22, 58, 0.08);
+  transform: translateY(-2px);
+}
+
+.bundle-item-card--inactive {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  border-style: dashed;
+}
+
+.bundle-item-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.custom-checkbox {
+  accent-color: #5B163A;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.bundle-tag-main {
+  background: #5B163A;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.bundle-img-wrap {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f8f8;
+  cursor: pointer;
+}
+
+.bundle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.bundle-item-card:hover .bundle-img {
+  transform: scale(1.04);
+}
+
+.bundle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bundle-product-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.bundle-variant-tag {
+  font-size: 0.72rem;
+  color: #64748B;
+  background: #FAF5F0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.bundle-select-input {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  color: #1E293B;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+}
+
+.bundle-select-input:focus {
+  border-color: #5B163A;
+}
+
+.bundle-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bundle-price-current {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #5B163A;
+}
+
+.bundle-price-old {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+}
+
+.bundle-action-box {
+  background: #ffffff;
+  border: 1.5px solid rgba(91, 22, 58, 0.15);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(91, 22, 58, 0.05);
+}
+
+.bundle-summary-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748B;
+  font-weight: 700;
+}
+
+.bundle-total-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.bundle-total-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #5B163A;
+}
+
+.bundle-total-mrp {
+  font-size: 0.95rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+}
+
+.bundle-savings-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #15803D;
+  background: #DCFCE7;
+  padding: 3px 8px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.btn-add-bundle {
+  background: #5B163A;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(91, 22, 58, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-add-bundle:hover:not(:disabled) {
+  background: #3D0E26;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(91, 22, 58, 0.35);
+}
+
+.btn-add-bundle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bundle-success-toast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #15803D;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* ==========================================================================
+   More Products For You (Curated Grid) Styles
+   ========================================================================== */
+.more-for-you-section {
+  margin: 3.5rem 0 2rem 0;
+}
+
+.more-for-you-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 1100px) {
+  .more-for-you-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .more-for-you-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+}
+
+.more-product-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.more-product-card:hover {
+  transform: translateY(-4px);
+  border-color: #5B163A;
+  box-shadow: 0 10px 25px rgba(91, 22, 58, 0.1);
+}
+
+.more-card-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: #F8F6F2;
+}
+
+.more-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.more-product-card:hover .more-card-img {
+  transform: scale(1.06);
+}
+
+.more-card-wishlist-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.more-card-wishlist-btn:hover {
+  transform: scale(1.1);
+  background: #ffffff;
+}
+
+.more-card-wishlist-btn.is-active {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+}
+
+.more-card-discount-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #5B163A;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.more-card-tag-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #D4AF37;
+  color: #1a0f14;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.more-card-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.more-card-category {
+  font-size: 0.72rem;
+  color: #8A6418;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.more-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.more-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+.rating-count {
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.more-card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 0.25rem;
+}
+
+.more-price-current {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #5B163A;
+}
+
+.more-price-old {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+}
+
+.btn-more-card-action {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border: none;
+  background: transparent;
+  color: #5B163A;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: gap 0.2s ease;
+}
+
+.more-product-card:hover .btn-more-card-action {
+  gap: 8px;
+  color: #8A6418;
 }
 </style>

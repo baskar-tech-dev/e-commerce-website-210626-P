@@ -128,7 +128,7 @@
           </div>
         </div>
         
-        <div class="mdc-footer">
+          <div class="mdc-footer">
           <div class="mdc-badges">
             <span :class="['badge', getStatusBadgeClass(order.status)]">
               {{ getStatusLabel(order.status) }}
@@ -142,9 +142,20 @@
               </span>
             </div>
           </div>
-          <router-link :to="`/admin/orders/${order.id}`" class="btn btn--secondary btn--sm">
-            View Details
-          </router-link>
+          <div style="display: flex; gap: 0.4rem; align-items: center;">
+            <router-link :to="`/admin/orders/${order.id}`" class="btn btn--secondary btn--sm">
+              View
+            </router-link>
+            <button 
+              type="button" 
+              @click="confirmDeleteOrder(order)" 
+              class="btn btn--danger btn--sm" 
+              style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3); padding: 0 8px; height: 32px;" 
+              title="Delete Order"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
       </div>
       
@@ -203,10 +214,19 @@
             </span>
           </td>
           <td style="text-align: right;">
-            <div style="display: inline-flex; gap: 0.5rem;">
+            <div style="display: inline-flex; gap: 0.4rem;">
               <router-link :to="`/admin/orders/${order.id}`" class="btn btn--secondary btn--sm">
                 👁️ View Details
               </router-link>
+              <button 
+                type="button" 
+                @click="confirmDeleteOrder(order)" 
+                class="btn btn--danger btn--sm" 
+                style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3);" 
+                title="Delete Order"
+              >
+                🗑️ Delete
+              </button>
             </div>
           </td>
         </tr>
@@ -241,6 +261,33 @@
       </div>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div v-if="orderToDelete" class="admin-modal-backdrop" @click="orderToDelete = null">
+    <div class="admin-modal-card" @click.stop style="max-width: 480px; padding: 1.5rem; background: #ffffff; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 1px solid #fee2e2;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; color: #dc2626;">
+        <span style="font-size: 1.6rem;">⚠️</span>
+        <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #991b1b;">Delete Customer Order</h3>
+      </div>
+      <p style="color: #475569; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.25rem;">
+        Are you sure you want to delete <strong>Order #{{ orderToDelete.order_number }}</strong>? This will remove the order from the store's order tracking pipeline.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn--secondary btn--sm" @click="orderToDelete = null" :disabled="isDeleting">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn--danger btn--sm" 
+          @click="executeDeleteOrder" 
+          :disabled="isDeleting" 
+          style="background: #dc2626; color: #ffffff; font-weight: 700;"
+        >
+          {{ isDeleting ? 'Deleting...' : 'Yes, Delete Order' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -248,11 +295,42 @@ import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 
 const showStats = ref(true);
-const loading = ref(true);
-const errorMsg = ref('');
-
+const loading = ref(false);
 const orders = ref([]);
-const pagination = ref({
+const errorMsg = ref('');
+const orderToDelete = ref(null);
+const isDeleting = ref(false);
+
+const confirmDeleteOrder = (order) => {
+  orderToDelete.value = order;
+};
+
+const executeDeleteOrder = async () => {
+  if (!orderToDelete.value) return;
+  isDeleting.value = true;
+  try {
+    const res = await axios.delete(`/api/admin/orders/${orderToDelete.value.id}`);
+    if (res.data && res.data.success) {
+      alert(`Order #${orderToDelete.value.order_number} has been deleted.`);
+      orderToDelete.value = null;
+      await fetchOrders(pagination.current_page);
+      await fetchKPIs();
+    }
+  } catch (err) {
+    console.error('Delete order failed:', err);
+    alert(err.response?.data?.message || 'Failed to delete order. Please try again.');
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const filters = reactive({
+  search: '',
+  status: '',
+  payment_status: '',
+});
+
+const pagination = reactive({
   current_page: 1,
   last_page: 1,
   per_page: 15,
@@ -265,23 +343,17 @@ const statusCounts = ref({
   delivered: 0,
 });
 
-const filters = reactive({
-  search: '',
-  status: '',
-  payment_status: '',
-});
-
 // Official 9 Order Status Definitions
 const statusDefinitions = [
-  { step: 1, code: 'order_placed', label: 'Order Placed', meaning: 'Customer successfully placed the order', badge: 'badge--warning', icon: '📝' },
-  { step: 2, code: 'order_confirmed', label: 'Order Confirmed', meaning: 'Admin accepted/confirmed the order', badge: 'badge--primary', icon: '✓' },
-  { step: 3, code: 'processing', label: 'Processing', meaning: 'Order is being prepared', badge: 'badge--secondary', icon: '⚙️' },
-  { step: 4, code: 'ready_to_ship', label: 'Ready to Ship', meaning: 'Product is packed and ready', badge: 'badge--secondary', icon: '📦' },
-  { step: 5, code: 'shipped', label: 'Shipped', meaning: 'Order handed over to courier', badge: 'badge--warning', icon: '🚚' },
-  { step: 6, code: 'delivered', label: 'Delivered', meaning: 'Customer received the order', badge: 'badge--success', icon: '🎉' },
-  { step: 7, code: 'cancelled', label: 'Cancelled', meaning: 'Order was cancelled', badge: 'badge--danger', icon: '✕' },
-  { step: 8, code: 'returned', label: 'Returned', meaning: 'Product was returned', badge: 'badge--danger', icon: '↩' },
-  { step: 9, code: 'refunded', label: 'Refunded', meaning: 'Refund completed', badge: 'badge--secondary', icon: '💰' },
+  { step: 1, code: 'order_placed', label: 'Order Placed', badge: 'badge--warning', icon: '📝' },
+  { step: 2, code: 'order_confirmed', label: 'Order Confirmed', badge: 'badge--primary', icon: '✓' },
+  { step: 3, code: 'processing', label: 'Processing', badge: 'badge--secondary', icon: '⚙️' },
+  { step: 4, code: 'ready_to_ship', label: 'Ready to Ship', badge: 'badge--secondary', icon: '📦' },
+  { step: 5, code: 'shipped', label: 'Shipped', badge: 'badge--warning', icon: '🚚' },
+  { step: 6, code: 'delivered', label: 'Delivered', badge: 'badge--success', icon: '🎉' },
+  { step: 7, code: 'cancelled', label: 'Cancelled', badge: 'badge--danger', icon: '✕' },
+  { step: 8, code: 'returned', label: 'Returned', badge: 'badge--danger', icon: '↩️' },
+  { step: 9, code: 'refunded', label: 'Refunded', badge: 'badge--secondary', icon: '💸' },
 ];
 
 let debounceTimeout = null;
@@ -305,12 +377,10 @@ const fetchOrders = async (page = 1) => {
     const response = await axios.get('/api/admin/orders', { params });
     if (response.data && response.data.success) {
       orders.value = response.data.data;
-      pagination.value = {
-        current_page: response.data.meta.current_page,
-        last_page: response.data.meta.last_page,
-        per_page: response.data.meta.per_page,
-        total: response.data.meta.total,
-      };
+      pagination.current_page = response.data.meta.current_page;
+      pagination.last_page = response.data.meta.last_page;
+      pagination.per_page = response.data.meta.per_page;
+      pagination.total = response.data.meta.total;
     }
   } catch (err) {
     console.error('Failed to fetch orders:', err);
@@ -373,3 +443,17 @@ onMounted(() => {
   fetchKPIs();
 });
 </script>
+
+<style scoped>
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+</style>

@@ -144,8 +144,36 @@ class StorefrontProductController extends Controller
             ], 404);
         }
 
+        // Frequently Bought Together (2 complementary products with variants & images)
+        $boughtTogether = Product::with(['images', 'variants', 'category'])
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->when($product->category_id, function ($q) use ($product) {
+                $q->where('category_id', $product->category_id);
+            })
+            ->limit(2)
+            ->get();
+
+        if ($boughtTogether->count() < 2) {
+            $fallback = Product::with(['images', 'variants', 'category'])
+                ->where('id', '!=', $product->id)
+                ->whereNotIn('id', $boughtTogether->pluck('id'))
+                ->where('is_active', true)
+                ->limit(2 - $boughtTogether->count())
+                ->get();
+            $boughtTogether = $boughtTogether->merge($fallback);
+        }
+
+        // More Products For You (Curated Recommendation Grid)
+        $moreForYou = Product::with(['images', 'variants', 'category'])
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->inRandomOrder()
+            ->limit(8)
+            ->get();
+
         // Related Products (4 products in same category)
-        $related = Product::with('images')
+        $related = Product::with(['images', 'variants', 'category'])
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
@@ -155,6 +183,8 @@ class StorefrontProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => $product,
+            'bought_together' => $boughtTogether,
+            'more_for_you' => $moreForYou,
             'related' => $related,
         ]);
     }

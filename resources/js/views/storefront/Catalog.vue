@@ -12,7 +12,7 @@
         <span>Sort</span>
       </button>
       <div class="filter-bar-divider"></div>
-      <button @click="scrollToCategories" class="filter-bar-btn">
+      <button @click="openMobileCategoriesSheet" class="filter-bar-btn">
         <FolderOpen :size="16" />
         <span>Categories</span>
       </button>
@@ -600,6 +600,76 @@
       </div>
     </div>
 
+    <!-- Mobile Categories Bottom Sheet -->
+    <div v-if="showMobileCategoriesSheet" class="bottom-sheet-overlay" @click="showMobileCategoriesSheet = false">
+      <div class="bottom-sheet-panel" @click.stop style="max-height: 80vh;">
+        <div class="bottom-sheet-header">
+          <h3 class="bottom-sheet-title">Explore Categories</h3>
+          <button class="bottom-sheet-close-btn" @click="showMobileCategoriesSheet = false">✕</button>
+        </div>
+        <div class="bottom-sheet-body" style="padding: 1rem 1.25rem;">
+          <!-- All Categories Option -->
+          <div 
+            class="mobile-cat-card"
+            :class="{ active: !filters.category_id }"
+            @click="selectMobileCategory('')"
+            style="margin-bottom: 0.75rem;"
+          >
+            <div class="mobile-cat-icon">🛍️</div>
+            <div class="mobile-cat-info">
+              <strong class="mobile-cat-name">All Collections</strong>
+              <span class="mobile-cat-sub">View all sarees, blouses & ensembles</span>
+            </div>
+            <span v-if="!filters.category_id" class="mobile-cat-check">✓</span>
+          </div>
+
+          <!-- List of categories -->
+          <div class="mobile-categories-list">
+            <div 
+              v-for="cat in categories" 
+              :key="cat.id" 
+              class="mobile-cat-group"
+            >
+              <div 
+                class="mobile-cat-card"
+                :class="{ active: filters.category_id == cat.id }"
+                @click="selectMobileCategory(cat.id)"
+              >
+                <img 
+                  v-if="cat.image" 
+                  :src="cat.image" 
+                  class="mobile-cat-img" 
+                  :alt="cat.name"
+                  loading="lazy"
+                />
+                <div v-else class="mobile-cat-icon">{{ cat.icon || '👗' }}</div>
+                
+                <div class="mobile-cat-info">
+                  <strong class="mobile-cat-name">{{ cat.name }}</strong>
+                  <span v-if="cat.children && cat.children.length" class="mobile-cat-sub">{{ cat.children.length }} subcategories</span>
+                </div>
+                <span v-if="filters.category_id == cat.id" class="mobile-cat-check">✓</span>
+              </div>
+
+              <!-- Subcategories Pills if available -->
+              <div v-if="cat.children && cat.children.length" class="mobile-subcat-pills">
+                <button
+                  v-for="sub in cat.children"
+                  :key="sub.id"
+                  type="button"
+                  class="mobile-subcat-pill-btn"
+                  :class="{ active: filters.category_id == sub.id }"
+                  @click="selectMobileCategory(sub.id)"
+                >
+                  {{ sub.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Mobile Size Bottom Sheet -->
     <div v-if="showMobileSizeSheet && sizeSelectProduct" class="bottom-sheet-overlay" @click="showMobileSizeSheet = false">
       <div class="bottom-sheet-panel" @click.stop>
@@ -801,8 +871,19 @@ const getColorCode = (colorName) => {
 
 const showMobileFiltersSheet = ref(false);
 const showMobileSortSheet = ref(false);
+const showMobileCategoriesSheet = ref(false);
 const quickViewProduct = ref(null);
 const activeQuickFilter = ref('');
+
+const openMobileCategoriesSheet = () => {
+  showMobileCategoriesSheet.value = true;
+};
+
+const selectMobileCategory = (catId) => {
+  filters.value.category_id = catId;
+  showMobileCategoriesSheet.value = false;
+  fetchProducts(1);
+};
 
 const sortOptions = [
   { value: 'newest', label: 'New Arrivals' },
@@ -826,10 +907,7 @@ const routeToProduct = (uuid) => {
 };
 
 const scrollToCategories = () => {
-  const el = document.getElementById('subcategories-section');
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' });
-  }
+  openMobileCategoriesSheet();
 };
 
 const applyQuickFilter = (pill) => {
@@ -2549,5 +2627,115 @@ onMounted(() => {
   font-size: 0.7rem;
   color: #9c8a94;
   margin-top: 8px;
+}
+
+/* ============================================================
+   Mobile Categories Bottom Sheet Styles
+   ============================================================ */
+.mobile-categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-cat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mobile-cat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-cat-card:hover,
+.mobile-cat-card.active {
+  border-color: #5B163A;
+  background: #FAF5F0;
+  box-shadow: 0 4px 12px rgba(91, 22, 58, 0.08);
+}
+
+.mobile-cat-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+}
+
+.mobile-cat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(91, 22, 58, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mobile-cat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.mobile-cat-name {
+  font-size: 0.92rem;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.mobile-cat-card.active .mobile-cat-name {
+  color: #5B163A;
+}
+
+.mobile-cat-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mobile-cat-check {
+  color: #5B163A;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.mobile-subcat-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 3.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.mobile-subcat-pill-btn {
+  background: #ffffff;
+  border: 1px solid rgba(182, 141, 64, 0.3);
+  color: #554D47;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-subcat-pill-btn:hover,
+.mobile-subcat-pill-btn.active {
+  background: #5B163A;
+  color: #ffffff;
+  border-color: #5B163A;
 }
 </style>

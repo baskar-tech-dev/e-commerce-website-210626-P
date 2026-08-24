@@ -252,7 +252,7 @@ class StorefrontCheckoutController extends Controller
             $grandTotal = $subtotal - $discount + $shipping;
 
             // 4. Generate order
-            $orderNumber = 'VIBE-' . strtoupper(Str::random(10));
+            $orderNumber = Order::generateOrderNumber();
             
             $order = Order::create([
                 'uuid' => (string) Str::uuid(),

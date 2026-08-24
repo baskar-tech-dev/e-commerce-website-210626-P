@@ -393,4 +393,39 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete order (Soft delete / remove from list).
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            $order = Order::find($id);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found',
+                    'error_code' => 'NOT_FOUND'
+                ], 404);
+            }
+
+            $orderNo = $order->order_number;
+            $order->delete();
+
+            Log::info("Order #{$orderNo} (ID: {$id}) deleted by Admin (User ID: " . (auth()->id() ?? 'system') . ")");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Order #{$orderNo} has been deleted successfully",
+            ]);
+        } catch (Exception $e) {
+            Log::error('OrderController@destroy failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete order: ' . $e->getMessage(),
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
 }

@@ -15,6 +15,38 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes, Auditable;
 
+    /**
+     * Generate branded and unique order number for Maya Sree Fashion.
+     * Format: MSF-YYYY-XXXXX (e.g. MSF-2026-01001)
+     */
+    public static function generateOrderNumber(): string
+    {
+        $year = date('Y');
+        $prefix = "MSF-{$year}-";
+
+        $latest = static::withTrashed()
+            ->where('order_number', 'like', "{$prefix}%")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextSeq = 1001;
+        if ($latest && preg_match('/MSF-\d{4}-(\d+)/', $latest->order_number, $matches)) {
+            $nextSeq = ((int)$matches[1]) + 1;
+        } else {
+            $totalCount = static::withTrashed()->count();
+            $nextSeq = 1000 + $totalCount + 1;
+        }
+
+        $orderNo = $prefix . str_pad($nextSeq, 5, '0', STR_PAD_LEFT);
+
+        while (static::withTrashed()->where('order_number', $orderNo)->exists()) {
+            $nextSeq++;
+            $orderNo = $prefix . str_pad($nextSeq, 5, '0', STR_PAD_LEFT);
+        }
+
+        return $orderNo;
+    }
+
     // 9 Standardized Order Statuses
     public const STATUS_ORDER_PLACED    = 'order_placed';    // 1. Customer successfully placed the order
     public const STATUS_ORDER_CONFIRMED = 'order_confirmed'; // 2. Admin accepted/confirmed the order

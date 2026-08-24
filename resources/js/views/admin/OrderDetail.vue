@@ -11,6 +11,9 @@
       <button class="btn btn--secondary" @click="printMockInvoice">
         🖨️ Print Invoice
       </button>
+      <button class="btn btn--danger" @click="showDeleteModal = true" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3);">
+        🗑️ Delete Order
+      </button>
     </div>
   </div>
 
@@ -396,19 +399,66 @@
       </div>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div v-if="showDeleteModal" class="admin-modal-backdrop" @click="showDeleteModal = false">
+    <div class="admin-modal-card" @click.stop style="max-width: 480px; padding: 1.5rem; background: #ffffff; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 1px solid #fee2e2;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; color: #dc2626;">
+        <span style="font-size: 1.6rem;">⚠️</span>
+        <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #991b1b;">Delete Order #{{ order.order_number }}</h3>
+      </div>
+      <p style="color: #475569; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.25rem;">
+        Are you sure you want to permanently delete this order? It will be removed from customer history and admin order tracking.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn--secondary btn--sm" @click="showDeleteModal = false" :disabled="isDeleting">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn--danger btn--sm" 
+          @click="deleteCurrentOrder" 
+          :disabled="isDeleting" 
+          style="background: #dc2626; color: #ffffff; font-weight: 700;"
+        >
+          {{ isDeleting ? 'Deleting...' : 'Yes, Delete Order' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
+const router = useRouter();
 const orderId = route.params.id;
 
 const order = ref({});
 const loading = ref(true);
 const error = ref('');
+const showDeleteModal = ref(false);
+const isDeleting = ref(false);
+
+const deleteCurrentOrder = async () => {
+  isDeleting.value = true;
+  try {
+    const res = await axios.delete(`/api/admin/orders/${orderId}`);
+    if (res.data && res.data.success) {
+      alert(`Order #${order.value.order_number} was successfully deleted.`);
+      router.push('/admin/orders');
+    }
+  } catch (err) {
+    console.error('Failed to delete order:', err);
+    alert(err.response?.data?.message || 'Failed to delete order');
+  } finally {
+    isDeleting.value = false;
+    showDeleteModal.value = false;
+  }
+};
 
 const nextStatus = ref('');
 const statusComment = ref('');
@@ -795,5 +845,17 @@ onMounted(() => {
   background: rgba(13, 148, 136, 0.08);
   border: 1px solid rgba(13, 148, 136, 0.2);
   color: #0f766e;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
 }
 </style>

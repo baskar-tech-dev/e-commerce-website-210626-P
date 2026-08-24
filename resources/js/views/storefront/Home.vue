@@ -3248,15 +3248,29 @@ onUnmounted(() => {
   top: 10px;
   left: 10px;
   z-index: 3;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #ffffff;
+  background-color: #5B163A;
   padding: 4px 10px;
   border-radius: 4px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.product-tag.selling-fast { background-color: #e21b5a; }
+.product-tag.new-arrival {
+  background: linear-gradient(135deg, #5B163A 0%, #3D0E26 100%);
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(91, 22, 58, 0.45);
+}
+
+.product-tag.selling-fast {
+  background: linear-gradient(135deg, #B68D40 0%, #8C6219 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(182, 141, 64, 0.4);
+}
 
 .product-image-container {
   position: relative;
