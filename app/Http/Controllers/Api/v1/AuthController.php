@@ -114,9 +114,15 @@ class AuthController extends Controller
                 })
                 ->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            if (!$user) {
                 throw ValidationException::withMessages([
-                    'email' => ['The email/phone or password you entered is incorrect.'],
+                    'email' => ['No account found with this email address or phone number. Please click "Create Account" to register.'],
+                ]);
+            }
+
+            if (!Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'password' => ['The password you entered is incorrect. Please try again or click "Forgot Password?".'],
                 ]);
             }
 

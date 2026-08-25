@@ -8,7 +8,11 @@
       <span class="admin-page__subtitle">Placed on {{ formatDate(order.created_at) }}</span>
     </div>
     <div style="display: flex; gap: var(--spacing-sm);">
-      <button class="btn btn--secondary" @click="printMockInvoice">
+      <button 
+        v-if="order.payment_status === 'paid' || order.status === 'completed' || order.status === 'delivered' || order.status === 'processing' || order.status === 'shipped'"
+        class="btn btn--secondary" 
+        @click="printMockInvoice"
+      >
         🖨️ Print Invoice
       </button>
       <button 
@@ -175,16 +179,40 @@
               style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border);"
             >
               <div style="display: flex; align-items: center; gap: var(--spacing-md);">
-                <div style="width: 54px; height: 54px; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; overflow: hidden;">
-                  <img 
-                    v-if="item.variant?.product?.primary_image_url" 
-                    :src="item.variant.product.primary_image_url" 
-                    style="width: 100%; height: 100%; object-fit: cover;" 
-                  />
-                  <span v-else>👗</span>
-                </div>
+                <!-- Clickable Image Thumbnail opening in new tab -->
+                <a 
+                  :href="getProductUrl(item)" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style="display: block; text-decoration: none;"
+                  :title="'View ' + item.product_name + ' in storefront ↗'"
+                >
+                  <div style="width: 58px; height: 58px; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; overflow: hidden; flex-shrink: 0; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
+                    <img 
+                      v-if="getItemImage(item)" 
+                      :src="getItemImage(item)" 
+                      :alt="item.product_name"
+                      style="width: 100%; height: 100%; object-fit: cover;" 
+                      @error="handleImageError($event)"
+                    />
+                    <span v-else>👗</span>
+                  </div>
+                </a>
+
+                <!-- Clickable Product Title opening in new tab -->
                 <div>
-                  <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">{{ item.product_name }}</div>
+                  <a 
+                    :href="getProductUrl(item)" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style="font-weight: 700; color: #1e293b; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s;"
+                    onmouseover="this.style.color='#5B163A'"
+                    onmouseout="this.style.color='#1e293b'"
+                    :title="'View ' + item.product_name + ' in storefront ↗'"
+                  >
+                    <span>{{ item.product_name }}</span>
+                    <span style="font-size: 0.75rem; color: #64748b;">↗</span>
+                  </a>
                   <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.125rem; display: flex; gap: 0.5rem; align-items: center;">
                     <code>{{ item.sku }}</code>
                     <span v-if="item.variant?.color">• Color: {{ item.variant.color }}</span>
@@ -698,6 +726,35 @@ const printMockInvoice = () => {
   win.document.write(`<pre>${content}</pre>`);
   win.document.close();
   win.print();
+};
+
+const getItemImage = (item) => {
+  if (!item) return null;
+  if (item.image_url) return item.image_url;
+  if (item.variant?.product?.primary_image_url) return item.variant.product.primary_image_url;
+  if (item.variant?.product?.images?.length) {
+    const p = item.variant.product.images.find(i => i.is_primary) || item.variant.product.images[0];
+    return p?.url || p?.image_path;
+  }
+  if (item.product?.primary_image_url) return item.product.primary_image_url;
+  if (item.product?.images?.length) {
+    const p = item.product.images.find(i => i.is_primary) || item.product.images[0];
+    return p?.url || p?.image_path;
+  }
+  return null;
+};
+
+const handleImageError = (e) => {
+  e.target.style.display = 'none';
+};
+
+const getProductUrl = (item) => {
+  if (!item) return '#';
+  const target = item.product_uuid || item.product_slug || item.product?.uuid || item.product?.slug || item.variant?.product?.uuid || item.variant?.product?.slug || item.product_id;
+  if (target) {
+    return `/products/${target}`;
+  }
+  return '/shop';
 };
 
 const formatDate = (dateString) => {

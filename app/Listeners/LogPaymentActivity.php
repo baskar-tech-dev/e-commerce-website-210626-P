@@ -6,10 +6,18 @@ use App\Events\PaymentStarted;
 use App\Events\PaymentVerified;
 use App\Events\PaymentFailedEvent;
 use App\Events\WebhookReceivedEvent;
+use App\Services\OrderNotificationService;
 use Illuminate\Support\Facades\Log;
 
 class LogPaymentActivity
 {
+    protected OrderNotificationService $orderNotificationService;
+
+    public function __construct(OrderNotificationService $orderNotificationService)
+    {
+        $this->orderNotificationService = $orderNotificationService;
+    }
+
     /**
      * Handle payment started event.
      */
@@ -24,6 +32,9 @@ class LogPaymentActivity
     public function handlePaymentVerified(PaymentVerified $event): void
     {
         Log::info("Payment Verified for Order #{$event->order->order_number}. Gateway Payment ID: {$event->payment->gateway_payment_id}");
+
+        // Send order placed confirmation email now that payment is confirmed
+        $this->orderNotificationService->sendOrderPlacedNotification($event->order);
     }
 
     /**

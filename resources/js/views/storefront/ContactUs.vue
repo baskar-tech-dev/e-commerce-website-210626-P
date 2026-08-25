@@ -397,7 +397,7 @@ const faqs = ref([
   },
   {
     question: "Do you offer Cash on Delivery?",
-    answer: "Yes, we support Cash on Delivery (COD) for most pin codes across India, in addition to secure online payment gateways like credit/debit card, UPI, and Net Banking."
+    answer: "No, we do not offer Cash on Delivery (COD). We accept 100% secure online prepaid payments including UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, and Net Banking."
   },
   {
     question: "How can I track my order?",

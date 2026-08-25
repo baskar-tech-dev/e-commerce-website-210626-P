@@ -236,7 +236,7 @@ class CustomerProfileController extends Controller
             ], 401);
         }
 
-        $orders = Order::with('items')
+        $orders = Order::with(['items.product.images', 'items.variant.product.images', 'items.variant.images'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -261,7 +261,7 @@ class CustomerProfileController extends Controller
             ], 401);
         }
 
-        $order = Order::with('items')
+        $order = Order::with(['items.product.images', 'items.variant.product.images', 'items.variant.images'])
             ->where('user_id', $user->id)
             ->where(function ($q) use ($orderId) {
                 $q->where('id', $orderId)

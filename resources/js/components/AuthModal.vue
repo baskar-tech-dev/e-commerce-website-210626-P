@@ -46,7 +46,7 @@
         </div>
 
         <!-- Global Error Alert -->
-        <div v-if="authStore.error" class="auth-alert auth-alert--error">
+        <div v-if="authStore.error && (!authStore.validationErrors || Object.keys(authStore.validationErrors).length === 0)" class="auth-alert auth-alert--error">
           {{ authStore.error }}
         </div>
 

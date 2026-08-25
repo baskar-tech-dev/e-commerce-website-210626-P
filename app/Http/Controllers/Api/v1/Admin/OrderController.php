@@ -89,7 +89,7 @@ class OrderController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $order = Order::with(['user', 'items.variant.product', 'statusHistory.changedByUser', 'payments'])->find($id);
+            $order = Order::with(['user', 'items.product.images', 'items.variant.product.images', 'items.variant.images', 'statusHistory.changedByUser', 'payments'])->find($id);
 
             if (!$order) {
                 return response()->json([

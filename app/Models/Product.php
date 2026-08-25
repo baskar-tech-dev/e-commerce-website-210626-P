@@ -269,11 +269,16 @@ class Product extends Model
      */
     public function getPrimaryImageUrlAttribute(): ?string
     {
-        if ($this->relationLoaded('images') && $this->images->isNotEmpty()) {
-            $primary = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
-            return $primary?->url ?? $primary?->image_path;
+        if ($this->relationLoaded('images')) {
+            if ($this->images && $this->images->isNotEmpty()) {
+                $primary = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
+                return $primary?->url ?? $primary?->image_path;
+            }
+            return null;
         }
-        return null;
+
+        $primary = $this->images()->where('is_primary', true)->first() ?? $this->images()->first();
+        return $primary?->url ?? $primary?->image_path;
     }
 
     /**

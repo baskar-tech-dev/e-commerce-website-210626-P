@@ -346,24 +346,57 @@
                     <div class="stepper-track-bg"></div>
                     <div class="stepper-track-active" :style="{ width: getStepperWidth(order.status) }"></div>
 
+                    <!-- Step 1: Order Placed -->
                     <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 1), 'current': isCurrentStep(order.status, 1) }">
-                      <div class="node-circle"><span>1</span></div>
-                      <span class="node-label">Placed</span>
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 1)">✓</span>
+                        <span v-else>1</span>
+                      </div>
+                      <span class="node-label">Order Placed</span>
                     </div>
+
+                    <!-- Step 2: Order Confirmed -->
                     <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 2), 'current': isCurrentStep(order.status, 2) }">
-                      <div class="node-circle"><span>2</span></div>
-                      <span class="node-label">Confirmed</span>
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 2)">✓</span>
+                        <span v-else>2</span>
+                      </div>
+                      <span class="node-label">Order Confirmed</span>
                     </div>
+
+                    <!-- Step 3: Processing -->
                     <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 3), 'current': isCurrentStep(order.status, 3) }">
-                      <div class="node-circle"><span>3</span></div>
-                      <span class="node-label">Packed</span>
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 3)">✓</span>
+                        <span v-else>3</span>
+                      </div>
+                      <span class="node-label">Processing</span>
                     </div>
+
+                    <!-- Step 4: Ready to Ship -->
                     <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 4), 'current': isCurrentStep(order.status, 4) }">
-                      <div class="node-circle"><span>4</span></div>
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 4)">✓</span>
+                        <span v-else>4</span>
+                      </div>
+                      <span class="node-label">Ready to Ship</span>
+                    </div>
+
+                    <!-- Step 5: Shipped -->
+                    <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 5), 'current': isCurrentStep(order.status, 5) }">
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 5)">✓</span>
+                        <span v-else>5</span>
+                      </div>
                       <span class="node-label">Shipped</span>
                     </div>
-                    <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 5), 'current': isCurrentStep(order.status, 5) }">
-                      <div class="node-circle"><span>5</span></div>
+
+                    <!-- Step 6: Delivered -->
+                    <div class="stepper-node" :class="{ 'completed': isStepCompleted(order.status, 6), 'current': isCurrentStep(order.status, 6) }">
+                      <div class="node-circle">
+                        <span v-if="isStepCompleted(order.status, 6)">✓</span>
+                        <span v-else>6</span>
+                      </div>
                       <span class="node-label">Delivered</span>
                     </div>
                   </div>
@@ -406,15 +439,28 @@
                   <div v-for="item in order.items" :key="item.id" class="order-item-row">
                     <!-- Product Image -->
                     <div class="order-item-img-frame">
-                      <img v-protect-image :src="getItemImage(item)" :alt="item.product_name" class="order-item-img" />
+                      <a 
+                        :href="getProductUrl(item)" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style="display: block; width: 100%; height: 100%;"
+                        :title="'View ' + item.product_name + ' ↗'"
+                      >
+                        <img v-protect-image :src="getItemImage(item)" :alt="item.product_name" class="order-item-img" />
+                      </a>
                     </div>
 
                     <!-- Item Details -->
                     <div class="order-item-meta">
-                      <router-link v-if="item.product?.uuid" :to="`/products/${item.product.uuid}`" class="order-item-name">
+                      <a 
+                        :href="getProductUrl(item)" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="order-item-name"
+                        :title="'View ' + item.product_name + ' ↗'"
+                      >
                         {{ item.product_name }}
-                      </router-link>
-                      <span v-else class="order-item-name">{{ item.product_name }}</span>
+                      </a>
 
                       <div class="order-item-attributes">
                         <span v-if="item.variant?.size" class="item-attr-tag">Size: {{ item.variant.size }}</span>
@@ -457,8 +503,9 @@
                       {{ retryingOrderId === order.id ? 'Connecting...' : '💳 Pay Now' }}
                     </button>
 
-                    <!-- Print / Download Invoice -->
+                    <!-- Print / Download Invoice (Only if payment is completed/paid) -->
                     <button 
+                      v-if="order.payment_status === 'paid' || order.status === 'completed' || order.status === 'delivered'"
                       type="button" 
                       class="btn btn--secondary btn--sm order-action-btn"
                       @click="printCustomerInvoice(order)"
@@ -951,8 +998,19 @@ const formatPrice = (amount) => {
 };
 
 const getItemImage = (item) => {
+  if (!item) return '/asset/occasion/Party-wear.png';
+  if (item.image_url) {
+    const img = item.image_url;
+    return img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`);
+  }
   if (item?.product?.images && item.product.images.length > 0) {
-    const img = item.product.images[0].image_path;
+    const p = item.product.images.find(i => i.is_primary) || item.product.images[0];
+    const img = p.url || p.image_path;
+    return img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`);
+  }
+  if (item?.variant?.product?.images && item.variant.product.images.length > 0) {
+    const p = item.variant.product.images.find(i => i.is_primary) || item.variant.product.images[0];
+    const img = p.url || p.image_path;
     return img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`);
   }
   if (item?.variant?.image_path) {
@@ -960,6 +1018,15 @@ const getItemImage = (item) => {
     return img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`);
   }
   return '/asset/occasion/Party-wear.png';
+};
+
+const getProductUrl = (item) => {
+  if (!item) return '/shop';
+  const target = item.product_uuid || item.product_slug || item.product?.uuid || item.product?.slug || item.variant?.product?.uuid || item.variant?.product?.slug || item.product_id;
+  if (target) {
+    return `/products/${target}`;
+  }
+  return '/shop';
 };
 
 const getOrderTrackingUrl = (order) => {
@@ -1056,58 +1123,63 @@ const getPaymentLabel = (paymentStatus, method) => {
   return isCod ? 'Cash on Delivery' : 'Payment Pending';
 };
 
+const getStepIndex = (status) => {
+  const stepOrder = {
+    'order_placed': 1,
+    'pending': 1,
+    'order_confirmed': 2,
+    'confirmed': 2,
+    'processing': 3,
+    'ready_to_ship': 4,
+    'shipped': 5,
+    'delivered': 6,
+    'completed': 6,
+  };
+  return stepOrder[status] || 1;
+};
+
 const getStepperWidth = (status) => {
-  switch (status) {
-    case 'order_placed':
-    case 'pending':
-      return '10%';
-    case 'order_confirmed':
-    case 'confirmed':
-      return '30%';
-    case 'processing':
-      return '50%';
-    case 'ready_to_ship':
+  const idx = getStepIndex(status);
+  switch (idx) {
+    case 1:
+      return '0%';
+    case 2:
+      return '20%';
+    case 3:
+      return '40%';
+    case 4:
       return '60%';
-    case 'shipped':
+    case 5:
       return '80%';
-    case 'delivered':
+    case 6:
       return '100%';
     default:
-      return '10%';
+      return '0%';
   }
 };
 
 const isStepCompleted = (status, step) => {
-  const stepOrder = {
-    'order_placed': 1,
-    'pending': 1,
-    'order_confirmed': 2,
-    'confirmed': 2,
-    'processing': 3,
-    'ready_to_ship': 3,
-    'shipped': 4,
-    'delivered': 5,
-  };
-  const current = stepOrder[status] || 1;
-  return current >= step;
+  const current = getStepIndex(status);
+  if (current === 6 && (status === 'delivered' || status === 'completed')) {
+    return step <= 6;
+  }
+  return step < current;
 };
 
 const isCurrentStep = (status, step) => {
-  const stepOrder = {
-    'order_placed': 1,
-    'pending': 1,
-    'order_confirmed': 2,
-    'confirmed': 2,
-    'processing': 3,
-    'ready_to_ship': 3,
-    'shipped': 4,
-    'delivered': 5,
-  };
-  const current = stepOrder[status] || 1;
+  const current = getStepIndex(status);
+  if (current === 6 && (status === 'delivered' || status === 'completed')) {
+    return false;
+  }
   return current === step;
 };
 
 const printCustomerInvoice = (order) => {
+  if (order.payment_status !== 'paid' && order.status !== 'completed' && order.status !== 'delivered') {
+    alert('Tax Invoice is available only after payment has been successfully completed.');
+    return;
+  }
+
   const itemsHtml = (order.items || []).map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
@@ -1580,25 +1652,28 @@ onMounted(() => {
 
 /* Stepper Progress */
 .order-stepper-container {
-  padding: 1.25rem 1.25rem 0.75rem 1.25rem;
+  padding: 1.5rem 1.25rem 1rem 1.25rem;
   background: #ffffff;
   border-bottom: 1px solid #f8f1f4;
+  overflow-x: auto;
 }
 
 .order-stepper-bar {
   position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  max-width: 600px;
+  align-items: flex-start;
+  min-width: 600px;
+  max-width: 860px;
   margin: 0 auto 0.75rem auto;
+  padding: 0 16px;
 }
 
 .stepper-track-bg {
   position: absolute;
-  top: 14px;
-  left: 5%;
-  right: 5%;
+  top: 16px;
+  left: 45px;
+  right: 45px;
   height: 3px;
   background: #e2e8f0;
   z-index: 1;
@@ -1606,12 +1681,13 @@ onMounted(() => {
 
 .stepper-track-active {
   position: absolute;
-  top: 14px;
-  left: 5%;
+  top: 16px;
+  left: 45px;
   height: 3px;
-  background: #6E1F3A;
+  background: #10b981;
   z-index: 2;
-  transition: width 0.4s ease;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: calc(100% - 90px);
 }
 
 .stepper-node {
@@ -1620,17 +1696,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 90px;
+  flex-shrink: 0;
 }
 
 .node-circle {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #f1f5f9;
   border: 2px solid #cbd5e1;
-  color: #94a3b8;
-  font-size: 0.75rem;
+  color: #64748b;
+  font-size: 0.82rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1639,29 +1717,36 @@ onMounted(() => {
 }
 
 .stepper-node.completed .node-circle {
-  background: #6E1F3A;
-  border-color: #6E1F3A;
+  background: #10b981;
+  border-color: #10b981;
   color: #ffffff;
+  box-shadow: 0 2px 5px rgba(16, 185, 129, 0.25);
 }
 
 .stepper-node.current .node-circle {
-  background: #ffffff;
-  border-color: #6E1F3A;
-  color: #6E1F3A;
-  box-shadow: 0 0 0 3px rgba(110, 31, 58, 0.15);
+  background: #5B163A;
+  border-color: #5B163A;
+  color: #ffffff;
+  box-shadow: 0 0 0 6px rgba(91, 22, 58, 0.15), 0 3px 6px rgba(91, 22, 58, 0.2);
 }
 
 .node-label {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: #64748b;
   text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.stepper-node.completed .node-label,
-.stepper-node.current .node-label {
-  color: #6E1F3A;
+.stepper-node.completed .node-label {
+  color: #0f172a;
   font-weight: 700;
+}
+
+.stepper-node.current .node-label {
+  color: #5B163A;
+  font-weight: 800;
 }
 
 .order-tracking-banner {

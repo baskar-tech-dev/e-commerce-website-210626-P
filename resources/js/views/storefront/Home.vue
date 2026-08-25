@@ -1123,7 +1123,7 @@ const reviews = [
 const faqs = [
   { question: 'What is your return/exchange policy?', answer: 'Returns are accepted ONLY for damaged products. An uninterrupted unboxing video is mandatory to process any return or replacement request. The video must clearly show the package being opened from its sealed condition.' },
   { question: 'How long will my order take to arrive?', answer: 'Standard delivery takes 3 to 5 business days for major metro cities and 5 to 7 business days for other regions across India.' },
-  { question: 'Do you offer cash on delivery (COD)?', answer: 'Yes, we offer Cash on Delivery across most pin codes in India for orders below ₹10,000.' },
+  { question: 'Do you offer cash on delivery (COD)?', answer: 'No, we do not offer Cash on Delivery (COD). We accept 100% secure online prepaid payments via UPI (Google Pay, PhonePe, Paytm), Net Banking, and Debit/Credit Cards.' },
   { question: 'How do I choose the right size?', answer: 'Please check our detailed Sizing Guide available on every product page. If you are between sizes, we recommend selecting one size up for a more comfortable ethnic wear fit.' },
   { question: 'How can I contact support?', answer: 'You can contact our support team via email at support@mayasreefashion.com, call us at +91 99442 85102, or chat directly via the WhatsApp Floating Widget.' }
 ];

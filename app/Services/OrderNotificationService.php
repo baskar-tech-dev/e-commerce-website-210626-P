@@ -62,6 +62,15 @@ class OrderNotificationService
     public function sendOrderPlacedNotification(Order $order): bool
     {
         try {
+            // 0. Only send email after the payment is confirmed or paid (or for COD orders)
+            $isPaid = $order->payment_status === 'paid';
+            $isCod = strtolower((string)($order->payment_method ?? '')) === 'cod';
+
+            if (!$isPaid && !$isCod) {
+                Log::info("Order #{$order->order_number} is unpaid (payment_status: {$order->payment_status}, method: {$order->payment_method}). Email notification skipped until payment is confirmed.");
+                return false;
+            }
+
             // 1. Check if email notifications are enabled in settings (default true)
             $isEnabled = Setting::get('order_notification_enabled', 'email', true);
             if (is_string($isEnabled)) {
