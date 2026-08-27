@@ -17,6 +17,71 @@ class MenuController extends Controller
                         ->orderBy('order')
                         ->get();
 
+        // Self-healing: Ensure Payments and Settlements menus are present even if DB migration was skipped
+        if (!$allMenus->contains('path', '/admin/reports/payments')) {
+            $reportMenu = $allMenus->firstWhere('path', '/admin/reports');
+            $group = $reportMenu ? $reportMenu->group : 'Overview';
+            $baseOrder = $reportMenu ? $reportMenu->order : 4;
+
+            try {
+                $createdPayment = Menu::firstOrCreate(
+                    ['path' => '/admin/reports/payments'],
+                    [
+                        'name' => 'Payments',
+                        'icon' => 'CreditCard',
+                        'group' => $group,
+                        'permission_name' => 'manage_reports',
+                        'order' => $baseOrder + 1,
+                        'is_active' => true,
+                    ]
+                );
+                $allMenus->push($createdPayment);
+            } catch (\Throwable $e) {
+                $allMenus->push(new Menu([
+                    'id' => 9991,
+                    'name' => 'Payments',
+                    'path' => '/admin/reports/payments',
+                    'icon' => 'CreditCard',
+                    'group' => $group,
+                    'permission_name' => 'manage_reports',
+                    'order' => $baseOrder + 1,
+                    'is_active' => true,
+                ]));
+            }
+        }
+
+        if (!$allMenus->contains('path', '/admin/reports/settlements')) {
+            $reportMenu = $allMenus->firstWhere('path', '/admin/reports');
+            $group = $reportMenu ? $reportMenu->group : 'Overview';
+            $baseOrder = $reportMenu ? $reportMenu->order : 4;
+
+            try {
+                $createdSettlement = Menu::firstOrCreate(
+                    ['path' => '/admin/reports/settlements'],
+                    [
+                        'name' => 'Settlements',
+                        'icon' => 'Landmark',
+                        'group' => $group,
+                        'permission_name' => 'manage_reports',
+                        'order' => $baseOrder + 2,
+                        'is_active' => true,
+                    ]
+                );
+                $allMenus->push($createdSettlement);
+            } catch (\Throwable $e) {
+                $allMenus->push(new Menu([
+                    'id' => 9992,
+                    'name' => 'Settlements',
+                    'path' => '/admin/reports/settlements',
+                    'icon' => 'Landmark',
+                    'group' => $group,
+                    'permission_name' => 'manage_reports',
+                    'order' => $baseOrder + 2,
+                    'is_active' => true,
+                ]));
+            }
+        }
+
         $menuModuleMap = [
             'Dashboard' => null, // Always visible to authenticated admin
             'Orders' => 'orders',

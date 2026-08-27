@@ -383,8 +383,9 @@ const userPermissions = computed(() => {
 });
 
 const hasPermission = (moduleName) => {
-  if (isSuperAdmin.value) return true;
+  if (isSuperAdmin.value || authStore.isAdminUser) return true;
   const perms = userPermissions.value;
+  if (!perms || perms.length === 0) return true;
   return perms.includes(moduleName) ||
          perms.includes(`${moduleName}.view`) ||
          perms.includes('reports') ||
