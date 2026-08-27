@@ -256,7 +256,7 @@ class CashfreeService
 
             $payload = [
                 'pagination' => [
-                    'limit' => 5,
+                    'limit' => 10,
                     'cursor' => null,
                 ],
                 'filters' => [
@@ -339,7 +339,7 @@ class CashfreeService
 
                 $payload = [
                     'pagination' => [
-                        'limit' => min(max($limit, 5), 100),
+                        'limit' => min(max($limit, 10), 100),
                         'cursor' => $cursor ?: null,
                     ],
                     'filters' => $reconFilters,
