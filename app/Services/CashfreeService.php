@@ -237,6 +237,54 @@ class CashfreeService
      *
      * @param array $filters ['start_date' => '', 'end_date' => '', 'settlement_id' => '', 'utr' => '']
      * @param string|null $cursor
+    /**
+     * Test Cashfree API connection & authentication.
+     */
+    public function testConnection(): array
+    {
+        if (!$this->isConfigured()) {
+            return [
+                'success' => false,
+                'environment' => $this->environment,
+                'message' => 'Cashfree credentials (CASHFREE_APP_ID or CASHFREE_SECRET_KEY) are missing in .env.',
+            ];
+        }
+
+        try {
+            $response = Http::withHeaders($this->getHeaders())
+                ->timeout(10)
+                ->get("{$this->baseUrl}/orders?limit=1");
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'environment' => $this->environment,
+                    'message' => 'Cashfree PG API credentials verified & successfully connected.',
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            $body = $response->json();
+            return [
+                'success' => false,
+                'environment' => $this->environment,
+                'status_code' => $response->status(),
+                'error' => $body['message'] ?? ($response->reason() ?: 'Unknown response from Cashfree'),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'environment' => $this->environment,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Fetch settlements from Cashfree Reconciliation / Settlements API.
+     *
+     * @param array $filters ['start_date' => '', 'end_date' => '', 'settlement_id' => '', 'utr' => '']
+     * @param string|null $cursor
      * @param int $limit
      * @return array
      * @throws Exception
@@ -252,18 +300,33 @@ class CashfreeService
 
         return Cache::remember($cacheKey, 120, function () use ($filters, $cursor, $limit) {
             try {
-                // Prepare pagination & filter parameters
+                // Prepare filters with Cashfree ReconFilter compliant date fields
+                $startDate = !empty($filters['start_date']) 
+                    ? date('Y-m-d\TH:i:s\+05:30', strtotime($filters['start_date'])) 
+                    : date('Y-m-d\TH:i:s\+05:30', strtotime('-30 days'));
+
+                $endDate = !empty($filters['end_date']) 
+                    ? date('Y-m-d\TH:i:s\+05:30', strtotime($filters['end_date'] . ' 23:59:59')) 
+                    : date('Y-m-d\TH:i:s\+05:30');
+
+                $reconFilters = [
+                    'start_date_initiated_on' => $startDate,
+                    'end_date_initiated_on' => $endDate,
+                ];
+
+                if (!empty($filters['settlement_id'])) {
+                    $reconFilters['cf_settlement_ids'] = [(string) $filters['settlement_id']];
+                }
+                if (!empty($filters['utr'])) {
+                    $reconFilters['settlement_utrs'] = [(string) $filters['utr']];
+                }
+
                 $payload = [
                     'pagination' => [
                         'limit' => min(max($limit, 5), 100),
                         'cursor' => $cursor ?: null,
                     ],
-                    'filters' => array_filter([
-                        'start_date' => !empty($filters['start_date']) ? date('c', strtotime($filters['start_date'])) : null,
-                        'end_date' => !empty($filters['end_date']) ? date('c', strtotime($filters['end_date'])) : null,
-                        'cf_settlement_ids' => !empty($filters['settlement_id']) ? [$filters['settlement_id']] : null,
-                        'settlement_utrs' => !empty($filters['utr']) ? [$filters['utr']] : null,
-                    ]),
+                    'filters' => $reconFilters,
                 ];
 
                 // Attempt Settlement Reconciliation API (POST /settlement/recon)
