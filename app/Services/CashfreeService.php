@@ -251,17 +251,16 @@ class CashfreeService
         }
 
         try {
-            $startDate = date('Y-m-d\TH:i:s\+05:30', strtotime('-30 days'));
-            $endDate = date('Y-m-d\TH:i:s\+05:30');
+            $startDate = date('Y-m-d\TH:i:s\Z', strtotime('-30 days'));
+            $endDate = date('Y-m-d\TH:i:s\Z');
 
             $payload = [
                 'pagination' => [
                     'limit' => 10,
-                    'cursor' => null,
                 ],
                 'filters' => [
-                    'start_date_initiated_on' => $startDate,
-                    'end_date_initiated_on' => $endDate,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
                 ],
             ];
 
@@ -316,24 +315,26 @@ class CashfreeService
 
         return Cache::remember($cacheKey, 120, function () use ($filters, $cursor, $limit) {
             try {
-                // Prepare filters with Cashfree ReconFilter compliant date fields
+                // Prepare filters (Cashfree accepts start_date / end_date or start_date_initiated_on)
                 $startDate = !empty($filters['start_date']) 
-                    ? date('Y-m-d\TH:i:s\+05:30', strtotime($filters['start_date'])) 
-                    : date('Y-m-d\TH:i:s\+05:30', strtotime('-30 days'));
+                    ? date('Y-m-d\TH:i:s\Z', strtotime($filters['start_date'])) 
+                    : date('Y-m-d\TH:i:s\Z', strtotime('-30 days'));
 
                 $endDate = !empty($filters['end_date']) 
-                    ? date('Y-m-d\TH:i:s\+05:30', strtotime($filters['end_date'] . ' 23:59:59')) 
-                    : date('Y-m-d\TH:i:s\+05:30');
+                    ? date('Y-m-d\TH:i:s\Z', strtotime($filters['end_date'] . ' 23:59:59')) 
+                    : date('Y-m-d\TH:i:s\Z');
 
                 $reconFilters = [
-                    'start_date_initiated_on' => $startDate,
-                    'end_date_initiated_on' => $endDate,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
                 ];
 
                 if (!empty($filters['settlement_id'])) {
+                    $reconFilters['settlement_id'] = (string) $filters['settlement_id'];
                     $reconFilters['cf_settlement_ids'] = [(string) $filters['settlement_id']];
                 }
                 if (!empty($filters['utr'])) {
+                    $reconFilters['settlement_utr'] = (string) $filters['utr'];
                     $reconFilters['settlement_utrs'] = [(string) $filters['utr']];
                 }
 
