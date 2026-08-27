@@ -115,7 +115,7 @@
             @click="selectAllPermissions"
             style="padding: 6px 14px; font-size: 0.82rem; background: #ffffff; cursor: pointer;"
           >
-            ✅ Select All (90)
+            ✅ Select All ({{ allPermissions.length }})
           </button>
           
           <button 
@@ -192,7 +192,12 @@
                     <!-- Module Label & Key -->
                     <td style="padding: 12px 18px;">
                       <div style="display: flex; flex-direction: column;">
-                        <span style="font-weight: 600; color: #1e293b; font-size: 0.88rem;">{{ mod.label }}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-weight: 600; color: #1e293b; font-size: 0.88rem;">{{ mod.label }}</span>
+                          <span v-if="mod.view_only" class="badge badge--secondary" style="font-size: 0.65rem; padding: 1px 6px; font-weight: 600; background: #f1f5f9; color: #475569;">
+                            👁️ View Only
+                          </span>
+                        </div>
                         <span style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">{{ mod.key }}</span>
                       </div>
                     </td>

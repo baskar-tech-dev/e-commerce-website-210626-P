@@ -30,7 +30,7 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        if ($className !== \Tests\Feature\MenuApiTest::class) {
+        if (!in_array($className, [\Tests\Feature\MenuApiTest::class, \Tests\Feature\CashfreeReportApiTest::class])) {
             $admin = User::factory()->create();
             $superAdmin = Role::firstOrCreate(['name' => 'super_admin']);
             $admin->assignRole($superAdmin);

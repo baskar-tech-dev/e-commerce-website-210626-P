@@ -15,7 +15,12 @@ class PermissionSeeder extends Seeder
     {
         $modules = [
             'dashboard' => 'Dashboard Overview',
-            'reports' => 'Financial & Analytics Reports',
+            'reports' => 'Business Analytics & Reports Hub',
+            'reports_sales' => 'Sales Analysis Report',
+            'reports_inventory' => 'Inventory & Valuation Report',
+            'reports_customers' => 'Customer Analytics Report',
+            'payments' => 'Cashfree Payments Report',
+            'settlements' => 'Payout Settlements Report',
             'orders' => 'Customer Orders',
             'returns' => 'Returns & Refunds',
             'couriers' => 'Couriers & Logistics',
@@ -49,8 +54,26 @@ class PermissionSeeder extends Seeder
 
         $allCreatedPermissionIds = [];
 
+        $viewOnlyModules = [
+            'dashboard',
+            'reports',
+            'reports_sales',
+            'reports_inventory',
+            'reports_customers',
+            'payments',
+            'settlements',
+        ];
+
+        // Clean up any non-view permissions for view-only modules
+        Permission::whereIn('module', $viewOnlyModules)
+            ->whereIn('action', ['create', 'edit', 'delete'])
+            ->delete();
+
         foreach ($modules as $moduleKey => $moduleLabel) {
-            foreach ($actions as $actionKey => $actionDesc) {
+            $isViewOnly = in_array($moduleKey, $viewOnlyModules);
+            $moduleActions = $isViewOnly ? ['view' => $actions['view']] : $actions;
+
+            foreach ($moduleActions as $actionKey => $actionDesc) {
                 $permName = "{$moduleKey}.{$actionKey}";
                 $description = "{$actionDesc} {$moduleLabel}";
 

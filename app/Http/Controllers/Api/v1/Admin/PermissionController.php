@@ -15,7 +15,14 @@ class PermissionController extends Controller
         $moduleDefinitions = [
             'Overview' => [
                 ['key' => 'dashboard', 'label' => 'Dashboard Overview', 'icon' => 'LayoutDashboard'],
-                ['key' => 'reports', 'label' => 'Financial & Analytics Reports', 'icon' => 'TrendingUp', 'confidential' => true],
+            ],
+            'Financial & Reports' => [
+                ['key' => 'reports_sales', 'label' => 'Sales Analysis Report', 'icon' => 'TrendingUp', 'confidential' => true],
+                ['key' => 'reports_inventory', 'label' => 'Warehouse & Inventory Report', 'icon' => 'Package', 'confidential' => true],
+                ['key' => 'reports_customers', 'label' => 'Customer Analytics Report', 'icon' => 'Users', 'confidential' => true],
+                ['key' => 'payments', 'label' => 'Cashfree Payments Report', 'icon' => 'CreditCard', 'confidential' => true],
+                ['key' => 'settlements', 'label' => 'Payout Settlements Report', 'icon' => 'Landmark', 'confidential' => true],
+                ['key' => 'reports', 'label' => 'All Analytics Hub (Full Access)', 'icon' => 'FileText', 'confidential' => true],
             ],
             'Sales' => [
                 ['key' => 'orders', 'label' => 'Customer Orders', 'icon' => 'ShoppingCart'],
@@ -51,13 +58,26 @@ class PermissionController extends Controller
             ],
         ];
 
+        $viewOnlyModules = [
+            'dashboard',
+            'reports',
+            'reports_sales',
+            'reports_inventory',
+            'reports_customers',
+            'payments',
+            'settlements',
+        ];
+
         $matrix = [];
         foreach ($moduleDefinitions as $groupName => $modules) {
             $groupList = [];
             foreach ($modules as $mod) {
                 $modKey = $mod['key'];
+                $isViewOnly = in_array($modKey, $viewOnlyModules) || ($mod['view_only'] ?? false);
+                $allowedActions = $isViewOnly ? ['view'] : ['view', 'create', 'edit', 'delete'];
+
                 $actions = [];
-                foreach (['view', 'create', 'edit', 'delete'] as $act) {
+                foreach ($allowedActions as $act) {
                     $perm = $permissions->first(function ($p) use ($modKey, $act) {
                         return ($p->module === $modKey && $p->action === $act) || $p->name === "{$modKey}.{$act}";
                     });
@@ -75,6 +95,7 @@ class PermissionController extends Controller
                         'label' => $mod['label'],
                         'icon' => $mod['icon'] ?? 'Layers',
                         'confidential' => $mod['confidential'] ?? false,
+                        'view_only' => $isViewOnly,
                         'actions' => $actions,
                     ];
                 }

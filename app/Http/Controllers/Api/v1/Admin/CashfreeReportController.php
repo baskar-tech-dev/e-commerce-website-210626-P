@@ -1,0 +1,497 @@
+<?php
+
+namespace App\Http\Controllers\Api\v1\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Services\CashfreeService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Exception;
+
+class CashfreeReportController extends Controller
+{
+    protected CashfreeService $cashfreeService;
+
+    public function __construct(CashfreeService $cashfreeService)
+    {
+        $this->cashfreeService = $cashfreeService;
+    }
+
+    /**
+     * Parse date presets (today, yesterday, last_7_days, last_30_days, custom).
+     */
+    protected function resolveDateRange(Request $request): array
+    {
+        $preset = $request->input('date_preset', '');
+        $startDate = null;
+        $endDate = null;
+
+        switch ($preset) {
+            case 'today':
+                $startDate = Carbon::today()->startOfDay();
+                $endDate = Carbon::today()->endOfDay();
+                break;
+            case 'yesterday':
+                $startDate = Carbon::yesterday()->startOfDay();
+                $endDate = Carbon::yesterday()->endOfDay();
+                break;
+            case 'last_7_days':
+                $startDate = Carbon::now()->subDays(7)->startOfDay();
+                $endDate = Carbon::now()->endOfDay();
+                break;
+            case 'last_30_days':
+                $startDate = Carbon::now()->subDays(30)->startOfDay();
+                $endDate = Carbon::now()->endOfDay();
+                break;
+            case 'custom':
+            default:
+                if ($request->filled('start_date')) {
+                    $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+                }
+                if ($request->filled('end_date')) {
+                    $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+                }
+                break;
+        }
+
+        return [$startDate, $endDate];
+    }
+
+    /**
+     * Get Cashfree Payments Report.
+     *
+     * GET /api/admin/reports/payments
+     */
+    public function payments(Request $request): JsonResponse
+    {
+        try {
+            [$startDate, $endDate] = $this->resolveDateRange($request);
+
+            $query = Payment::with(['order.user']);
+
+            // Apply Date Filter
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } elseif ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            } elseif ($endDate) {
+                $query->where('created_at', '<=', $endDate);
+            }
+
+            // Filter by Payment Status (captured/paid, pending, failed, refunded)
+            if ($request->filled('payment_status')) {
+                $status = strtolower($request->input('payment_status'));
+                if ($status === 'success' || $status === 'paid') {
+                    $query->whereIn('status', ['captured', 'paid']);
+                } else {
+                    $query->where('status', $status);
+                }
+            }
+
+            // Filter by Payment Method (upi, card, netbanking, wallet, cod, etc.)
+            if ($request->filled('payment_method')) {
+                $method = strtolower($request->input('payment_method'));
+                $query->where('method', 'like', "%{$method}%");
+            }
+
+            // Search by Order ID, Cashfree Order ID, Payment ID, Customer Name/Email
+            if ($request->filled('search')) {
+                $search = trim($request->input('search'));
+                $query->where(function ($q) use ($search) {
+                    $q->where('gateway_payment_id', 'like', "%{$search}%")
+                      ->orWhere('gateway_order_id', 'like', "%{$search}%")
+                      ->orWhereHas('order', function ($oq) use ($search) {
+                          $oq->where('order_number', 'like', "%{$search}%")
+                             ->orWhere('shipping_first_name', 'like', "%{$search}%")
+                             ->orWhere('shipping_last_name', 'like', "%{$search}%")
+                             ->orWhere('shipping_phone', 'like', "%{$search}%")
+                             ->orWhereHas('user', function ($uq) use ($search) {
+                                 $uq->where('email', 'like', "%{$search}%")
+                                    ->orWhere('first_name', 'like', "%{$search}%")
+                                    ->orWhere('last_name', 'like', "%{$search}%");
+                             });
+                      });
+                });
+            }
+
+            $perPage = min(max((int) $request->input('per_page', 15), 5), 100);
+            $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            // Transform payments to clean internal response structure (zero secret leak)
+            $transformed = collect($paginator->items())->map(function ($payment) {
+                $order = $payment->order;
+                $user = $order?->user;
+
+                $cfStatus = 'PENDING';
+                if ($payment->status === 'captured' || $payment->status === 'paid') {
+                    $cfStatus = 'SUCCESS';
+                } elseif ($payment->status === 'failed') {
+                    $cfStatus = 'FAILED';
+                } elseif ($payment->status === 'refunded') {
+                    $cfStatus = 'REFUNDED';
+                }
+
+                if (is_array($payment->gateway_response) && !empty($payment->gateway_response['payment_status'])) {
+                    $cfStatus = strtoupper($payment->gateway_response['payment_status']);
+                }
+
+                $customerName = trim(($order?->shipping_first_name ?? '') . ' ' . ($order?->shipping_last_name ?? ''));
+                if (empty($customerName)) {
+                    $customerName = $user?->name ?? 'Customer';
+                }
+
+                return [
+                    'id' => $payment->id,
+                    'uuid' => $payment->uuid,
+                    'order_id' => $order?->order_number ?? ("MSF-ORD-" . $payment->order_id),
+                    'order_db_id' => $payment->order_id,
+                    'cashfree_order_id' => $payment->gateway_order_id ?? ($order?->gateway_order_id ?? $order?->order_number),
+                    'payment_id' => $payment->gateway_payment_id ?? 'N/A',
+                    'customer_name' => $customerName,
+                    'customer_email' => $user?->email ?? 'customer@mayasree.com',
+                    'customer_phone' => $order?->shipping_phone ?? ($user?->phone ?? '—'),
+                    'order_amount' => (float) ($order?->grand_total ?? $payment->amount),
+                    'payment_amount' => (float) $payment->amount,
+                    'payment_method' => strtoupper($payment->method ?? 'ONLINE'),
+                    'payment_status' => $payment->status,
+                    'cashfree_status' => $cfStatus,
+                    'payment_date' => ($payment->paid_at ?? $payment->created_at)?->format('Y-m-d H:i:s') ?? date('Y-m-d H:i:s'),
+                    'failure_reason' => $payment->failure_reason,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cashfree payments report loaded successfully',
+                'data' => $transformed,
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@payments failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch Cashfree payment data at the moment. Please try again.',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Payments Summary KPIs.
+     *
+     * GET /api/admin/reports/payments/summary
+     */
+    public function paymentSummary(Request $request): JsonResponse
+    {
+        try {
+            $todayStart = Carbon::today()->startOfDay();
+            $todayEnd = Carbon::today()->endOfDay();
+
+            // Today's Total Payments (all statuses)
+            $todayTotalPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+
+            // Today's Successful Payments
+            $successfulPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->whereIn('status', ['captured', 'paid'])
+                ->count();
+
+            // Today's Pending Payments
+            $pendingPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->where('status', 'pending')
+                ->count();
+
+            // Today's Failed Payments
+            $failedPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->where('status', 'failed')
+                ->count();
+
+            // Today's Total Collection
+            $todayTotalCollection = (float) Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->whereIn('status', ['captured', 'paid'])
+                ->sum('amount');
+
+            // Overall Summary for Selected Range (if passed)
+            [$filterStart, $filterEnd] = $this->resolveDateRange($request);
+            $filterQuery = Payment::query();
+            if ($filterStart && $filterEnd) {
+                $filterQuery->whereBetween('created_at', [$filterStart, $filterEnd]);
+            }
+
+            $rangeTotalCollection = (float) (clone $filterQuery)->whereIn('status', ['captured', 'paid'])->sum('amount');
+            $rangeTotalPayments = (clone $filterQuery)->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'today_total_payments' => $todayTotalPayments,
+                    'successful_payments' => $successfulPayments,
+                    'pending_payments' => $pendingPayments,
+                    'failed_payments' => $failedPayments,
+                    'today_total_collection' => round($todayTotalCollection, 2),
+                    'range_total_collection' => round($rangeTotalCollection, 2),
+                    'range_total_payments' => $rangeTotalPayments,
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@paymentSummary failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to calculate payments summary.',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Settlements Report from Cashfree.
+     *
+     * GET /api/admin/reports/settlements
+     */
+    public function settlements(Request $request): JsonResponse
+    {
+        try {
+            [$startDate, $endDate] = $this->resolveDateRange($request);
+
+            $filters = [];
+            if ($startDate) {
+                $filters['start_date'] = $startDate->toIso8601String();
+            }
+            if ($endDate) {
+                $filters['end_date'] = $endDate->toIso8601String();
+            }
+            if ($request->filled('settlement_id')) {
+                $filters['settlement_id'] = trim($request->input('settlement_id'));
+            }
+            if ($request->filled('utr')) {
+                $filters['utr'] = trim($request->input('utr'));
+            }
+
+            $cursor = $request->input('cursor');
+            $limit = min(max((int) $request->input('limit', 15), 5), 50);
+
+            $rawSettlements = [];
+            $nextCursor = null;
+
+            if ($this->cashfreeService->isConfigured()) {
+                try {
+                    $cfResponse = $this->cashfreeService->getSettlements($filters, $cursor, $limit);
+
+                    if (isset($cfResponse['settlements']) && is_array($cfResponse['settlements'])) {
+                        $rawSettlements = $cfResponse['settlements'];
+                        $nextCursor = $cfResponse['pagination']['cursor'] ?? ($cfResponse['pagination']['next_cursor'] ?? null);
+                    } elseif (isset($cfResponse['data']) && is_array($cfResponse['data'])) {
+                        $rawSettlements = $cfResponse['data'];
+                    } elseif (is_array($cfResponse) && !isset($cfResponse['message'])) {
+                        $rawSettlements = $cfResponse;
+                    }
+                } catch (Exception $cfEx) {
+                    Log::warning("Cashfree settlements query warning: " . $cfEx->getMessage());
+                    // Fall back to empty list rather than 500 error if gateway is empty
+                    $rawSettlements = [];
+                }
+            }
+
+            // Filter in memory if local filters passed and gateway returns full set
+            $filteredCollection = collect($rawSettlements);
+
+            if (!empty($filters['settlement_id'])) {
+                $searchId = strtolower($filters['settlement_id']);
+                $filteredCollection = $filteredCollection->filter(function ($item) use ($searchId) {
+                    $id = strtolower((string) ($item['cf_settlement_id'] ?? $item['settlement_id'] ?? ''));
+                    return str_contains($id, $searchId);
+                });
+            }
+
+            if (!empty($filters['utr'])) {
+                $searchUtr = strtolower($filters['utr']);
+                $filteredCollection = $filteredCollection->filter(function ($item) use ($searchUtr) {
+                    $utr = strtolower((string) ($item['settlement_utr'] ?? $item['utr'] ?? ''));
+                    return str_contains($utr, $searchUtr);
+                });
+            }
+
+            // Transform each settlement into clean sanitized internal structure
+            $transformed = $filteredCollection->map(function ($item, $idx) {
+                $settlementId = (string) ($item['cf_settlement_id'] ?? $item['settlement_id'] ?? $item['id'] ?? ('SETT-' . ($idx + 1)));
+                $amount = (float) ($item['settlement_amount'] ?? $item['amount_settled'] ?? $item['amount'] ?? 0.0);
+                $status = strtoupper((string) ($item['settlement_status'] ?? $item['status'] ?? 'SETTLED'));
+                $utr = (string) ($item['settlement_utr'] ?? $item['utr'] ?? '—');
+                $type = strtoupper((string) ($item['settlement_type'] ?? $item['type'] ?? 'STANDARD'));
+                $ref = (string) ($item['settlement_reference'] ?? $item['reference_id'] ?? $item['cf_payment_id'] ?? '—');
+
+                $dateRaw = $item['settlement_date'] ?? $item['processed_at'] ?? $item['created_at'] ?? null;
+                $formattedDate = $dateRaw ? Carbon::parse($dateRaw)->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
+
+                return [
+                    'settlement_id' => $settlementId,
+                    'settlement_date' => $formattedDate,
+                    'settlement_amount' => round($amount, 2),
+                    'settlement_status' => $status,
+                    'utr' => $utr,
+                    'settlement_type' => $type,
+                    'settlement_reference' => $ref,
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Settlements report loaded successfully',
+                'data' => $transformed,
+                'pagination' => [
+                    'cursor' => $nextCursor,
+                    'limit' => $limit,
+                    'count' => $transformed->count(),
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@settlements failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch Cashfree payment data at the moment. Please try again.',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Settlements Summary KPIs.
+     *
+     * GET /api/admin/reports/settlements/summary
+     */
+    public function settlementSummary(Request $request): JsonResponse
+    {
+        try {
+            [$startDate, $endDate] = $this->resolveDateRange($request);
+            $filters = [];
+            if ($startDate) $filters['start_date'] = $startDate->toIso8601String();
+            if ($endDate) $filters['end_date'] = $endDate->toIso8601String();
+
+            $totalSettledAmount = 0.0;
+            $settlementsCount = 0;
+            $latestSettlementAmount = 0.0;
+            $latestSettlementDate = null;
+
+            if ($this->cashfreeService->isConfigured()) {
+                try {
+                    $cfResponse = $this->cashfreeService->getSettlements($filters, null, 50);
+                    $items = $cfResponse['settlements'] ?? ($cfResponse['data'] ?? (is_array($cfResponse) ? $cfResponse : []));
+
+                    if (is_array($items) && count($items) > 0) {
+                        $settlementsCount = count($items);
+                        $totalSettledAmount = (float) collect($items)->sum(function ($item) {
+                            return (float) ($item['settlement_amount'] ?? $item['amount_settled'] ?? $item['amount'] ?? 0.0);
+                        });
+
+                        $latest = $items[0] ?? null;
+                        if ($latest) {
+                            $latestSettlementAmount = (float) ($latest['settlement_amount'] ?? $latest['amount_settled'] ?? $latest['amount'] ?? 0.0);
+                            $dateRaw = $latest['settlement_date'] ?? $latest['processed_at'] ?? $latest['created_at'] ?? null;
+                            $latestSettlementDate = $dateRaw ? Carbon::parse($dateRaw)->format('Y-m-d') : null;
+                        }
+                    }
+                } catch (Exception $e) {
+                    Log::warning("Cashfree settlement summary warning: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_settled_amount' => round($totalSettledAmount, 2),
+                    'settlements_count' => $settlementsCount,
+                    'latest_settlement' => round($latestSettlementAmount, 2),
+                    'latest_settlement_date' => $latestSettlementDate ?: '—',
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@settlementSummary failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to calculate settlements summary.',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify a specific payment live with Cashfree.
+     *
+     * POST /api/admin/reports/payments/{id}/verify-cashfree
+     */
+    public function verifyPaymentWithCashfree(Request $request, int $id): JsonResponse
+    {
+        try {
+            $payment = Payment::with('order')->findOrFail($id);
+            $orderIdentifier = $payment->gateway_order_id ?? ($payment->order?->gateway_order_id ?? $payment->order?->order_number);
+
+            if (empty($orderIdentifier)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order identifier is missing for Cashfree verification.',
+                ], 400);
+            }
+
+            $cfPayments = $this->cashfreeService->getOrderPayments($orderIdentifier);
+            
+            $successfulPayment = null;
+            if (is_array($cfPayments)) {
+                foreach ($cfPayments as $attempt) {
+                    if (strtoupper($attempt['payment_status'] ?? '') === 'SUCCESS') {
+                        $successfulPayment = $attempt;
+                        break;
+                    }
+                }
+            }
+
+            if ($successfulPayment) {
+                $payment->status = 'captured';
+                $payment->gateway_payment_id = (string) ($successfulPayment['cf_payment_id'] ?? $payment->gateway_payment_id);
+                $payment->gateway_response = $successfulPayment;
+                $payment->paid_at = now();
+                $payment->save();
+
+                if ($payment->order && $payment->order->payment_status !== 'paid') {
+                    $payment->order->payment_status = 'paid';
+                    if ($payment->order->status === 'order_placed' || $payment->order->status === 'pending') {
+                        $payment->order->status = 'processing';
+                    }
+                    $payment->order->gateway_payment_id = $payment->gateway_payment_id;
+                    $payment->order->save();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cashfree status queried and synchronized successfully',
+                'data' => [
+                    'payment_id' => $payment->id,
+                    'status' => $payment->status,
+                    'cashfree_status' => $successfulPayment ? 'SUCCESS' : 'PENDING/FAILED',
+                    'gateway_payment_id' => $payment->gateway_payment_id,
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            Log::error("Cashfree live verify failed for payment #{$id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch Cashfree payment data at the moment. Please try again.',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+}

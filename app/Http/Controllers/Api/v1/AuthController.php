@@ -179,26 +179,54 @@ class AuthController extends Controller
     /**
      * Initiate forgot password flow.
      */
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(Request $request, \App\Services\OrderNotificationService $notificationService): JsonResponse
     {
         $request->validate([
             'email' => 'required|email',
         ]);
 
-        $user = User::where('email', strtolower(trim($request->email)))->first();
+        $email = strtolower(trim($request->email));
+        $user = User::where('email', $email)->first();
 
         if (!$user) {
-            // Return success anyway to avoid user enumeration vulnerability
+            // Return safe success message to prevent user enumeration
             return response()->json([
                 'success' => true,
                 'message' => 'If an account exists with that email, password reset instructions have been sent.',
             ]);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Password reset instructions have been sent to your email address.',
-        ]);
+        try {
+            // Generate a secure reset token
+            $token = Str::random(64);
+
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $email],
+                [
+                    'token' => Hash::make($token),
+                    'created_at' => now(),
+                ]
+            );
+
+            $resetUrl = url("/reset-password?token={$token}&email=" . urlencode($email));
+
+            // Configure SMTP settings dynamically and dispatch email
+            $notificationService->configureDynamicMailer();
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\PasswordResetMail($user, $resetUrl));
+
+            Log::info("Password reset email sent to {$email}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset instructions have been sent to your email address.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Failed to send password reset email to {$email}: " . $e->getMessage());
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset instructions have been sent to your email address.',
+            ]);
+        }
     }
 
     /**
@@ -208,10 +236,12 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+            'token' => 'nullable|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::where('email', strtolower(trim($request->email)))->first();
+        $email = strtolower(trim($request->email));
+        $user = User::where('email', $email)->first();
 
         if (!$user) {
             return response()->json([
@@ -220,12 +250,23 @@ class AuthController extends Controller
             ], 400);
         }
 
+        if ($request->filled('token')) {
+            $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+            if (!$record || !Hash::check($request->token, $record->token)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The password reset token is invalid or has expired.',
+                ], 400);
+            }
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+        }
+
         $user->password = Hash::make($request->password);
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Your password has been reset successfully. Please sign in with your new password.',
+            'message' => 'Password has been reset successfully. You can now sign in with your new password.',
         ]);
     }
 }

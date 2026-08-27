@@ -7,18 +7,47 @@
   </div>
 
   <!-- Tab Bar Selector -->
-  <div style="display: flex; gap: var(--spacing-sm); border-bottom: 1px solid var(--color-border); padding-bottom: 1px; margin-bottom: var(--spacing-lg); margin-top: var(--spacing-md);">
+  <div style="display: flex; gap: var(--spacing-sm); border-bottom: 1px solid var(--color-border); padding-bottom: 1px; margin-bottom: var(--spacing-lg); margin-top: var(--spacing-md); flex-wrap: wrap;">
     <button 
-      v-for="tab in ['sales', 'inventory', 'customers']" 
-      :key="tab"
-      @click="activeTab = tab"
-      :class="['btn', activeTab === tab ? 'btn--primary' : 'btn--secondary']"
+      v-if="canViewSales"
+      @click="activeTab = 'sales'"
+      :class="['btn', activeTab === 'sales' ? 'btn--primary' : 'btn--secondary']"
       style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; text-transform: capitalize;"
     >
-      <span v-if="tab === 'sales'">📊 Sales Analysis</span>
-      <span v-else-if="tab === 'inventory'">📦 Warehouse Inventory</span>
-      <span v-else-if="tab === 'customers'">👥 Customers Growth</span>
+      📊 Sales Analysis
     </button>
+    <button 
+      v-if="canViewInventory"
+      @click="activeTab = 'inventory'"
+      :class="['btn', activeTab === 'inventory' ? 'btn--primary' : 'btn--secondary']"
+      style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; text-transform: capitalize;"
+    >
+      📦 Warehouse Inventory
+    </button>
+    <button 
+      v-if="canViewCustomers"
+      @click="activeTab = 'customers'"
+      :class="['btn', activeTab === 'customers' ? 'btn--primary' : 'btn--secondary']"
+      style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; text-transform: capitalize;"
+    >
+      👥 Customers Growth
+    </button>
+    <router-link 
+      v-if="canViewPayments"
+      to="/admin/reports/payments" 
+      class="btn btn--secondary" 
+      style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"
+    >
+      💳 Cashfree Payments
+    </router-link>
+    <router-link 
+      v-if="canViewSettlements"
+      to="/admin/reports/settlements" 
+      class="btn btn--secondary" 
+      style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"
+    >
+      🏦 Payout Settlements
+    </router-link>
   </div>
 
   <!-- Error Alerts -->
@@ -339,6 +368,35 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
+
+const isSuperAdmin = computed(() => {
+  return authStore.user?.roles?.some(r => r.name === 'super_admin') || 
+         authStore.user?.role?.name === 'super_admin' || 
+         authStore.user?.role_id === 1;
+});
+
+const userPermissions = computed(() => {
+  return authStore.user?.roles?.flatMap(r => r.permissions?.map(p => p.name) || []) || [];
+});
+
+const hasPermission = (moduleName) => {
+  if (isSuperAdmin.value) return true;
+  const perms = userPermissions.value;
+  return perms.includes(moduleName) ||
+         perms.includes(`${moduleName}.view`) ||
+         perms.includes('reports') ||
+         perms.includes('manage_reports') ||
+         perms.some(p => p.startsWith(`${moduleName}.`));
+};
+
+const canViewSales = computed(() => hasPermission('reports_sales'));
+const canViewInventory = computed(() => hasPermission('reports_inventory'));
+const canViewCustomers = computed(() => hasPermission('reports_customers'));
+const canViewPayments = computed(() => hasPermission('payments'));
+const canViewSettlements = computed(() => hasPermission('settlements'));
 
 const activeTab = ref('sales');
 const loading = ref(true);
@@ -497,7 +555,11 @@ const exportCSV = () => {
   document.body.removeChild(link);
 };
 
-onMounted(() => {
+onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.fetchUser();
+  }
+
   // Set default dates to last 30 days
   const now = new Date();
   const sub30 = new Date();
@@ -507,6 +569,15 @@ onMounted(() => {
   salesDates.value.start = formatDateStr(sub30);
   salesDates.value.end = formatDateStr(now);
 
-  fetchSalesReport();
+  if (canViewSales.value) {
+    activeTab.value = 'sales';
+    fetchSalesReport();
+  } else if (canViewInventory.value) {
+    activeTab.value = 'inventory';
+    fetchInventoryReport();
+  } else if (canViewCustomers.value) {
+    activeTab.value = 'customers';
+    fetchCustomerReport();
+  }
 });
 </script>

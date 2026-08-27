@@ -119,7 +119,7 @@ trait HasRoles
     public function hasPermissionTo(string $permissionName): bool
     {
         // 1. Super admin always has all permissions
-        if ($this->hasRole('super_admin') || (int)$this->role_id === 1) {
+        if ($this->hasRole('super_admin') || (int)$this->role_id === 1 || ($this->relationLoaded('role') && $this->role?->name === 'super_admin')) {
             return true;
         }
 
@@ -143,7 +143,7 @@ trait HasRoles
             return true;
         }
 
-        // 4. If checking a module without dot (e.g. 'products', 'orders')
+        // 4. If checking a module without dot (e.g. 'products', 'orders', 'reports')
         if (!str_contains($permissionName, '.')) {
             foreach ($userPermissions as $up) {
                 if ($up === $permissionName || str_starts_with($up, $permissionName . '.')) {
@@ -155,7 +155,13 @@ trait HasRoles
                 'manage_products' => ['products', 'categories', 'tags', 'colors', 'sizes', 'inventory', 'stock_entry', 'inward', 'occasions', 'section_badges', 'reviews', 'coupons', 'reels', 'blog'],
                 'manage_orders' => ['orders', 'returns', 'couriers', 'purchase_orders'],
                 'manage_users' => ['users', 'roles', 'customers'],
-                'manage_reports' => ['reports'],
+                'manage_reports' => ['reports', 'reports_sales', 'reports_inventory', 'reports_customers', 'payments', 'settlements'],
+                'reports' => ['reports', 'reports_sales', 'reports_inventory', 'reports_customers', 'payments', 'settlements'],
+                'reports_sales' => ['reports_sales', 'reports', 'manage_reports'],
+                'reports_inventory' => ['reports_inventory', 'reports', 'manage_reports'],
+                'reports_customers' => ['reports_customers', 'reports', 'manage_reports'],
+                'payments' => ['payments', 'reports', 'manage_reports'],
+                'settlements' => ['settlements', 'reports', 'manage_reports'],
                 'manage_settings' => ['settings'],
             ];
 

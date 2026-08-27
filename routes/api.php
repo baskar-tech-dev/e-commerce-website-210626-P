@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\v1\Admin\OrderController;
 use App\Http\Controllers\Api\v1\Admin\CouponController;
 use App\Http\Controllers\Api\v1\Admin\ReturnController;
 use App\Http\Controllers\Api\v1\Admin\ReportController;
+use App\Http\Controllers\Api\v1\Admin\CashfreeReportController;
 use App\Http\Controllers\Api\v1\Admin\BlogPostController;
 use App\Http\Controllers\Api\v1\Admin\BlogCategoryController;
 use App\Http\Controllers\Api\v1\Admin\BlogTagController;
@@ -268,11 +269,18 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         Route::get('permissions', [PermissionController::class, 'index']);
     });
 
-    // Reports (requires 'manage_reports')
-    Route::middleware('permission:manage_reports')->group(function () {
-        Route::get('reports/sales', [ReportController::class, 'sales']);
-        Route::get('reports/inventory', [ReportController::class, 'inventory']);
-        Route::get('reports/customers', [ReportController::class, 'customers']);
+    // Reports (Granular permission per report)
+    Route::middleware('permission:reports_sales')->get('reports/sales', [ReportController::class, 'sales']);
+    Route::middleware('permission:reports_inventory')->get('reports/inventory', [ReportController::class, 'inventory']);
+    Route::middleware('permission:reports_customers')->get('reports/customers', [ReportController::class, 'customers']);
+    Route::middleware('permission:payments')->group(function () {
+        Route::get('reports/payments', [CashfreeReportController::class, 'payments']);
+        Route::get('reports/payments/summary', [CashfreeReportController::class, 'paymentSummary']);
+        Route::post('reports/payments/{payment}/verify-cashfree', [CashfreeReportController::class, 'verifyPaymentWithCashfree']);
+    });
+    Route::middleware('permission:settlements')->group(function () {
+        Route::get('reports/settlements', [CashfreeReportController::class, 'settlements']);
+        Route::get('reports/settlements/summary', [CashfreeReportController::class, 'settlementSummary']);
     });
 
     // System Settings (requires 'manage_settings')

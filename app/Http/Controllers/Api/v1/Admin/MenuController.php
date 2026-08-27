@@ -36,6 +36,8 @@ class MenuController extends Controller
             'Insta Reels' => 'reels',
             'Blog' => 'blog',
             'Reports' => 'reports',
+            'Payments' => 'payments',
+            'Settlements' => 'settlements',
             'Customers' => 'customers',
             'Users' => 'users',
             'Roles & Permissions' => 'roles',
@@ -60,10 +62,10 @@ class MenuController extends Controller
             $userPermissions = array_unique($userPermissions);
         }
 
-        $isSuperAdmin = $user && ($user->hasRole('super_admin') || $user->role_id === 1);
+        $isSuperAdmin = $user && ($user->hasRole('super_admin') || (int)$user->role_id === 1 || ($user->relationLoaded('role') && $user->role?->name === 'super_admin'));
 
         $allowedMenus = $allMenus->filter(function ($menu) use ($user, $isSuperAdmin, $menuModuleMap, $userPermissions) {
-            // Super admin bypasses all menu restrictions
+            // Super admin bypasses all menu restrictions and can view all menus
             if ($isSuperAdmin) {
                 return true;
             }
@@ -82,6 +84,18 @@ class MenuController extends Controller
             // Dashboard is always visible
             if ($menu->name === 'Dashboard' || $moduleKey === null) {
                 return true;
+            }
+
+            // Check if user has permission for reports module family
+            $reportModules = ['reports', 'payments', 'settlements'];
+            if (in_array($moduleKey, $reportModules)) {
+                if (
+                    in_array('manage_reports', $userPermissions) ||
+                    in_array('reports', $userPermissions) ||
+                    in_array('reports.view', $userPermissions)
+                ) {
+                    return true;
+                }
             }
 
             // For any other menu, user MUST have at least one permission for this module

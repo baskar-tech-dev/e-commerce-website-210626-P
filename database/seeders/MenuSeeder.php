@@ -48,7 +48,21 @@ class MenuSeeder extends Seeder
                 'name' => 'Reports',
                 'path' => '/admin/reports',
                 'icon' => 'TrendingUp',
-                'group' => 'Overview',
+                'group' => 'Reports',
+                'permission_name' => 'manage_reports',
+            ],
+            [
+                'name' => 'Payments',
+                'path' => '/admin/reports/payments',
+                'icon' => 'CreditCard',
+                'group' => 'Reports',
+                'permission_name' => 'manage_reports',
+            ],
+            [
+                'name' => 'Settlements',
+                'path' => '/admin/reports/settlements',
+                'icon' => 'Landmark',
+                'group' => 'Reports',
                 'permission_name' => 'manage_reports',
             ],
             [

@@ -21,6 +21,11 @@ class CheckPermission
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // Super admin has universal access to all endpoints
+        if ($user->hasRole('super_admin') || (int)$user->role_id === 1 || ($user->relationLoaded('role') && $user->role?->name === 'super_admin')) {
+            return $next($request);
+        }
+
         if (!$user->hasPermissionTo($permission)) {
             return response()->json(['message' => 'Forbidden. You do not have the required permission.'], 403);
         }

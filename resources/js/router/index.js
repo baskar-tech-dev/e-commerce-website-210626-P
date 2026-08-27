@@ -37,6 +37,8 @@ import CouponForm from '../views/admin/CouponForm.vue';
 import ReturnList from '../views/admin/ReturnList.vue';
 import ReturnDetail from '../views/admin/ReturnDetail.vue';
 import ReportDashboard from '../views/admin/ReportDashboard.vue';
+import PaymentsReport from '../views/admin/reports/PaymentsReport.vue';
+import SettlementsReport from '../views/admin/reports/SettlementsReport.vue';
 import BlogPostList from '../views/admin/BlogPostList.vue';
 import BlogPostForm from '../views/admin/BlogPostForm.vue';
 import UserList from '../views/admin/UserList.vue';
@@ -169,6 +171,18 @@ const routes = [
         path: 'reports',
         name: 'admin.reports',
         component: ReportDashboard,
+        meta: { permission: 'reports' },
+      },
+      {
+        path: 'reports/payments',
+        name: 'admin.reports.payments',
+        component: PaymentsReport,
+        meta: { permission: 'reports' },
+      },
+      {
+        path: 'reports/settlements',
+        name: 'admin.reports.settlements',
+        component: SettlementsReport,
         meta: { permission: 'reports' },
       },
       {
