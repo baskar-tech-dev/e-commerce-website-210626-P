@@ -195,52 +195,79 @@ class CashfreeReportController extends Controller
     public function paymentSummary(Request $request): JsonResponse
     {
         try {
-            $todayStart = Carbon::today()->startOfDay();
-            $todayEnd = Carbon::today()->endOfDay();
+            [$startDate, $endDate] = $this->resolveDateRange($request);
 
-            // Today's Total Payments (all statuses)
-            $todayTotalPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+            $query = Payment::query();
 
-            // Today's Successful Payments
-            $successfulPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
-                ->whereIn('status', ['captured', 'paid'])
-                ->count();
-
-            // Today's Pending Payments
-            $pendingPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
-                ->where('status', 'pending')
-                ->count();
-
-            // Today's Failed Payments
-            $failedPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])
-                ->where('status', 'failed')
-                ->count();
-
-            // Today's Total Collection
-            $todayTotalCollection = (float) Payment::whereBetween('created_at', [$todayStart, $todayEnd])
-                ->whereIn('status', ['captured', 'paid'])
-                ->sum('amount');
-
-            // Overall Summary for Selected Range (if passed)
-            [$filterStart, $filterEnd] = $this->resolveDateRange($request);
-            $filterQuery = Payment::query();
-            if ($filterStart && $filterEnd) {
-                $filterQuery->whereBetween('created_at', [$filterStart, $filterEnd]);
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } elseif ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            } elseif ($endDate) {
+                $query->where('created_at', '<=', $endDate);
             }
 
-            $rangeTotalCollection = (float) (clone $filterQuery)->whereIn('status', ['captured', 'paid'])->sum('amount');
-            $rangeTotalPayments = (clone $filterQuery)->count();
+            // Optional status & method filters
+            if ($request->filled('payment_method')) {
+                $query->where('method', strtolower($request->input('payment_method')));
+            }
+
+            // Period Total Payments (all attempts)
+            $totalPayments = (clone $query)->count();
+
+            // Period Successful Payments
+            $successfulPayments = (clone $query)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['captured', 'paid', 'completed', 'success'])
+                      ->orWhereIn('status', ['CAPTURED', 'PAID', 'COMPLETED', 'SUCCESS']);
+                })
+                ->count();
+
+            // Period Pending Payments
+            $pendingPayments = (clone $query)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['pending', 'PENDING']);
+                })
+                ->count();
+
+            // Period Failed Payments
+            $failedPayments = (clone $query)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['failed', 'FAILED', 'user_dropped', 'cancelled']);
+                })
+                ->count();
+
+            // Period Total Collection (sum of successful payments)
+            $totalCollection = (float) (clone $query)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['captured', 'paid', 'completed', 'success'])
+                      ->orWhereIn('status', ['CAPTURED', 'PAID', 'COMPLETED', 'SUCCESS']);
+                })
+                ->sum('amount');
+
+            // Today metrics for reference
+            $todayStart = Carbon::today()->startOfDay();
+            $todayEnd = Carbon::today()->endOfDay();
+            $todayTotalPayments = Payment::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+            $todayTotalCollection = (float) Payment::whereBetween('created_at', [$todayStart, $todayEnd])
+                ->where(function ($q) {
+                    $q->whereIn('status', ['captured', 'paid', 'completed', 'success'])
+                      ->orWhereIn('status', ['CAPTURED', 'PAID', 'COMPLETED', 'SUCCESS']);
+                })
+                ->sum('amount');
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'today_total_payments' => $todayTotalPayments,
+                    'total_payments' => $totalPayments,
+                    'today_total_payments' => $totalPayments, // backwards compatibility
                     'successful_payments' => $successfulPayments,
                     'pending_payments' => $pendingPayments,
                     'failed_payments' => $failedPayments,
-                    'today_total_collection' => round($todayTotalCollection, 2),
-                    'range_total_collection' => round($rangeTotalCollection, 2),
-                    'range_total_payments' => $rangeTotalPayments,
+                    'total_collection' => round($totalCollection, 2),
+                    'today_total_collection' => round($totalCollection, 2), // backwards compatibility
+                    'period_today_total_payments' => $todayTotalPayments,
+                    'period_today_total_collection' => round($todayTotalCollection, 2),
                 ]
             ]);
 

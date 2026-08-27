@@ -36,16 +36,16 @@
 
   <!-- Summary KPI Cards -->
   <div v-show="showStats" class="stats-grid-5" style="margin-bottom: var(--spacing-lg);">
-    <!-- 1. Today's Total Payments -->
+    <!-- 1. Total Payments -->
     <div class="stat-card-new">
       <div class="stat-card__top">
-        <div class="stat-card__title">Today's Total Payments</div>
+        <div class="stat-card__title">{{ timeframeLabel }} Total Payments</div>
         <div class="stat-card__icon-wrap stat-card__icon-wrap--purple">💳</div>
       </div>
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem;">
-        {{ summaryData.today_total_payments || 0 }}
+        {{ summaryData.total_payments ?? summaryData.today_total_payments ?? 0 }}
       </div>
-      <span style="font-size: 0.75rem; color: var(--color-text-muted);">All initiated attempts today</span>
+      <span style="font-size: 0.75rem; color: var(--color-text-muted);">All initiated attempts</span>
     </div>
 
     <!-- 2. Successful Payments -->
@@ -84,14 +84,14 @@
       <span style="font-size: 0.75rem; color: var(--color-danger);">Dropped or Declined</span>
     </div>
 
-    <!-- 5. Today's Total Collection -->
+    <!-- 5. Total Collection -->
     <div class="stat-card-new" style="border-color: rgba(74, 14, 46, 0.25); background: linear-gradient(135deg, #ffffff, #fffcf7);">
       <div class="stat-card__top">
-        <div class="stat-card__title" style="color: var(--color-primary); font-weight: 700;">Today's Total Collection</div>
+        <div class="stat-card__title" style="color: var(--color-primary); font-weight: 700;">{{ timeframeLabel }} Collection</div>
         <div class="stat-card__icon-wrap" style="background: rgba(74, 14, 46, 0.1); color: var(--color-primary);">₹</div>
       </div>
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-primary);">
-        ₹{{ formatCurrency(summaryData.today_total_collection) }}
+        ₹{{ formatCurrency(summaryData.total_collection ?? summaryData.today_total_collection ?? 0) }}
       </div>
       <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Net settled collection volume</span>
     </div>
@@ -114,7 +114,7 @@
         <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 0.95rem;">🔍</span>
         <button 
           v-if="filters.search" 
-          @click="filters.search = ''; fetchPayments(1)" 
+          @click="filters.search = ''; onFiltersChanged()" 
           style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--color-text-muted);"
         >
           ✕
@@ -126,7 +126,7 @@
         <!-- Payment Status Dropdown -->
         <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
           <label style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Status:</label>
-          <select v-model="filters.payment_status" @change="fetchPayments(1)" class="form-input" style="min-width: 140px; padding: 0.35rem var(--spacing-md);">
+          <select v-model="filters.payment_status" @change="onFiltersChanged" class="form-input" style="min-width: 140px; padding: 0.35rem var(--spacing-md);">
             <option value="">All Statuses</option>
             <option value="captured">Captured / Paid</option>
             <option value="pending">Pending</option>
@@ -138,7 +138,7 @@
         <!-- Payment Method Dropdown -->
         <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
           <label style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Method:</label>
-          <select v-model="filters.payment_method" @change="fetchPayments(1)" class="form-input" style="min-width: 140px; padding: 0.35rem var(--spacing-md);">
+          <select v-model="filters.payment_method" @change="onFiltersChanged" class="form-input" style="min-width: 140px; padding: 0.35rem var(--spacing-md);">
             <option value="">All Methods</option>
             <option value="upi">Instant UPI</option>
             <option value="card">Credit / Debit Card</option>
@@ -177,7 +177,7 @@
           <label style="font-size: 0.75rem; color: var(--color-text-muted);">To:</label>
           <input type="date" v-model="filters.end_date" class="form-input" style="padding: 0.2rem 0.5rem; width: 140px; font-size: 0.8rem;" />
         </div>
-        <button class="btn btn--secondary btn--sm" @click="fetchPayments(1)">Apply</button>
+        <button class="btn btn--secondary btn--sm" @click="onFiltersChanged">Apply</button>
       </div>
     </div>
   </div>
@@ -483,6 +483,17 @@ const datePresets = [
   { id: 'custom', label: 'Custom Range' },
 ];
 
+const timeframeLabel = computed(() => {
+  switch (filters.date_preset) {
+    case 'today': return "Today's";
+    case 'yesterday': return "Yesterday's";
+    case 'last_7_days': return 'Last 7 Days';
+    case 'last_30_days': return 'Last 30 Days';
+    case 'custom': return 'Selected Period';
+    default: return '';
+  }
+});
+
 const pagination = reactive({
   current_page: 1,
   last_page: 1,
@@ -496,6 +507,11 @@ const debounceSearch = () => {
   debounceTimer = setTimeout(() => {
     fetchPayments(1);
   }, 350);
+};
+
+const onFiltersChanged = () => {
+  fetchPayments(1);
+  fetchSummary();
 };
 
 const selectDatePreset = (presetId) => {
@@ -525,7 +541,7 @@ const fetchPayments = async (page = 1) => {
 
     const response = await axios.get('/api/admin/reports/payments', { params });
     if (response.data && response.data.success) {
-      payments.value = response.data.data;
+      payments.value = response.data.data || [];
       if (response.data.meta) {
         pagination.current_page = response.data.meta.current_page;
         pagination.last_page = response.data.meta.last_page;
@@ -547,6 +563,8 @@ const fetchSummary = async () => {
       date_preset: filters.date_preset,
       start_date: filters.start_date,
       end_date: filters.end_date,
+      payment_status: filters.payment_status,
+      payment_method: filters.payment_method,
     };
     const response = await axios.get('/api/admin/reports/payments/summary', { params });
     if (response.data && response.data.success) {
