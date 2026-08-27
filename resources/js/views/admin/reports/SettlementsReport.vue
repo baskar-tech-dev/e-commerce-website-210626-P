@@ -1,14 +1,32 @@
 <template>
   <div class="admin-page__header">
     <div class="admin-page__title-section">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <router-link to="/admin/reports" class="btn btn--secondary btn--sm" style="padding: 4px 8px;" title="Back to Reports Hub">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <router-link to="/admin/reports" class="btn btn--secondary btn--sm" style="padding: 4px 8px; font-size: 0.8rem;" title="Back to Reports Hub">
           ← Reports Hub
         </router-link>
-        <h1 class="admin-page__title">Cashfree Settlements Report</h1>
+        <h1 class="admin-page__title" style="margin: 0;">Cashfree Settlements Report</h1>
+        
+        <!-- Gateway Environment Pill -->
+        <span 
+          v-if="gatewayInfo.is_configured" 
+          :class="['badge', gatewayInfo.is_production ? 'badge--success' : 'badge--warning']"
+          style="font-size: 0.72rem; padding: 3px 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;"
+        >
+          {{ gatewayInfo.is_production ? '🟢 Production Live' : '🟡 Sandbox Test' }}
+        </span>
+        <router-link 
+          v-else 
+          to="/admin/settings"
+          class="badge badge--secondary" 
+          style="font-size: 0.72rem; padding: 3px 8px; text-decoration: none; cursor: pointer; color: var(--color-primary); background: rgba(74, 14, 46, 0.08);"
+          title="Configure Cashfree API keys in Settings"
+        >
+          ⚙️ Setup API Keys
+        </router-link>
       </div>
       <span class="admin-page__subtitle">
-        Track payout settlements, UTR bank transaction references, batch cycles, and reconciliation.
+        Track payout settlements, UTR bank transaction references, batch cycles, and bank reconciliation.
       </span>
     </div>
     <div class="admin-header__actions">
@@ -34,12 +52,49 @@
     </router-link>
   </div>
 
+  <!-- Gateway Notice / Pending Payments Notification Banners -->
+  <div v-if="!gatewayInfo.is_configured" class="glass-panel" style="margin-bottom: var(--spacing-md); padding: 0.85rem 1.25rem; border-left: 4px solid var(--color-warning); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; background: #fffcf0;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 1.2rem;">⚙️</span>
+      <span style="font-size: 0.85rem; color: #78350f;">
+        <strong>Cashfree Gateway API Keys Not Configured:</strong> Bank payout settlements are fetched directly from Cashfree Payment Gateway in production.
+      </span>
+    </div>
+    <router-link to="/admin/settings" class="btn btn--secondary btn--sm" style="font-size: 0.75rem; padding: 4px 10px;">
+      Configure in Settings →
+    </router-link>
+  </div>
+
+  <div v-else-if="!gatewayInfo.is_production" class="glass-panel" style="margin-bottom: var(--spacing-md); padding: 0.75rem 1.25rem; border-left: 4px solid #f59e0b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; background: #fffdf5;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 1.1rem;">ℹ️</span>
+      <span style="font-size: 0.85rem; color: #92400e;">
+        <strong>Sandbox Mode Active:</strong> In Cashfree sandbox, payout reconciliation reflects simulated and captured order batches. Real bank transfers occur in Production.
+      </span>
+    </div>
+    <router-link v-if="canViewPayments" to="/admin/reports/payments" class="btn btn--secondary btn--sm" style="font-size: 0.75rem; padding: 4px 10px;">
+      View Payments →
+    </router-link>
+  </div>
+
+  <div v-if="summaryData.pending_payments_count > 0 && settlements.length === 0" class="glass-panel" style="margin-bottom: var(--spacing-md); padding: 0.85rem 1.25rem; border-left: 4px solid var(--color-primary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; background: #faf5f8;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span style="font-size: 1.2rem;">⏳</span>
+      <span style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500;">
+        You have <strong>{{ summaryData.pending_payments_count }}</strong> pending payment attempt(s) waiting for bank capture. Settlements are generated once payments are successfully captured.
+      </span>
+    </div>
+    <router-link v-if="canViewPayments" to="/admin/reports/payments" class="btn btn--primary btn--sm" style="font-size: 0.75rem; padding: 4px 12px;">
+      Review Payments Report →
+    </router-link>
+  </div>
+
   <!-- Summary KPI Cards -->
   <div v-show="showStats" class="stats-grid-4" style="margin-bottom: var(--spacing-lg);">
     <!-- 1. Total Settled Amount -->
     <div class="stat-card-new" style="border-color: rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, #ffffff, #f0fdf4);">
       <div class="stat-card__top">
-        <div class="stat-card__title" style="color: #065f46; font-weight: 700;">Total Settled Amount</div>
+        <div class="stat-card__title" style="color: #065f46; font-weight: 700;">{{ timeframeLabel }} Settled Amount</div>
         <div class="stat-card__icon-wrap stat-card__icon-wrap--green">₹</div>
       </div>
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: #047857;">
@@ -51,7 +106,7 @@
     <!-- 2. Number of Settlements -->
     <div class="stat-card-new">
       <div class="stat-card__top">
-        <div class="stat-card__title">Number of Settlements</div>
+        <div class="stat-card__title">Settlement Batches</div>
         <div class="stat-card__icon-wrap stat-card__icon-wrap--purple">🏦</div>
       </div>
       <div class="stat-card__value" style="font-size: 1.6rem; margin-top: 0.25rem; color: var(--color-primary);">
@@ -100,6 +155,11 @@
             style="padding-left: 2rem;" 
           />
           <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted);">🔍</span>
+          <button 
+            v-if="filters.settlement_id" 
+            @click="filters.settlement_id = ''; onFiltersChanged()" 
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--color-text-muted);"
+          >✕</button>
         </div>
 
         <div style="position: relative; flex: 1; min-width: 180px;">
@@ -112,12 +172,17 @@
             style="padding-left: 2rem;" 
           />
           <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted);">🏛️</span>
+          <button 
+            v-if="filters.utr" 
+            @click="filters.utr = ''; onFiltersChanged()" 
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--color-text-muted);"
+          >✕</button>
         </div>
       </div>
 
       <div style="display: flex; gap: var(--spacing-sm);">
         <button class="btn btn--secondary btn--sm" @click="clearFilters">Clear Filters</button>
-        <button class="btn btn--primary btn--sm" @click="fetchSettlements">Apply</button>
+        <button class="btn btn--primary btn--sm" @click="onFiltersChanged">Apply</button>
       </div>
     </div>
 
@@ -147,7 +212,7 @@
           <label style="font-size: 0.75rem; color: var(--color-text-muted);">To:</label>
           <input type="date" v-model="filters.end_date" class="form-input" style="padding: 0.2rem 0.5rem; width: 140px; font-size: 0.8rem;" />
         </div>
-        <button class="btn btn--secondary btn--sm" @click="fetchSettlements">Apply Dates</button>
+        <button class="btn btn--secondary btn--sm" @click="onFiltersChanged">Apply Dates</button>
       </div>
     </div>
   </div>
@@ -158,10 +223,19 @@
     <button @click="errorMsg = ''" style="background: none; border: none; cursor: pointer; color: inherit; font-size: 1rem;">✕</button>
   </div>
 
-  <!-- Loading State -->
-  <div v-if="loading" style="text-align: center; padding: 4rem;">
-    <div class="stat-card__value" style="font-size: 1.25rem;">Retrieving Cashfree Settlements...</div>
-    <span style="font-size: 0.85rem; color: var(--color-text-muted);">Querying bank payout transactions</span>
+  <!-- Loading State (Skeleton Effect) -->
+  <div v-if="loading" class="glass-panel" style="padding: 2.5rem; text-align: center;">
+    <div style="font-size: 1.1rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">
+      Retrieving Cashfree Settlements...
+    </div>
+    <span style="font-size: 0.85rem; color: var(--color-text-muted);">
+      Querying bank payout transaction batches & reconciliation data
+    </span>
+    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+      <div style="height: 20px; background: rgba(0,0,0,0.06); border-radius: 4px; animation: pulse 1.5s infinite;"></div>
+      <div style="height: 20px; background: rgba(0,0,0,0.04); border-radius: 4px; animation: pulse 1.5s infinite; animation-delay: 0.2s;"></div>
+      <div style="height: 20px; background: rgba(0,0,0,0.03); border-radius: 4px; animation: pulse 1.5s infinite; animation-delay: 0.4s;"></div>
+    </div>
   </div>
 
   <!-- Settlements Data List -->
@@ -185,7 +259,7 @@
         <div class="mdc-body">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
             <span style="font-size: 0.85rem; color: var(--color-text-muted);">Amount Settled:</span>
-            <span style="font-size: 1.1rem; font-weight: 700; color: var(--color-primary);">₹{{ formatCurrency(settlement.settlement_amount) }}</span>
+            <span style="font-size: 1.1rem; font-weight: 700; color: #047857;">₹{{ formatCurrency(settlement.settlement_amount) }}</span>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem; background: rgba(0,0,0,0.02); padding: 0.5rem; border-radius: 6px;">
@@ -211,14 +285,10 @@
           </div>
         </div>
       </div>
-
-      <div v-if="settlements.length === 0" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
-        No settlement payouts recorded for the selected date range.
-      </div>
     </div>
 
     <!-- Desktop Table View -->
-    <table class="data-table desktop-data-table">
+    <table class="data-table desktop-data-table" v-if="settlements.length > 0">
       <thead>
         <tr>
           <th style="width: 50px; text-align: center;">S.No</th>
@@ -280,17 +350,36 @@
             <code>{{ settlement.settlement_reference || '—' }}</code>
           </td>
         </tr>
-
-        <tr v-if="settlements.length === 0">
-          <td colspan="8" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
-            No Cashfree settlement payouts found for the active filter range.
-          </td>
-        </tr>
       </tbody>
     </table>
 
-    <!-- Pagination Summary Footer -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--color-border); background: rgba(0,0,0,0.01);">
+    <!-- Rich Empty State View -->
+    <div v-if="settlements.length === 0" style="padding: 3.5rem 1.5rem; text-align: center;">
+      <div style="width: 64px; height: 64px; margin: 0 auto 1.25rem; border-radius: 50%; background: rgba(74, 14, 46, 0.06); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+        🏦
+      </div>
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--color-text-primary); margin-bottom: 0.5rem;">
+        No Settlement Payout Records Found
+      </h3>
+      <p style="font-size: 0.88rem; color: var(--color-text-muted); max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.5;">
+        There are no completed settlement payout batches for the <strong>{{ timeframeLabel }}</strong> timeframe. Settlements are credited to the merchant bank after online customer payments are captured.
+      </p>
+
+      <div style="display: flex; gap: var(--spacing-sm); justify-content: center; flex-wrap: wrap;">
+        <router-link v-if="canViewPayments" to="/admin/reports/payments" class="btn btn--primary btn--sm">
+          💳 View Cashfree Payments ({{ summaryData.pending_payments_count || 0 }} Attempts)
+        </router-link>
+        <button v-if="filters.date_preset !== 'last_30_days'" class="btn btn--secondary btn--sm" @click="selectDatePreset('last_30_days')">
+          📅 Check Last 30 Days
+        </button>
+        <button class="btn btn--secondary btn--sm" @click="clearFilters">
+          🔄 Reset Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Pagination Summary Footer (when items exist) -->
+    <div v-if="settlements.length > 0" style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--color-border); background: rgba(0,0,0,0.01);">
       <div style="font-size: 0.85rem; color: var(--color-text-muted);">
         Displaying <strong>{{ settlements.length }}</strong> settlement records
       </div>
@@ -345,11 +434,20 @@ const loading = ref(false);
 const errorMsg = ref('');
 const settlements = ref([]);
 
+const gatewayInfo = reactive({
+  is_configured: false,
+  environment: 'sandbox',
+  is_production: false,
+  api_version: '2023-08-01',
+  app_id_masked: 'Not Set',
+});
+
 const summaryData = reactive({
   total_settled_amount: 0,
   settlements_count: 0,
   latest_settlement: 0,
   latest_settlement_date: '—',
+  pending_payments_count: 0,
 });
 
 const filters = reactive({
@@ -367,6 +465,16 @@ const datePresets = [
   { id: 'custom', label: 'Custom Range' },
 ];
 
+const timeframeLabel = computed(() => {
+  switch (filters.date_preset) {
+    case 'today': return "Today's";
+    case 'last_7_days': return 'Last 7 Days';
+    case 'last_30_days': return 'Last 30 Days';
+    case 'custom': return 'Selected Period';
+    default: return '';
+  }
+});
+
 const pagination = reactive({
   cursor: null,
   limit: 20,
@@ -376,8 +484,13 @@ let debounceTimer = null;
 const debounceSearch = () => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    fetchSettlements();
+    onFiltersChanged();
   }, 350);
+};
+
+const onFiltersChanged = () => {
+  fetchSettlements();
+  fetchSummary();
 };
 
 const selectDatePreset = (presetId) => {
@@ -385,8 +498,7 @@ const selectDatePreset = (presetId) => {
   if (presetId !== 'custom') {
     filters.start_date = '';
     filters.end_date = '';
-    fetchSettlements();
-    fetchSummary();
+    onFiltersChanged();
   }
 };
 
@@ -396,8 +508,7 @@ const clearFilters = () => {
   filters.date_preset = 'today';
   filters.start_date = '';
   filters.end_date = '';
-  fetchSettlements();
-  fetchSummary();
+  onFiltersChanged();
 };
 
 const fetchSettlements = async (cursor = null) => {
@@ -416,8 +527,15 @@ const fetchSettlements = async (cursor = null) => {
 
     const response = await axios.get('/api/admin/reports/settlements', { params });
     if (response.data && response.data.success) {
-      settlements.value = response.data.data;
+      settlements.value = response.data.data || [];
       pagination.cursor = response.data.pagination?.cursor || null;
+
+      if (response.data.gateway) {
+        Object.assign(gatewayInfo, response.data.gateway);
+      }
+      if (response.data.meta && response.data.meta.pending_payments_count !== undefined) {
+        summaryData.pending_payments_count = response.data.meta.pending_payments_count;
+      }
     }
   } catch (err) {
     console.error('Failed to load settlements report:', err);
@@ -437,6 +555,9 @@ const fetchSummary = async () => {
     const response = await axios.get('/api/admin/reports/settlements/summary', { params });
     if (response.data && response.data.success) {
       Object.assign(summaryData, response.data.data);
+      if (response.data.gateway) {
+        Object.assign(gatewayInfo, response.data.gateway);
+      }
     }
   } catch (err) {
     console.error('Failed to load settlements summary:', err);
@@ -490,3 +611,11 @@ onMounted(() => {
   fetchSummary();
 });
 </script>
+
+<style scoped>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+</style>
+

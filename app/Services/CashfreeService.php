@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -19,9 +21,26 @@ class CashfreeService
 
     public function __construct()
     {
-        $this->appId = (string) (config('services.cashfree.app_id') ?? env('CASHFREE_APP_ID', ''));
-        $this->secretKey = (string) (config('services.cashfree.secret_key') ?? env('CASHFREE_SECRET_KEY', ''));
-        $this->environment = strtolower((string) (config('services.cashfree.environment') ?? env('CASHFREE_ENVIRONMENT', 'sandbox')));
+        $dbAppId = null;
+        $dbSecretKey = null;
+        $dbEnv = null;
+
+        try {
+            if (class_exists(Setting::class)) {
+                $dbAppId = Setting::get('cashfree_app_id', 'payment') ?: Setting::get('cashfree_app_id', 'general');
+                $dbSecretKey = Setting::get('cashfree_secret_key', 'payment') ?: Setting::get('cashfree_secret_key', 'general');
+                $dbEnv = Setting::get('cashfree_environment', 'payment') ?: Setting::get('cashfree_environment', 'general');
+            }
+        } catch (\Throwable) {
+            // DB might not be accessible during early CLI bootstrap / migration
+            $dbAppId = null;
+            $dbSecretKey = null;
+            $dbEnv = null;
+        }
+
+        $this->appId = (string) ($dbAppId ?: (config('services.cashfree.app_id') ?? env('CASHFREE_APP_ID', '')));
+        $this->secretKey = (string) ($dbSecretKey ?: (config('services.cashfree.secret_key') ?? env('CASHFREE_SECRET_KEY', '')));
+        $this->environment = strtolower((string) ($dbEnv ?: (config('services.cashfree.environment') ?? env('CASHFREE_ENVIRONMENT', 'sandbox'))));
         $this->apiVersion = (string) (config('services.cashfree.api_version') ?? env('CASHFREE_API_VERSION', '2023-08-01'));
 
         $this->baseUrl = $this->environment === 'production'
@@ -296,6 +315,25 @@ class CashfreeService
     }
 
     /**
+     * Get summary status of Cashfree integration (environment, configured flag, masked app ID).
+     */
+    public function getGatewayStatus(): array
+    {
+        $configured = $this->isConfigured();
+        $maskedAppId = $configured 
+            ? (strlen($this->appId) > 8 ? substr($this->appId, 0, 4) . '...' . substr($this->appId, -4) : '••••••••')
+            : 'Not Set';
+
+        return [
+            'is_configured' => $configured,
+            'environment' => $this->environment,
+            'is_production' => $this->environment === 'production',
+            'api_version' => $this->apiVersion,
+            'app_id_masked' => $maskedAppId,
+        ];
+    }
+
+    /**
      * Fetch settlements from Cashfree Reconciliation / Settlements API.
      *
      * @param array $filters ['start_date' => '', 'end_date' => '', 'settlement_id' => '', 'utr' => '']
@@ -315,14 +353,22 @@ class CashfreeService
 
         return Cache::remember($cacheKey, 120, function () use ($filters, $cursor, $limit) {
             try {
-                // Prepare filters (Cashfree accepts start_date / end_date or start_date_initiated_on)
-                $startDate = !empty($filters['start_date']) 
-                    ? date('Y-m-d\TH:i:s\Z', strtotime($filters['start_date'])) 
-                    : date('Y-m-d\TH:i:s\Z', strtotime('-30 days'));
+                // Parse dates reliably using Carbon with fallback
+                try {
+                    $startDate = !empty($filters['start_date']) 
+                        ? Carbon::parse($filters['start_date'])->startOfDay()->toIso8601String() 
+                        : Carbon::now()->subDays(30)->startOfDay()->toIso8601String();
+                } catch (\Throwable) {
+                    $startDate = Carbon::now()->subDays(30)->startOfDay()->toIso8601String();
+                }
 
-                $endDate = !empty($filters['end_date']) 
-                    ? date('Y-m-d\TH:i:s\Z', strtotime($filters['end_date'] . ' 23:59:59')) 
-                    : date('Y-m-d\TH:i:s\Z');
+                try {
+                    $endDate = !empty($filters['end_date']) 
+                        ? Carbon::parse($filters['end_date'])->endOfDay()->toIso8601String() 
+                        : Carbon::now()->endOfDay()->toIso8601String();
+                } catch (\Throwable) {
+                    $endDate = Carbon::now()->endOfDay()->toIso8601String();
+                }
 
                 $reconFilters = [
                     'start_date' => $startDate,
