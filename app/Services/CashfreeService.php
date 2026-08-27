@@ -251,16 +251,32 @@ class CashfreeService
         }
 
         try {
+            $startDate = date('Y-m-d\TH:i:s\+05:30', strtotime('-30 days'));
+            $endDate = date('Y-m-d\TH:i:s\+05:30');
+
+            $payload = [
+                'pagination' => [
+                    'limit' => 5,
+                    'cursor' => null,
+                ],
+                'filters' => [
+                    'start_date_initiated_on' => $startDate,
+                    'end_date_initiated_on' => $endDate,
+                ],
+            ];
+
             $response = Http::withHeaders($this->getHeaders())
-                ->timeout(10)
-                ->get("{$this->baseUrl}/orders?limit=1");
+                ->timeout(12)
+                ->post("{$this->baseUrl}/settlement/recon", $payload);
 
             if ($response->successful()) {
+                $data = $response->json();
+                $count = count($data['data'] ?? ($data['settlements'] ?? []));
                 return [
                     'success' => true,
                     'environment' => $this->environment,
-                    'message' => 'Cashfree PG API credentials verified & successfully connected.',
-                    'status_code' => $response->status(),
+                    'message' => 'Cashfree Payment Gateway & Settlements API connected successfully.',
+                    'settlement_records_count' => $count,
                 ];
             }
 
