@@ -84,7 +84,7 @@ class InventoryController extends Controller
                 'message' => "Stock updated successfully for {$result['updated_count']} variants.",
                 'data' => $result,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@quickAdjust failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -133,7 +133,7 @@ class InventoryController extends Controller
             };
 
             return response()->stream($callback, 200, $headers);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@exportOverviewCsv failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -164,7 +164,7 @@ class InventoryController extends Controller
                     'total' => $variants->total(),
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@index failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -204,7 +204,7 @@ class InventoryController extends Controller
                 'message' => 'Stock adjusted successfully',
                 'data' => $ledger
             ], 201);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@adjust failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -236,7 +236,7 @@ class InventoryController extends Controller
                     'total' => $ledger->total(),
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@ledger failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -257,7 +257,7 @@ class InventoryController extends Controller
                 'success' => true,
                 'data' => $data,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("InventoryController@productMatrix failed for Product #{$id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -297,7 +297,7 @@ class InventoryController extends Controller
                 'message' => "Stock updated successfully for {$result['updated_count']} variants.",
                 'data' => $result,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@bulkMatrixUpdate failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -343,7 +343,7 @@ class InventoryController extends Controller
             };
 
             return response()->stream($callback, 200, $headers);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("InventoryController@exportTemplate failed: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -440,7 +440,7 @@ class InventoryController extends Controller
                 'message' => "Successfully imported and updated {$result['updated_count']} variants from CSV.",
                 'data' => $result,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('InventoryController@importCsv failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,

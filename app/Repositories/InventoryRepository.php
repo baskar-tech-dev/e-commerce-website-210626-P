@@ -145,6 +145,9 @@ class InventoryRepository implements InventoryRepositoryInterface
      */
     public function stockOverview(array $filters = [], int $perPage = 24): LengthAwarePaginator
     {
+        $perPage = ($perPage > 0) ? min(max($perPage, 1), 100) : 24;
+        $page = isset($filters['page']) && is_numeric($filters['page']) && (int)$filters['page'] > 0 ? (int)$filters['page'] : 1;
+
         $query = \App\Models\Product::with([
             'category:id,name',
             'images' => function ($q) {
@@ -219,7 +222,7 @@ class InventoryRepository implements InventoryRepositoryInterface
                 break;
         }
 
-        $paginator = $query->paginate($perPage);
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
         $paginator->getCollection()->transform(function ($product) {
             $variants = $product->variants;
