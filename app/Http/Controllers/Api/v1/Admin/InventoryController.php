@@ -24,8 +24,8 @@ class InventoryController extends Controller
     public function overview(Request $request): JsonResponse
     {
         try {
-            $filters = $request->only(['search', 'status', 'category_id', 'sort_by']);
-            $perPage = (int) $request->input('per_page', 24);
+            $filters = $request->only(['search', 'status', 'category_id', 'sort_by', 'page']);
+            $perPage = min(max((int) $request->input('per_page', 24), 1), 100);
 
             $stats = $this->inventoryService->getStockOverviewStats($filters);
             $products = $this->inventoryService->getStockOverview($filters, $perPage);
@@ -42,11 +42,12 @@ class InventoryController extends Controller
                     'total' => $products->total(),
                 ]
             ]);
-        } catch (Exception $e) {
-            Log::error('InventoryController@overview failed: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('InventoryController@overview failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve stock overview',
+                'error_detail' => config('app.debug') ? $e->getMessage() : null,
                 'error_code' => 'SERVER_ERROR'
             ], 500);
         }

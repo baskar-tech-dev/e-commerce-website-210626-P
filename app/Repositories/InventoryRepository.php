@@ -172,7 +172,7 @@ class InventoryRepository implements InventoryRepositoryInterface
             });
         }
 
-        if (!empty($filters['category_id'])) {
+        if (!empty($filters['category_id']) && is_numeric($filters['category_id']) && (int)$filters['category_id'] > 0) {
             $catId = (int)$filters['category_id'];
             $childIds = \App\Models\Category::where('parent_id', $catId)->pluck('id')->push($catId)->toArray();
             $query->whereIn('category_id', $childIds);
