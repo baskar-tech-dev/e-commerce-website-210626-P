@@ -19,6 +19,129 @@ class InventoryController extends Controller
     }
 
     /**
+     * Display real-time Stock Overview with global KPIs and product stock cards.
+     */
+    public function overview(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only(['search', 'status', 'category_id', 'sort_by']);
+            $perPage = (int) $request->input('per_page', 24);
+
+            $stats = $this->inventoryService->getStockOverviewStats($filters);
+            $products = $this->inventoryService->getStockOverview($filters, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock overview data retrieved successfully',
+                'stats' => $stats,
+                'data' => $products->items(),
+                'meta' => [
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('InventoryController@overview failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve stock overview',
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick color & size variant stock adjustment for a product.
+     */
+    public function quickAdjust(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'mode' => 'required|string|in:set,add,subtract',
+            'reason' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.variant_id' => 'required|integer|exists:product_variants,id',
+            'items.*.quantity' => 'required|integer|min:0',
+        ]);
+
+        try {
+            $userId = auth()->id();
+            $result = $this->inventoryService->bulkUpdateMatrixStock(
+                $validated['product_id'],
+                $validated['mode'],
+                $validated['reason'],
+                $validated['notes'] ?? null,
+                $validated['items'],
+                $userId
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Stock updated successfully for {$result['updated_count']} variants.",
+                'data' => $result,
+            ]);
+        } catch (Exception $e) {
+            Log::error('InventoryController@quickAdjust failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?: 'Failed to adjust product stock',
+                'error_code' => 'BAD_REQUEST'
+            ], 400);
+        }
+    }
+
+    /**
+     * Export full stock overview as CSV.
+     */
+    public function exportOverviewCsv(Request $request)
+    {
+        try {
+            $filters = $request->only(['search', 'status', 'category_id', 'sort_by']);
+            $products = $this->inventoryService->getStockOverview($filters, 1000);
+            $filename = "stock_overview_" . date('Y_m_d_His') . ".csv";
+
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0',
+            ];
+
+            $callback = function () use ($products) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, ['Product ID', 'Product Name', 'SKU', 'Category', 'Stock Qty', 'Order Qty', 'Available Qty', 'Status', 'Last Updated']);
+
+                foreach ($products as $p) {
+                    fputcsv($file, [
+                        $p['id'],
+                        $p['name'],
+                        $p['sku'],
+                        $p['category_name'],
+                        $p['stock_qty'],
+                        $p['order_qty'],
+                        $p['avail_qty'],
+                        $p['status_label'],
+                        $p['updated_at_formatted'],
+                    ]);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        } catch (Exception $e) {
+            Log::error('InventoryController@exportOverviewCsv failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export stock overview.',
+            ], 500);
+        }
+    }
+
+    /**
      * Display listing of variants and their stock status.
      */
     public function index(Request $request): JsonResponse

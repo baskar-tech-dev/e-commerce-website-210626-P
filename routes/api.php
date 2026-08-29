@@ -175,6 +175,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         Route::delete('media/{id}', [\App\Http\Controllers\Api\v1\Admin\MediaController::class, 'destroy']);
         
         Route::get('inventory', [InventoryController::class, 'index']);
+        Route::get('inventory/overview', [InventoryController::class, 'overview']);
+        Route::post('inventory/quick-adjust', [InventoryController::class, 'quickAdjust']);
+        Route::get('inventory/export-overview-csv', [InventoryController::class, 'exportOverviewCsv']);
         Route::post('inventory/adjust', [InventoryController::class, 'adjust']);
         Route::get('inventory/ledger', [InventoryController::class, 'ledger']);
         Route::get('inventory/product-matrix/{id}', [InventoryController::class, 'productMatrix']);

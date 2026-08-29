@@ -25,6 +25,7 @@ import ProductForm from '../views/admin/ProductForm.vue';
 import InwardList from '../views/admin/InwardList.vue';
 import InwardForm from '../views/admin/InwardForm.vue';
 import InventoryList from '../views/admin/InventoryList.vue';
+import StockOverview from '../views/admin/StockOverview.vue';
 import StockMatrixEntry from '../views/admin/StockMatrixEntry.vue';
 import PurchaseOrderList from '../views/admin/PurchaseOrderList.vue';
 import PurchaseOrderForm from '../views/admin/PurchaseOrderForm.vue';
@@ -340,6 +341,12 @@ const routes = [
         name: 'admin.inward.create',
         component: InwardForm,
         meta: { permission: 'inward.create' },
+      },
+      {
+        path: 'stock-overview',
+        name: 'admin.stock-overview',
+        component: StockOverview,
+        meta: { permission: 'manage_products' },
       },
       {
         path: 'inventory',

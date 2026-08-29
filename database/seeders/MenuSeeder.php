@@ -115,6 +115,13 @@ class MenuSeeder extends Seeder
                 'permission_name' => 'manage_products',
             ],
             [
+                'name' => 'Stock Overview',
+                'path' => '/admin/stock-overview',
+                'icon' => 'Boxes',
+                'group' => 'Catalog',
+                'permission_name' => 'manage_products',
+            ],
+            [
                 'name' => 'Inventory',
                 'path' => '/admin/inventory',
                 'icon' => 'Package',
@@ -124,7 +131,7 @@ class MenuSeeder extends Seeder
             [
                 'name' => 'Quick Stock Entry',
                 'path' => '/admin/stock-entry',
-                'icon' => 'Boxes',
+                'icon' => 'PackagePlus',
                 'group' => 'Catalog',
                 'permission_name' => 'manage_products',
             ],

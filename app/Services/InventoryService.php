@@ -27,6 +27,22 @@ class InventoryService
     }
 
     /**
+     * Get real-time stock overview summary metrics.
+     */
+    public function getStockOverviewStats(array $filters = []): array
+    {
+        return $this->inventoryRepository->stockOverviewStats($filters);
+    }
+
+    /**
+     * Get paginated product stock overview records.
+     */
+    public function getStockOverview(array $filters = [], int $perPage = 24): LengthAwarePaginator
+    {
+        return $this->inventoryRepository->stockOverview($filters, $perPage);
+    }
+
+    /**
      * Get paginated ledger movement history.
      */
     public function getPaginatedLedger(array $filters = [], int $perPage = 15): LengthAwarePaginator

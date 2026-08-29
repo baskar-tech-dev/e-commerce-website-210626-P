@@ -6,6 +6,22 @@ export const useInventoryStore = defineStore('inventory', {
     variants: [],
     ledger: [],
     currentMatrix: null,
+    overviewStats: {
+      total_products: 0,
+      total_stock_qty: 0,
+      total_order_qty: 0,
+      total_available_qty: 0,
+      low_stock_items: 0,
+      out_of_stock_items: 0,
+    },
+    overviewProducts: [],
+    overviewPagination: {
+      current_page: 1,
+      last_page: 1,
+      per_page: 24,
+      total: 0
+    },
+    overviewLoading: false,
     pagination: {
       current_page: 1,
       last_page: 1,
@@ -25,6 +41,42 @@ export const useInventoryStore = defineStore('inventory', {
   }),
 
   actions: {
+    async fetchOverview(filters = {}) {
+      this.overviewLoading = true;
+      this.error = null;
+      try {
+        const response = await axios.get('/api/admin/inventory/overview', { params: filters });
+        if (response.data.success) {
+          this.overviewProducts = response.data.data;
+          if (response.data.stats) {
+            this.overviewStats = response.data.stats;
+          }
+          if (response.data.meta) {
+            this.overviewPagination = response.data.meta;
+          }
+          return response.data;
+        }
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to fetch stock overview';
+        throw err;
+      } finally {
+        this.overviewLoading = false;
+      }
+    },
+
+    async quickAdjustStock(payload) {
+      this.submitting = true;
+      this.error = null;
+      try {
+        const response = await axios.post('/api/admin/inventory/quick-adjust', payload);
+        return response.data;
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to adjust stock';
+        throw err.response?.data || { message: 'Failed to adjust stock' };
+      } finally {
+        this.submitting = false;
+      }
+    },
     async fetchVariants(filters = {}) {
       this.loading = true;
       this.error = null;

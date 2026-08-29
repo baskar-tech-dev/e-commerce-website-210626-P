@@ -4,7 +4,10 @@
       <h1 class="admin-page__title">Stock Control & Ledger</h1>
       <span class="admin-page__subtitle">Monitor stock levels, execute adjustments, and view double-entry audits.</span>
     </div>
-    <div style="display: flex; gap: 0.75rem; align-items: center;">
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <router-link to="/admin/stock-overview" class="btn btn--outline-gold" style="border-radius: 8px; font-weight: 600;">
+        📊 Visual Stock Overview
+      </router-link>
       <router-link to="/admin/stock-entry" class="btn btn--primary" style="border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-sm);">
         ⚡ Quick Stock Matrix Entry
       </router-link>

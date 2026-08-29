@@ -41,14 +41,16 @@ const props = defineProps({
 
 const stockStatusClass = computed(() => {
   if (!props.selectedVariant || props.selectedVariant.stock_quantity <= 0) return 'out-of-stock';
-  if (props.selectedVariant.stock_quantity <= 5) return 'low-stock';
+  const threshold = props.selectedVariant.low_stock_threshold || 5;
+  if (props.selectedVariant.stock_quantity <= threshold) return 'low-stock';
   return 'in-stock';
 });
 
 const stockStatusLabel = computed(() => {
   if (!props.selectedVariant || props.selectedVariant.stock_quantity <= 0) return 'Out of Stock';
-  if (props.selectedVariant.stock_quantity <= 5) {
-    return `Only ${props.selectedVariant.stock_quantity} Left`;
+  const threshold = props.selectedVariant.low_stock_threshold || 5;
+  if (props.selectedVariant.stock_quantity <= threshold) {
+    return `Only ${props.selectedVariant.stock_quantity} Left in Stock`;
   }
   return 'In Stock';
 });

@@ -22,4 +22,14 @@ interface InventoryRepositoryInterface
      * Find a variant with product details.
      */
     public function findVariant(int $variantId): ?ProductVariant;
+
+    /**
+     * Get stock overview KPI summary statistics.
+     */
+    public function stockOverviewStats(array $filters = []): array;
+
+    /**
+     * Get paginated product stock overview records.
+     */
+    public function stockOverview(array $filters = [], int $perPage = 24): LengthAwarePaginator;
 }

@@ -379,14 +379,19 @@ class CashfreeReportController extends Controller
                 try {
                     $cfResponse = $this->cashfreeService->getSettlements($filters, $cursor, $limit);
 
-                    if (isset($cfResponse['settlements']) && is_array($cfResponse['settlements']) && count($cfResponse['settlements']) > 0) {
+                    if (isset($cfResponse['settlements']) && is_array($cfResponse['settlements'])) {
                         $rawSettlements = $cfResponse['settlements'];
                         $nextCursor = $cfResponse['pagination']['cursor'] ?? ($cfResponse['pagination']['next_cursor'] ?? null);
-                        $source = 'cashfree_gateway';
-                    } elseif (isset($cfResponse['data']) && is_array($cfResponse['data']) && count($cfResponse['data']) > 0) {
+                        if (!empty($rawSettlements)) {
+                            $source = 'cashfree_gateway';
+                        }
+                    } elseif (isset($cfResponse['data']) && is_array($cfResponse['data'])) {
                         $rawSettlements = $cfResponse['data'];
-                        $source = 'cashfree_gateway';
-                    } elseif (is_array($cfResponse) && !isset($cfResponse['message']) && count($cfResponse) > 0) {
+                        $nextCursor = $cfResponse['cursor'] ?? ($cfResponse['pagination']['cursor'] ?? null);
+                        if (!empty($rawSettlements)) {
+                            $source = 'cashfree_gateway';
+                        }
+                    } elseif (is_array($cfResponse) && array_is_list($cfResponse) && !empty($cfResponse)) {
                         $rawSettlements = $cfResponse;
                         $source = 'cashfree_gateway';
                     }
@@ -405,7 +410,7 @@ class CashfreeReportController extends Controller
             }
 
             // Filter in memory if local filters passed
-            $filteredCollection = collect($rawSettlements);
+            $filteredCollection = collect(array_values($rawSettlements));
 
             if (!empty($filters['settlement_id'])) {
                 $searchId = strtolower($filters['settlement_id']);
@@ -431,15 +436,16 @@ class CashfreeReportController extends Controller
             $pendingCount = $pendingQuery->count();
 
             // Transform each settlement into clean sanitized internal structure
-            $transformed = $filteredCollection->map(function ($item, $idx) {
-                $settlementId = (string) ($item['cf_settlement_id'] ?? $item['settlement_id'] ?? $item['id'] ?? ('SETT-' . ($idx + 1)));
-                $amount = (float) ($item['settlement_amount'] ?? $item['amount_settled'] ?? $item['amount'] ?? 0.0);
-                $status = strtoupper((string) ($item['settlement_status'] ?? $item['status'] ?? 'SETTLED'));
-                $utr = (string) ($item['settlement_utr'] ?? $item['utr'] ?? '—');
-                $type = strtoupper((string) ($item['settlement_type'] ?? $item['type'] ?? 'STANDARD'));
-                $ref = (string) ($item['settlement_reference'] ?? $item['reference_id'] ?? $item['cf_payment_id'] ?? '—');
+            $transformed = $filteredCollection->values()->map(function ($item, $idx) {
+                $safeIndex = is_numeric($idx) ? ((int)$idx + 1) : 1;
+                $settlementId = (string) ($item['cf_settlement_id'] ?? $item['settlement_id'] ?? $item['event_id'] ?? $item['id'] ?? ('SETT-' . $safeIndex));
+                $amount = (float) ($item['event_settlement_amount'] ?? $item['settlement_amount'] ?? $item['amount_settled'] ?? $item['event_amount'] ?? $item['order_amount'] ?? $item['amount'] ?? 0.0);
+                $status = strtoupper((string) ($item['event_status'] ?? $item['settlement_status'] ?? $item['status'] ?? 'SETTLED'));
+                $utr = (string) ($item['settlement_utr'] ?? $item['payment_utr'] ?? $item['utr'] ?? '—');
+                $type = strtoupper((string) ($item['settlement_type'] ?? $item['event_type'] ?? $item['sale_type'] ?? $item['type'] ?? 'STANDARD'));
+                $ref = (string) ($item['order_id'] ?? $item['settlement_reference'] ?? $item['reference_id'] ?? $item['cf_payment_id'] ?? '—');
 
-                $dateRaw = $item['settlement_date'] ?? $item['processed_at'] ?? $item['created_at'] ?? null;
+                $dateRaw = $item['settlement_date'] ?? $item['event_time'] ?? $item['processed_at'] ?? $item['created_at'] ?? null;
                 $formattedDate = $dateRaw ? Carbon::parse($dateRaw)->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
 
                 return [
@@ -516,18 +522,25 @@ class CashfreeReportController extends Controller
             if ($this->cashfreeService->isConfigured()) {
                 try {
                     $cfResponse = $this->cashfreeService->getSettlements($filters, null, 50);
-                    $items = $cfResponse['settlements'] ?? ($cfResponse['data'] ?? (is_array($cfResponse) ? $cfResponse : []));
+                    $items = [];
+                    if (isset($cfResponse['settlements']) && is_array($cfResponse['settlements'])) {
+                        $items = $cfResponse['settlements'];
+                    } elseif (isset($cfResponse['data']) && is_array($cfResponse['data'])) {
+                        $items = $cfResponse['data'];
+                    } elseif (is_array($cfResponse) && array_is_list($cfResponse)) {
+                        $items = $cfResponse;
+                    }
 
-                    if (is_array($items) && count($items) > 0) {
+                    if (!empty($items)) {
                         $settlementsCount = count($items);
                         $totalSettledAmount = (float) collect($items)->sum(function ($item) {
-                            return (float) ($item['settlement_amount'] ?? $item['amount_settled'] ?? $item['amount'] ?? 0.0);
+                            return (float) ($item['event_settlement_amount'] ?? $item['settlement_amount'] ?? $item['amount_settled'] ?? $item['event_amount'] ?? $item['order_amount'] ?? $item['amount'] ?? 0.0);
                         });
 
                         $latest = $items[0] ?? null;
                         if ($latest) {
-                            $latestSettlementAmount = (float) ($latest['settlement_amount'] ?? $latest['amount_settled'] ?? $latest['amount'] ?? 0.0);
-                            $dateRaw = $latest['settlement_date'] ?? $latest['processed_at'] ?? $latest['created_at'] ?? null;
+                            $latestSettlementAmount = (float) ($latest['event_settlement_amount'] ?? $latest['settlement_amount'] ?? $latest['amount_settled'] ?? $latest['event_amount'] ?? $latest['order_amount'] ?? $latest['amount'] ?? 0.0);
+                            $dateRaw = $latest['settlement_date'] ?? $latest['event_time'] ?? $latest['processed_at'] ?? $latest['created_at'] ?? null;
                             $latestSettlementDate = $dateRaw ? Carbon::parse($dateRaw)->format('Y-m-d') : null;
                         }
                         $source = 'cashfree_gateway';

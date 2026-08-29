@@ -197,4 +197,107 @@ class InventoryApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.type', 'DAMAGE');
     }
+
+    public function test_can_get_stock_overview_with_kpi_stats(): void
+    {
+        $category = Category::factory()->create(['name' => 'Dresses']);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'name' => 'Floral Printed Maxi Dress',
+            'is_active' => true,
+        ]);
+
+        ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'sku' => 'FMD-MRN-M',
+            'color' => 'Maroon',
+            'size' => 'M',
+            'stock_quantity' => 320,
+            'reserved_quantity' => 85,
+            'low_stock_threshold' => 10,
+        ]);
+
+        $response = $this->getJson('/api/admin/inventory/overview');
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'stats' => [
+                    'total_products',
+                    'total_stock_qty',
+                    'total_order_qty',
+                    'total_available_qty',
+                    'low_stock_items',
+                    'out_of_stock_items',
+                ],
+                'data',
+                'meta',
+            ]);
+
+        $this->assertEquals(1, $response->json('stats.total_products'));
+        $this->assertEquals(320, $response->json('stats.total_stock_qty'));
+        $this->assertEquals(85, $response->json('stats.total_order_qty'));
+        $this->assertEquals(235, $response->json('stats.total_available_qty'));
+
+        $this->assertEquals(320, $response->json('data.0.stock_qty'));
+        $this->assertEquals(85, $response->json('data.0.order_qty'));
+        $this->assertEquals(235, $response->json('data.0.avail_qty'));
+        $this->assertEquals('in_stock', $response->json('data.0.status'));
+
+        // Test search query by name
+        $searchResponse = $this->getJson('/api/admin/inventory/overview?search=Floral');
+        $searchResponse->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.sku', 'FMD-MRN-M');
+
+        // Test search query by SKU/color
+        $searchSkuResponse = $this->getJson('/api/admin/inventory/overview?search=FMD-MRN');
+        $searchSkuResponse->assertStatus(200)
+            ->assertJsonCount(1, 'data');
+
+        // Test search with no match
+        $noMatchResponse = $this->getJson('/api/admin/inventory/overview?search=NonExistentProduct');
+        $noMatchResponse->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_can_quick_adjust_stock_color_and_size_wise(): void
+    {
+        $product = Product::factory()->create(['is_active' => true]);
+        $variant1 = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'color' => 'Maroon',
+            'size' => 'S',
+            'stock_quantity' => 10,
+        ]);
+        $variant2 = ProductVariant::factory()->create([
+            'product_id' => $product->id,
+            'color' => 'Maroon',
+            'size' => 'M',
+            'stock_quantity' => 20,
+        ]);
+
+        // Add 5 to variant1, and set variant2 to 30
+        $payload = [
+            'product_id' => $product->id,
+            'mode' => 'add',
+            'reason' => 'Supplier Shipment Arrival',
+            'items' => [
+                ['variant_id' => $variant1->id, 'quantity' => 5],
+                ['variant_id' => $variant2->id, 'quantity' => 10],
+            ]
+        ];
+
+        $response = $this->postJson('/api/admin/inventory/quick-adjust', $payload);
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('product_variants', [
+            'id' => $variant1->id,
+            'stock_quantity' => 15,
+        ]);
+        $this->assertDatabaseHas('product_variants', [
+            'id' => $variant2->id,
+            'stock_quantity' => 30,
+        ]);
+    }
 }

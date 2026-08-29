@@ -38,10 +38,20 @@ class CashfreeService
             $dbEnv = null;
         }
 
-        $this->appId = (string) ($dbAppId ?: (config('services.cashfree.app_id') ?? env('CASHFREE_APP_ID', '')));
-        $this->secretKey = (string) ($dbSecretKey ?: (config('services.cashfree.secret_key') ?? env('CASHFREE_SECRET_KEY', '')));
-        $this->environment = strtolower((string) ($dbEnv ?: (config('services.cashfree.environment') ?? env('CASHFREE_ENVIRONMENT', 'sandbox'))));
-        $this->apiVersion = (string) (config('services.cashfree.api_version') ?? env('CASHFREE_API_VERSION', '2023-08-01'));
+        $this->appId = (string) (!empty($dbAppId) ? $dbAppId : (config('services.cashfree.app_id') ?: env('CASHFREE_APP_ID', '')));
+        $this->secretKey = (string) (!empty($dbSecretKey) ? $dbSecretKey : (config('services.cashfree.secret_key') ?: env('CASHFREE_SECRET_KEY', '')));
+        
+        $resolvedEnv = (!empty($dbAppId) && !empty($dbEnv)) ? $dbEnv : (config('services.cashfree.environment') ?: env('CASHFREE_ENVIRONMENT', 'sandbox'));
+        
+        // Auto-detect production environment if secret key begins with cfsk_ma_prod_
+        if (str_starts_with($this->secretKey, 'cfsk_ma_prod_')) {
+            $resolvedEnv = 'production';
+        } elseif (str_starts_with($this->secretKey, 'cfsk_ma_test_')) {
+            $resolvedEnv = 'sandbox';
+        }
+
+        $this->environment = strtolower((string) $resolvedEnv);
+        $this->apiVersion = (string) (config('services.cashfree.api_version') ?: env('CASHFREE_API_VERSION', '2023-08-01'));
 
         $this->baseUrl = $this->environment === 'production'
             ? 'https://api.cashfree.com/pg'
