@@ -705,9 +705,10 @@ function resetFilters() {
 
 async function loadOverview() {
   try {
+    errorMsg.value = null;
     await inventoryStore.fetchOverview(filters);
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to load stock overview data';
+    errorMsg.value = err.response?.data?.message || err.message || 'Failed to load stock overview data';
   }
 }
 

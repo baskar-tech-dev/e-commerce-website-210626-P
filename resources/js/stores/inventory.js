@@ -45,7 +45,15 @@ export const useInventoryStore = defineStore('inventory', {
       this.overviewLoading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/admin/inventory/overview', { params: filters });
+        const cleanParams = {};
+        if (filters.search && filters.search.trim()) cleanParams.search = filters.search.trim();
+        if (filters.category_id && filters.category_id !== '') cleanParams.category_id = filters.category_id;
+        if (filters.status && filters.status !== 'all') cleanParams.status = filters.status;
+        if (filters.sort_by) cleanParams.sort_by = filters.sort_by;
+        cleanParams.page = filters.page ? parseInt(filters.page, 10) : 1;
+        cleanParams.per_page = filters.per_page ? parseInt(filters.per_page, 10) : 24;
+
+        const response = await axios.get('/api/admin/inventory/overview', { params: cleanParams });
         if (response.data.success) {
           this.overviewProducts = response.data.data;
           if (response.data.stats) {
@@ -57,7 +65,7 @@ export const useInventoryStore = defineStore('inventory', {
           return response.data;
         }
       } catch (err) {
-        this.error = err.response?.data?.message || 'Failed to fetch stock overview';
+        this.error = err.response?.data?.message || err.message || 'Failed to fetch stock overview';
         throw err;
       } finally {
         this.overviewLoading = false;
