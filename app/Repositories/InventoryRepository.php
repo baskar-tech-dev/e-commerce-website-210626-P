@@ -145,7 +145,7 @@ class InventoryRepository implements InventoryRepositoryInterface
      */
     public function stockOverview(array $filters = [], int $perPage = 24): LengthAwarePaginator
     {
-        $perPage = ($perPage > 0) ? min(max($perPage, 1), 100) : 24;
+        $perPage = ($perPage > 0) ? min(max($perPage, 1), 5000) : 24;
         $page = isset($filters['page']) && is_numeric($filters['page']) && (int)$filters['page'] > 0 ? (int)$filters['page'] : 1;
 
         $query = \App\Models\Product::with([
@@ -196,7 +196,19 @@ class InventoryRepository implements InventoryRepositoryInterface
                 $query->whereDoesntHave('variants', function ($vQ) {
                     $vQ->whereRaw('(stock_quantity - reserved_quantity) > 0');
                 });
+            } elseif ($status === 'ordered') {
+                $query->whereHas('variants', function ($vQ) {
+                    $vQ->where('reserved_quantity', '>', 0);
+                });
             }
+        }
+
+        if (!empty($filters['color'])) {
+            $color = trim($filters['color']);
+            $query->whereHas('variants', function ($vQ) use ($color) {
+                $vQ->where('color', $color)
+                   ->orWhere('color_code', $color);
+            });
         }
 
         $sortBy = $filters['sort_by'] ?? 'name_asc';

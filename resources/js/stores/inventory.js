@@ -49,6 +49,7 @@ export const useInventoryStore = defineStore('inventory', {
         if (filters.search && filters.search.trim()) cleanParams.search = filters.search.trim();
         if (filters.category_id && filters.category_id !== '') cleanParams.category_id = filters.category_id;
         if (filters.status && filters.status !== 'all') cleanParams.status = filters.status;
+        if (filters.color && filters.color !== '') cleanParams.color = filters.color;
         if (filters.sort_by) cleanParams.sort_by = filters.sort_by;
         cleanParams.page = filters.page ? parseInt(filters.page, 10) : 1;
         cleanParams.per_page = filters.per_page ? parseInt(filters.per_page, 10) : 24;

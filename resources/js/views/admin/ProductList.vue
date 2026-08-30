@@ -84,9 +84,8 @@
             <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); background: rgba(128, 0, 32, 0.08); border: 1px solid rgba(128, 0, 32, 0.15); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">
               #{{ (pagination.current_page - 1) * (pagination.per_page || 15) + index + 1 }}
             </span>
-            <div style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-              <img v-if="getPrimaryImage(prod)" :src="getPrimaryImage(prod)" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" />
-              <span v-else style="font-weight: 700; color: var(--color-text-muted);">🛍️</span>
+            <div style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+              <img :src="getPrimaryImage(prod) || '/asset/product-placeholder.jpg'" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" @error="$event.target.src = '/asset/product-placeholder.jpg'" />
             </div>
             <div>
               <div class="mdc-title">{{ prod.name }}</div>
@@ -153,8 +152,7 @@
             <div style="display: flex; align-items: center; gap: 1rem;">
               <!-- Thumbnail -->
               <div style="width: 50px; height: 50px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--color-border); flex-shrink: 0;">
-                <img v-if="getPrimaryImage(prod)" :src="getPrimaryImage(prod)" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" />
-                <span v-else style="font-weight: 700; color: var(--color-text-muted);">🛍️</span>
+                <img :src="getPrimaryImage(prod) || '/asset/product-placeholder.jpg'" :alt="prod.name" style="width: 100%; height: 100%; object-fit: cover;" @error="$event.target.src = '/asset/product-placeholder.jpg'" />
               </div>
               <div>
                 <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">{{ prod.name }}</div>

@@ -17,6 +17,20 @@ class MenuController extends Controller
                         ->orderBy('order')
                         ->get();
 
+        // Clean up legacy stock-overview and stock-entry menus if present
+        if ($allMenus->contains('path', '/admin/stock-overview')) {
+            try {
+                Menu::where('path', '/admin/stock-overview')->delete();
+            } catch (\Throwable $e) {}
+            $allMenus = $allMenus->reject(fn($m) => $m->path === '/admin/stock-overview');
+        }
+        if ($allMenus->contains('path', '/admin/stock-entry')) {
+            try {
+                Menu::where('path', '/admin/stock-entry')->delete();
+            } catch (\Throwable $e) {}
+            $allMenus = $allMenus->reject(fn($m) => $m->path === '/admin/stock-entry');
+        }
+
         // Self-healing: Ensure Payments and Settlements menus are present even if DB migration was skipped
         if (!$allMenus->contains('path', '/admin/reports/payments')) {
             $reportMenu = $allMenus->firstWhere('path', '/admin/reports');

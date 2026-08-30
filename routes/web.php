@@ -37,4 +37,4 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::get('{any}', function () {
     return view('app');
-})->where('any', '.*');
+})->name('login')->where('any', '.*');

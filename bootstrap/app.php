@@ -18,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth/*',
             'api/*',
         ]);
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return null;
+            }
+            return '/';
+        });
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'role' => \App\Http\Middleware\EnsureStaffRole::class,

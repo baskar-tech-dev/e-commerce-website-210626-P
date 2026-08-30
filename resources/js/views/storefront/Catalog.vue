@@ -51,6 +51,13 @@
           </div>
           <div v-show="openSections.category" class="filter-card-body">
             <div class="filter-options-list">
+              <!-- All Products Option -->
+              <label class="custom-radio-option">
+                <input type="radio" value="" v-model="filters.category_id" @change="fetchProducts(1)" />
+                <span class="radio-indicator"></span>
+                <span class="option-label">All Products</span>
+              </label>
+
               <label class="custom-radio-option" v-for="cat in categories" :key="cat.id">
                 <input type="radio" :value="cat.id" v-model="filters.category_id" @change="fetchProducts(1)" />
                 <span class="radio-indicator"></span>
@@ -237,9 +244,10 @@
                 :class="{ active: filters.category_id == sub.id }"
               >
                 <img 
-                  :src="sub.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=150&auto=format&fit=crop'" 
+                  :src="sub.image || '/asset/product-placeholder.jpg'" 
                   class="bubble-image" 
-                  alt="subcategory"
+                  :alt="sub.name"
+                  @error="$event.target.src = '/asset/product-placeholder.jpg'"
                 />
               </div>
               <span class="bubble-label" :class="{ active: filters.category_id == sub.id }">{{ sub.name }}</span>
@@ -452,6 +460,12 @@
               <span>{{ openSections.category ? '−' : '+' }}</span>
             </div>
             <div v-show="openSections.category" class="sheet-group-body">
+              <!-- All Products Option -->
+              <label class="sheet-radio-label">
+                <input type="radio" value="" v-model="filters.category_id" @change="fetchProducts(1)" />
+                <span class="option-title-text">All Products</span>
+              </label>
+
               <label class="sheet-radio-label" v-for="cat in categories" :key="cat.id">
                 <input type="radio" :value="cat.id" v-model="filters.category_id" @change="fetchProducts(1)" />
                 <span class="option-title-text">{{ cat.name }}</span>
@@ -641,6 +655,7 @@
                   class="mobile-cat-img" 
                   :alt="cat.name"
                   loading="lazy"
+                  @error="$event.target.src = '/asset/product-placeholder.jpg'"
                 />
                 <div v-else class="mobile-cat-icon">{{ cat.icon || '👗' }}</div>
                 
@@ -1130,7 +1145,7 @@ const isProductSoldOut = (product) => {
   if (!product) return false;
   if (product.is_sold_out) return true;
   if (!product.variants || product.variants.length === 0) return true;
-  return !product.variants.some(v => v.stock_quantity > 0);
+  return !product.variants.some(v => (v.stock_quantity - (v.reserved_quantity || 0)) > 0);
 };
 
 const isProductLowStock = (product) => {

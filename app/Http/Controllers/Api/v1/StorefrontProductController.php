@@ -87,7 +87,10 @@ class StorefrontProductController extends Controller
             });
         }
 
-        // Sorting
+        // Primary Ordering: In-stock products first (0), Sold-out products last (1)
+        $query->orderByRaw('(CASE WHEN (SELECT COALESCE(SUM(stock_quantity - reserved_quantity), 0) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.deleted_at IS NULL AND product_variants.is_active = 1) > 0 THEN 0 ELSE 1 END) ASC');
+
+        // Secondary Sorting
         $sortBy = $request->input('sort_by', 'newest');
         switch ($sortBy) {
             case 'price_low_high':

@@ -24,7 +24,7 @@ class InventoryController extends Controller
     public function overview(Request $request): JsonResponse
     {
         try {
-            $filters = $request->only(['search', 'status', 'category_id', 'sort_by', 'page']);
+            $filters = $request->only(['search', 'status', 'category_id', 'color', 'sort_by', 'page']);
             $perPage = min(max((int) $request->input('per_page', 24), 1), 100);
 
             $stats = $this->inventoryService->getStockOverviewStats($filters);
@@ -100,12 +100,12 @@ class InventoryController extends Controller
     public function exportOverviewCsv(Request $request)
     {
         try {
-            $filters = $request->only(['search', 'status', 'category_id', 'sort_by']);
-            $products = $this->inventoryService->getStockOverview($filters, 1000);
+            $filters = $request->only(['search', 'status', 'category_id', 'color', 'sort_by']);
+            $products = $this->inventoryService->getStockOverview($filters, 5000);
             $filename = "stock_overview_" . date('Y_m_d_His') . ".csv";
 
             $headers = [
-                'Content-Type' => 'text/csv',
+                'Content-Type' => 'text/csv; charset=UTF-8',
                 'Content-Disposition' => "attachment; filename=\"{$filename}\"",
                 'Pragma' => 'no-cache',
                 'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
@@ -114,27 +114,69 @@ class InventoryController extends Controller
 
             $callback = function () use ($products) {
                 $file = fopen('php://output', 'w');
-                fputcsv($file, ['Product ID', 'Product Name', 'SKU', 'Category', 'Stock Qty', 'Order Qty', 'Available Qty', 'Status', 'Last Updated']);
+                
+                // Add UTF-8 BOM so Excel opens with correct encoding
+                fputs($file, "\xEF\xBB\xBF");
+
+                fputcsv($file, [
+                    'Product ID',
+                    'Product Name',
+                    'SKU',
+                    'Category',
+                    'Color',
+                    'Size',
+                    'Stock Qty',
+                    'In Order / Reserved',
+                    'Available Qty',
+                    'Selling Price (INR)',
+                    'MRP (INR)',
+                    'Status',
+                    'Last Updated'
+                ]);
 
                 foreach ($products as $p) {
-                    fputcsv($file, [
-                        $p['id'],
-                        $p['name'],
-                        $p['sku'],
-                        $p['category_name'],
-                        $p['stock_qty'],
-                        $p['order_qty'],
-                        $p['avail_qty'],
-                        $p['status_label'],
-                        $p['updated_at_formatted'],
-                    ]);
+                    if (!empty($p['variants']) && count($p['variants']) > 0) {
+                        foreach ($p['variants'] as $v) {
+                            fputcsv($file, [
+                                $p['id'],
+                                $p['name'],
+                                $v['sku'] ?? $p['sku'],
+                                $p['category_name'],
+                                $v['color'] ?? 'Standard',
+                                $v['size'] ?? 'Free Size',
+                                $v['stock_quantity'] ?? 0,
+                                $v['reserved_quantity'] ?? 0,
+                                $v['avail_qty'] ?? 0,
+                                $v['selling_price'] ?? 0,
+                                $v['mrp'] ?? 0,
+                                $v['status_label'] ?? $p['status_label'],
+                                $p['updated_at_formatted'] ?? '',
+                            ]);
+                        }
+                    } else {
+                        fputcsv($file, [
+                            $p['id'],
+                            $p['name'],
+                            $p['sku'],
+                            $p['category_name'],
+                            'Standard',
+                            'Free Size',
+                            $p['stock_qty'] ?? 0,
+                            $p['order_qty'] ?? 0,
+                            $p['avail_qty'] ?? 0,
+                            0,
+                            0,
+                            $p['status_label'] ?? 'Out of Stock',
+                            $p['updated_at_formatted'] ?? '',
+                        ]);
+                    }
                 }
                 fclose($file);
             };
 
             return response()->stream($callback, 200, $headers);
         } catch (\Throwable $e) {
-            Log::error('InventoryController@exportOverviewCsv failed: ' . $e->getMessage());
+            Log::error('InventoryController@exportOverviewCsv failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to export stock overview.',

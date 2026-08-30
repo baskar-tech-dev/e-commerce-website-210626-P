@@ -1496,7 +1496,7 @@ const isProductSoldOut = (product) => {
   if (!product) return false;
   if (product.is_sold_out) return true;
   if (!product.variants || product.variants.length === 0) return true;
-  return !product.variants.some(v => v.stock_quantity > 0);
+  return !product.variants.some(v => (v.stock_quantity - (v.reserved_quantity || 0)) > 0);
 };
 
 const isProductLowStock = (product) => {

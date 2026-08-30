@@ -46,7 +46,7 @@
           <!-- Search Suggestions Dropdown Overlay -->
           <div v-if="showSuggestions" class="search-suggestions-dropdown">
             <!-- Top Categories -->
-            <div class="suggestions-section">
+            <div v-if="suggestionCategories.length > 0" class="suggestions-section">
               <div class="suggestions-header">
                 <span class="suggestions-icon">🏷️</span>
                 <h4>TOP CATEGORIES</h4>
@@ -54,12 +54,12 @@
               <div class="suggestions-categories-grid">
                 <router-link 
                   v-for="cat in suggestionCategories" 
-                  :key="cat.name" 
+                  :key="cat.id || cat.name" 
                   :to="cat.link"
                   class="suggestion-category-tag"
                   @click="showSuggestions = false"
                 >
-                  <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img">
+                  <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img" @error="$event.target.src = '/asset/product-placeholder.jpg'">
                   <span>{{ cat.name }}</span>
                 </router-link>
               </div>
@@ -184,7 +184,7 @@
         <!-- Search Suggestions Dropdown Overlay for Mobile -->
         <div v-if="showSuggestionsMobile" class="search-suggestions-dropdown search-suggestions-dropdown--mobile">
           <!-- Top Categories -->
-          <div class="suggestions-section">
+          <div v-if="suggestionCategories.length > 0" class="suggestions-section">
             <div class="suggestions-header">
               <span class="suggestions-icon">🏷️</span>
               <h4>TOP CATEGORIES</h4>
@@ -192,12 +192,12 @@
             <div class="suggestions-categories-grid">
               <router-link 
                 v-for="cat in suggestionCategories" 
-                :key="cat.name" 
+                :key="cat.id || cat.name" 
                 :to="cat.link"
                 class="suggestion-category-tag"
                 @click="showSuggestionsMobile = false"
               >
-                <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img">
+                <img :src="cat.image" :alt="cat.name" class="suggestion-cat-img" @error="$event.target.src = '/asset/product-placeholder.jpg'">
                 <span>{{ cat.name }}</span>
               </router-link>
             </div>
@@ -465,12 +465,47 @@ const showSuggestionsMobile = ref(false);
 const searchContainerRef = ref(null);
 const searchContainerMobileRef = ref(null);
 
-const suggestionCategories = [
-  { name: 'ReadyMade Blouse', link: '/shop?search=Blouse', image: '/asset/occasion/Party-wear.png' },
-  { name: 'Womens', link: '/shop?category_id=1', image: '/asset/occasion/wedding-guest.png' },
-  { name: 'Kids', link: '/shop?category_id=3', image: '/asset/occasion/daily-wear.png' },
-  { name: 'Mens', link: '/shop?category_id=4', image: '/asset/occasion/office-wear.png' }
-];
+const formatCategoryImageUrl = (imagePath) => {
+  if (!imagePath || typeof imagePath !== 'string') return '/asset/product-placeholder.jpg';
+  const trimmed = imagePath.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('storage/') || trimmed.startsWith('asset/')) {
+    return `/${trimmed}`;
+  }
+  return `/storage/${trimmed}`;
+};
+
+const suggestionCategories = computed(() => {
+  if (categories.value && categories.value.length > 0) {
+    // Flatten both root categories and child categories loaded from the database table
+    const allCategories = [];
+    categories.value.forEach(cat => {
+      allCategories.push(cat);
+      if (cat.children && Array.isArray(cat.children)) {
+        cat.children.forEach(child => allCategories.push(child));
+      }
+    });
+
+    return allCategories.slice(0, 8).map(cat => {
+      const displayName = cat.name.replace('Stretchable ', '');
+      const storageImage = formatCategoryImageUrl(cat.image);
+
+      return {
+        id: cat.id,
+        name: displayName,
+        link: `/shop?category_id=${cat.id}`,
+        image: storageImage
+      };
+    });
+  }
+
+  return [];
+});
 
 const suggestionProducts = ref([]);
 
