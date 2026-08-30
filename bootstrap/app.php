@@ -28,7 +28,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'role' => \App\Http\Middleware\EnsureStaffRole::class,
         ]);
-    })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated. Admin login required.',
+                    'error_code' => 'UNAUTHENTICATED'
+                ], 401);
+            }
+        });
     })->create();
