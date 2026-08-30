@@ -296,6 +296,8 @@ class StorefrontProductController extends Controller
     {
         try {
             if (!\Illuminate\Support\Facades\Schema::hasTable('occasions')) {
+                return response()->json([
+                    'success' => true,
                     'data' => [],
                 ]);
             }
