@@ -97,47 +97,73 @@ class InventoryRepository implements InventoryRepositoryInterface
      */
     public function stockOverviewStats(array $filters = []): array
     {
-        $totalProducts = \App\Models\Product::where('is_active', true)->count();
-        
-        $variantStats = ProductVariant::whereHas('product', function ($q) {
-            $q->where('is_active', true);
-        })->selectRaw('
-            COALESCE(SUM(stock_quantity), 0) as total_stock,
-            COALESCE(SUM(reserved_quantity), 0) as total_reserved
-        ')->first();
+        try {
+            $totalProducts = \App\Models\Product::where('is_active', true)->count();
+            
+            $variantStats = ProductVariant::whereHas('product', function ($q) {
+                $q->where('is_active', true);
+            })->selectRaw('
+                COALESCE(SUM(stock_quantity), 0) as total_stock,
+                COALESCE(SUM(reserved_quantity), 0) as total_reserved
+            ')->first();
 
-        $activeOrderQty = \App\Models\OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', [
-                \App\Models\Order::STATUS_ORDER_PLACED,
-                \App\Models\Order::STATUS_ORDER_CONFIRMED,
-                \App\Models\Order::STATUS_PROCESSING,
-                \App\Models\Order::STATUS_READY_TO_SHIP,
-            ]);
-        })->sum('quantity');
+            $activeOrderQty = 0;
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('order_items') && \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+                    $activeOrderQty = (int) \App\Models\OrderItem::whereHas('order', function ($q) {
+                        $q->whereIn('status', [
+                            'order_placed',
+                            'order_confirmed',
+                            'processing',
+                            'ready_to_ship',
+                        ]);
+                    })->sum('quantity');
+                }
+            } catch (\Throwable $t) {
+                $activeOrderQty = 0;
+            }
 
-        $totalStock = (int) ($variantStats->total_stock ?? 0);
-        $totalOrder = max((int) ($variantStats->total_reserved ?? 0), (int) $activeOrderQty);
-        $totalAvail = max(0, $totalStock - $totalOrder);
+            $totalStock = (int) ($variantStats->total_stock ?? 0);
+            $totalOrder = max((int) ($variantStats->total_reserved ?? 0), $activeOrderQty);
+            $totalAvail = max(0, $totalStock - $totalOrder);
 
-        $lowStockItems = ProductVariant::whereHas('product', function ($q) {
-            $q->where('is_active', true);
-        })->whereRaw('(stock_quantity - reserved_quantity) > 0')
-          ->whereRaw('(stock_quantity - reserved_quantity) <= low_stock_threshold')
-          ->count();
+            $lowStockItems = 0;
+            $outOfStockItems = 0;
+            try {
+                $lowStockItems = (int) ProductVariant::whereHas('product', function ($q) {
+                    $q->where('is_active', true);
+                })->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0')
+                  ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) <= COALESCE(low_stock_threshold, 5)')
+                  ->count();
 
-        $outOfStockItems = ProductVariant::whereHas('product', function ($q) {
-            $q->where('is_active', true);
-        })->whereRaw('(stock_quantity - reserved_quantity) <= 0')
-          ->count();
+                $outOfStockItems = (int) ProductVariant::whereHas('product', function ($q) {
+                    $q->where('is_active', true);
+                })->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) <= 0')
+                  ->count();
+            } catch (\Throwable $t) {
+                $lowStockItems = 0;
+                $outOfStockItems = 0;
+            }
 
-        return [
-            'total_products' => $totalProducts,
-            'total_stock_qty' => $totalStock,
-            'total_order_qty' => $totalOrder,
-            'total_available_qty' => $totalAvail,
-            'low_stock_items' => $lowStockItems,
-            'out_of_stock_items' => $outOfStockItems,
-        ];
+            return [
+                'total_products' => $totalProducts,
+                'total_stock_qty' => $totalStock,
+                'total_order_qty' => $totalOrder,
+                'total_available_qty' => $totalAvail,
+                'low_stock_items' => $lowStockItems,
+                'out_of_stock_items' => $outOfStockItems,
+            ];
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('stockOverviewStats failed: ' . $e->getMessage());
+            return [
+                'total_products' => 0,
+                'total_stock_qty' => 0,
+                'total_order_qty' => 0,
+                'total_available_qty' => 0,
+                'low_stock_items' => 0,
+                'out_of_stock_items' => 0,
+            ];
+        }
     }
 
     /**
@@ -185,16 +211,16 @@ class InventoryRepository implements InventoryRepositoryInterface
             $status = $filters['status'];
             if ($status === 'in_stock') {
                 $query->whereHas('variants', function ($vQ) {
-                    $vQ->whereRaw('(stock_quantity - reserved_quantity) > low_stock_threshold');
+                    $vQ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > COALESCE(low_stock_threshold, 5)');
                 });
             } elseif ($status === 'low_stock') {
                 $query->whereHas('variants', function ($vQ) {
-                    $vQ->whereRaw('(stock_quantity - reserved_quantity) > 0')
-                       ->whereRaw('(stock_quantity - reserved_quantity) <= low_stock_threshold');
+                    $vQ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0')
+                       ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) <= COALESCE(low_stock_threshold, 5)');
                 });
             } elseif ($status === 'out_of_stock') {
                 $query->whereDoesntHave('variants', function ($vQ) {
-                    $vQ->whereRaw('(stock_quantity - reserved_quantity) > 0');
+                    $vQ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0');
                 });
             } elseif ($status === 'ordered') {
                 $query->whereHas('variants', function ($vQ) {

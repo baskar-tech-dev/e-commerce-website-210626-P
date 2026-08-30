@@ -47,7 +47,7 @@ class InventoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve stock overview',
-                'error_detail' => config('app.debug') ? $e->getMessage() : null,
+                'error_detail' => $e->getMessage(),
                 'error_code' => 'SERVER_ERROR'
             ], 500);
         }
