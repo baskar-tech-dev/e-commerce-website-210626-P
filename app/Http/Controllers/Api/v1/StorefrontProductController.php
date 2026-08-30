@@ -38,37 +38,49 @@ class StorefrontProductController extends Controller
             }
 
             // Featured Filter
-            if ($request->has('is_featured')) {
+            if ($request->has('is_featured') && \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_featured')) {
                 $query->where('is_featured', filter_var($request->input('is_featured'), FILTER_VALIDATE_BOOLEAN));
             }
 
             // New Arrival Filter
-            if ($request->has('is_new_arrival')) {
+            if ($request->has('is_new_arrival') && \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_new_arrival')) {
                 $query->where('is_new_arrival', filter_var($request->input('is_new_arrival'), FILTER_VALIDATE_BOOLEAN));
             }
 
             // Bestseller Filter
-            if ($request->has('is_bestseller')) {
+            if ($request->has('is_bestseller') && \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_bestseller')) {
                 $query->where('is_bestseller', filter_var($request->input('is_bestseller'), FILTER_VALIDATE_BOOLEAN));
             }
 
             // Occasion Filter (supports comma-separated multi-select values)
             if ($request->filled('occasion')) {
                 $occVal = trim($request->input('occasion'));
-                $query->where(function ($q) use ($occVal) {
-                    $q->where('occasion', 'like', "%{$occVal}%")
-                      ->orWhere('badge', 'like', "%{$occVal}%")
-                      ->orWhere('name', 'like', "%{$occVal}%");
+                $hasOcc = \Illuminate\Support\Facades\Schema::hasColumn('products', 'occasion');
+                $hasBadge = \Illuminate\Support\Facades\Schema::hasColumn('products', 'badge');
+                $query->where(function ($q) use ($occVal, $hasOcc, $hasBadge) {
+                    if ($hasOcc) {
+                        $q->where('occasion', 'like', "%{$occVal}%");
+                    }
+                    if ($hasBadge) {
+                        $hasOcc ? $q->orWhere('badge', 'like', "%{$occVal}%") : $q->where('badge', 'like', "%{$occVal}%");
+                    }
+                    $q->orWhere('name', 'like', "%{$occVal}%");
                 });
             }
 
             // Badge Filter (supports assigned badge, occasion tag, name matching)
             if ($request->filled('badge')) {
                 $badgeVal = trim($request->input('badge'));
-                $query->where(function ($q) use ($badgeVal) {
-                    $q->where('badge', 'like', "%{$badgeVal}%")
-                      ->orWhere('occasion', 'like', "%{$badgeVal}%")
-                      ->orWhere('name', 'like', "%{$badgeVal}%")
+                $hasOcc = \Illuminate\Support\Facades\Schema::hasColumn('products', 'occasion');
+                $hasBadge = \Illuminate\Support\Facades\Schema::hasColumn('products', 'badge');
+                $query->where(function ($q) use ($badgeVal, $hasOcc, $hasBadge) {
+                    if ($hasBadge) {
+                        $q->where('badge', 'like', "%{$badgeVal}%");
+                    }
+                    if ($hasOcc) {
+                        $hasBadge ? $q->orWhere('occasion', 'like', "%{$badgeVal}%") : $q->where('occasion', 'like', "%{$badgeVal}%");
+                    }
+                    $q->orWhere('name', 'like', "%{$badgeVal}%")
                       ->orWhere('description', 'like', "%{$badgeVal}%");
                 });
             }
@@ -242,6 +254,13 @@ class StorefrontProductController extends Controller
     public function getEditBadges(): JsonResponse
     {
         try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('section_badges')) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
             $badges = \App\Models\SectionBadge::where('is_active', true)
                 ->orderBy('sort_order', 'asc')
                 ->orderBy('id', 'asc')
@@ -276,6 +295,11 @@ class StorefrontProductController extends Controller
     public function getOccasions(): JsonResponse
     {
         try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('occasions')) {
+                    'data' => [],
+                ]);
+            }
+
             $occasions = \App\Models\Occasion::where('is_active', true)
                 ->orderBy('sort_order', 'asc')
                 ->orderBy('id', 'asc')
