@@ -651,7 +651,127 @@
                         </div>
                     </div>
 
-                    <!-- Section 2: Outgoing SMTP Mailer Settings -->
+                    <!-- Section 2: Daily Cashfree Payment & Settlement Reconciliation Report -->
+                    <div style="background: #FAF8F5; border: 1px solid #E8DDD3; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #E8DDD3; padding-bottom: 0.75rem;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem; color: #5B163A; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    📊 Daily Cashfree Payment & Settlement Report
+                                </h3>
+                                <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #64748B;">
+                                    Automated executive report delivering daily gross revenue, net bank settlements, UTR numbers, and CSV ledger attachments every morning.
+                                </p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="badge" style="background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.4); color: #8A6D3B; font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px;">
+                                    ⏰ Scheduled: {{ formatReportTimeDisplay(settings.email.daily_payment_report_time) }} IST
+                                </span>
+                                <span
+                                    class="badge"
+                                    :style="settings.email.daily_payment_report_enabled ? 'background: #DCFCE7; color: #166534;' : 'background: #F1F5F9; color: #64748B;'"
+                                    style="font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px;"
+                                >
+                                    {{ settings.email.daily_payment_report_enabled ? '✓ Automated Daily' : '✕ Disabled' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Enable/Disable Switch -->
+                        <div
+                            style="
+                                background: #FFFFFF;
+                                border: 1px solid #E8DDD3;
+                                border-radius: 8px;
+                                padding: var(--spacing-md);
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.25rem;
+                            "
+                        >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.6rem;
+                                    color: #1e293b;
+                                    font-weight: 700;
+                                    font-size: 0.95rem;
+                                    cursor: pointer;
+                                    user-select: none;
+                                "
+                            >
+                                <input
+                                    type="checkbox"
+                                    v-model="settings.email.daily_payment_report_enabled"
+                                    style="width: 18px; height: 18px; cursor: pointer; accent-color: #5B163A;"
+                                />
+                                Enable Scheduled Daily Payment & Settlement Report Dispatch
+                            </label>
+                            <span
+                                style="
+                                    font-size: 0.78rem;
+                                    color: var(--color-text-muted);
+                                    margin-left: 2rem;
+                                "
+                            >
+                                Automatically compiles yesterday's Cashfree payments, bank settlement status, UTR reference, and order breakdown at your configured time below.
+                            </span>
+                        </div>
+
+                        <!-- Delivery Time & Recipient Inputs -->
+                        <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; color: #5B163A; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>⏰ Daily Delivery Time (IST) *</span>
+                                    <span class="badge" style="background: #FAF5F0; border: 1px solid rgba(212, 175, 55, 0.4); color: #8A6D3B; font-size: 0.7rem;">IST Timezone</span>
+                                </label>
+                                <input
+                                    type="time"
+                                    v-model="settings.email.daily_payment_report_time"
+                                    class="form-input"
+                                    style="font-weight: 700; font-size: 1rem; color: #5B163A;"
+                                    required
+                                />
+                                <span style="font-size: 0.75rem; color: #64748B;">
+                                    Report is automatically dispatched every day at this exact time (e.g. 08:30 for 8:30 AM).
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; color: #5B163A; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Report Recipient Email(s)</span>
+                                    <span class="badge" style="background: #5B163A; color: #FFFFFF; font-size: 0.7rem;">Primary Recipients</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    v-model="settings.email.daily_payment_report_recipients"
+                                    :placeholder="settings.email.primary_order_email || 'e.g. accounts@mayasree.com, finance@mayasree.com'"
+                                    class="form-input"
+                                    style="font-weight: 600;"
+                                />
+                                <span style="font-size: 0.75rem; color: #64748B;">
+                                    Separate multiple emails with commas. If left empty, defaults to your Primary Notification Email.
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 0.25rem;">
+                            <label class="form-label" style="font-weight: 700; color: #1E293B;">
+                                Additional Report CC Recipients (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                v-model="settings.email.daily_payment_report_cc"
+                                placeholder="e.g. auditor@domain.com, management@domain.com"
+                                class="form-input"
+                            />
+                            <span style="font-size: 0.75rem; color: #64748B;">
+                                Additional stakeholders to receive a carbon copy (CC) of the report and CSV sheet.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Outgoing SMTP Mailer Settings -->
                     <div>
                         <div
                             class="card-header-title"
@@ -3167,6 +3287,10 @@ const settings = ref({
         order_notification_enabled: true,
         primary_order_email: "",
         additional_order_emails: "",
+        daily_payment_report_enabled: true,
+        daily_payment_report_time: "08:30",
+        daily_payment_report_recipients: "",
+        daily_payment_report_cc: "",
         smtp_host: "",
         smtp_port: 587,
         smtp_username: "",
@@ -3627,6 +3751,21 @@ const toggleAnnouncementActive = async (item) => {
     }
 };
 
+const formatReportTimeDisplay = (timeStr) => {
+    if (!timeStr) return "08:30 AM";
+    const parts = timeStr.split(":");
+    if (parts.length >= 2) {
+        let hour = parseInt(parts[0], 10);
+        const min = parts[1];
+        const ampm = hour >= 12 ? "PM" : "AM";
+        hour = hour % 12;
+        hour = hour ? hour : 12;
+        const strHour = hour < 10 ? "0" + hour : hour;
+        return `${strHour}:${min} ${ampm}`;
+    }
+    return timeStr;
+};
+
 const openAddModal = () => {
     modal.value = {
         isOpen: true,
@@ -3742,6 +3881,12 @@ const fetchSettings = async () => {
                         : true,
                     primary_order_email: data.email.primary_order_email || "",
                     additional_order_emails: data.email.additional_order_emails || "",
+                    daily_payment_report_enabled: data.email.daily_payment_report_enabled !== undefined
+                        ? filterBool(data.email.daily_payment_report_enabled)
+                        : true,
+                    daily_payment_report_time: data.email.daily_payment_report_time || "08:30",
+                    daily_payment_report_recipients: data.email.daily_payment_report_recipients || "",
+                    daily_payment_report_cc: data.email.daily_payment_report_cc || "",
                     smtp_host: data.email.smtp_host || "",
                     smtp_port: data.email.smtp_port ? Number(data.email.smtp_port) : 587,
                     smtp_username: data.email.smtp_username || "",
@@ -3845,6 +3990,10 @@ const saveSettings = async () => {
                 email: {
                     ...settings.value.email,
                     order_notification_enabled: settings.value.email.order_notification_enabled ? "1" : "0",
+                    daily_payment_report_enabled: settings.value.email.daily_payment_report_enabled ? "1" : "0",
+                    daily_payment_report_time: settings.value.email.daily_payment_report_time || "08:30",
+                    daily_payment_report_recipients: settings.value.email.daily_payment_report_recipients || "",
+                    daily_payment_report_cc: settings.value.email.daily_payment_report_cc || "",
                     smtp_port: Number(settings.value.email.smtp_port || 587),
                 },
                 announcement: {

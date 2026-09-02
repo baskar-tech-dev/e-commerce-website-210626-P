@@ -45,6 +45,7 @@ class OrderNotificationService
                     'mail.mailers.smtp.username' => $smtpUsername ?: null,
                     'mail.mailers.smtp.password' => $smtpPassword ?: null,
                     'mail.mailers.smtp.encryption' => $encryption,
+                    'mail.mailers.smtp.timeout' => 30,
                 ]);
 
                 if (app()->bound('mail.manager')) {
@@ -117,14 +118,16 @@ class OrderNotificationService
             // 5. Configure dynamic mailer
             $this->configureDynamicMailer();
 
-            // 6. Send Mail
+            // 6. Send Mail with retry
             $mailable = new OrderPlacedNotificationMail($order);
             $pendingMail = Mail::to($primaryEmail);
             if (!empty($ccList)) {
                 $pendingMail->cc($ccList);
             }
 
-            $pendingMail->send($mailable);
+            retry(3, function () use ($pendingMail, $mailable) {
+                $pendingMail->send($mailable);
+            }, 1000);
 
             Log::info("Order placement notification email sent successfully for Order #{$order->order_number} to {$primaryEmail}" . (!empty($ccList) ? " (CC: " . implode(', ', $ccList) . ")" : ""));
             return true;

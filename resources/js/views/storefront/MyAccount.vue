@@ -130,8 +130,16 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="form-label">Mobile Number</label>
-                      <input type="tel" v-model="editProfileForm.phone" class="form-input" placeholder="+91 99442 85102" style="background: #ffffff; color: #111;" />
+                      <label class="form-label">Mobile Number (10 digits)</label>
+                      <input 
+                        type="tel" 
+                        v-model="editProfileForm.phone" 
+                        class="form-input" 
+                        placeholder="9876543210" 
+                        maxlength="10"
+                        @input="editProfileForm.phone = editProfileForm.phone.replace(/\D/g, '').slice(0, 10)"
+                        style="background: #ffffff; color: #111;" 
+                      />
                     </div>
                   </div>
 
@@ -216,8 +224,16 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Phone *</label>
-                  <input type="text" v-model="addressForm.phone" class="form-input" required />
+                  <label class="form-label">Phone (10 digits) *</label>
+                  <input 
+                    type="tel" 
+                    v-model="addressForm.phone" 
+                    placeholder="9876543210" 
+                    maxlength="10" 
+                    @input="addressForm.phone = addressForm.phone.replace(/\D/g, '').slice(0, 10)" 
+                    class="form-input" 
+                    required 
+                  />
                 </div>
 
                 <div class="form-group">

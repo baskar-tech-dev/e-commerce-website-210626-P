@@ -38,17 +38,107 @@ class CustomerAuthTest extends TestCase
         $this->assertNotNull($user->customerProfile);
     }
 
+    public function test_customer_registration_normalizes_phone_with_country_code(): void
+    {
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Kavitha Nathan',
+            'email' => 'kavitha@example.com',
+            'phone' => '+91 98765 43210',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
+            'terms' => true,
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'kavitha@example.com',
+            'phone' => '9876543210',
+        ]);
+    }
+
+    public function test_registration_fails_when_phone_is_missing(): void
+    {
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Priya Sundaram',
+            'email' => 'priya2@example.com',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
+            'terms' => true,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_registration_fails_when_phone_is_not_10_digits(): void
+    {
+        // 8 digits
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Priya Sundaram',
+            'email' => 'priya3@example.com',
+            'phone' => '99442851',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
+            'terms' => true,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_registration_fails_when_phone_starts_with_invalid_prefix(): void
+    {
+        // 10 digits starting with 1
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Priya Sundaram',
+            'email' => 'priya4@example.com',
+            'phone' => '1234567890',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
+            'terms' => true,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_registration_fails_on_duplicate_phone(): void
+    {
+        User::create([
+            'name' => 'Existing User',
+            'email' => 'existing2@example.com',
+            'phone' => '9944285102',
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'New User',
+            'email' => 'newuser@example.com',
+            'phone' => '9944285102',
+            'password' => 'SecretPass123',
+            'password_confirmation' => 'SecretPass123',
+            'terms' => true,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
+
     public function test_registration_fails_on_duplicate_email(): void
     {
         User::create([
             'name' => 'Existing User',
             'email' => 'existing@example.com',
+            'phone' => '9111222333',
             'password' => bcrypt('password'),
         ]);
 
         $response = $this->postJson('/api/auth/register', [
             'name' => 'New User',
             'email' => 'existing@example.com',
+            'phone' => '9444555666',
             'password' => 'SecretPass123',
             'password_confirmation' => 'SecretPass123',
             'terms' => true,
@@ -105,7 +195,7 @@ class CustomerAuthTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['password']);
     }
 
     public function test_customer_can_request_forgot_password(): void

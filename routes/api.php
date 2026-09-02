@@ -280,7 +280,12 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         Route::get('reports/payments', [CashfreeReportController::class, 'payments']);
         Route::get('reports/payments/summary', [CashfreeReportController::class, 'paymentSummary']);
         Route::post('reports/payments/{payment}/verify-cashfree', [CashfreeReportController::class, 'verifyPaymentWithCashfree']);
+        Route::get('reports/daily-payment-report/preview', [CashfreeReportController::class, 'dailyPaymentReportPreview']);
+        Route::post('reports/daily-payment-report/send', [CashfreeReportController::class, 'sendDailyPaymentReport']);
+        Route::get('reports/daily-payment-report/logs', [CashfreeReportController::class, 'dailyPaymentReportLogs']);
     });
+
+
     Route::middleware('permission:settlements')->group(function () {
         Route::get('reports/settlements', [CashfreeReportController::class, 'settlements']);
         Route::get('reports/settlements/summary', [CashfreeReportController::class, 'settlementSummary']);

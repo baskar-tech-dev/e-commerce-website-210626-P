@@ -662,4 +662,128 @@ class CashfreeReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Preview Daily Payment Report metrics for a target date.
+     *
+     * GET /api/admin/reports/daily-payment-report/preview
+     */
+    public function dailyPaymentReportPreview(Request $request, \App\Services\DailyPaymentReportService $reportService): JsonResponse
+
+    {
+        try {
+            $targetDate = null;
+            if ($request->filled('date')) {
+                $dateVal = $request->input('date');
+                if (strtolower($dateVal) === 'today') {
+                    $targetDate = Carbon::today();
+                } elseif (strtolower($dateVal) === 'yesterday') {
+                    $targetDate = Carbon::yesterday();
+                } else {
+                    $targetDate = Carbon::parse($dateVal);
+                }
+            }
+
+            $reportData = $reportService->generateReportData($targetDate);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daily payment report preview loaded successfully',
+                'data' => $reportData,
+            ]);
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@dailyPaymentReportPreview failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to generate daily payment report preview: ' . $e->getMessage(),
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Manually dispatch Daily Payment Report on-demand to configured or custom recipients.
+     *
+     * POST /api/admin/reports/daily-payment-report/send
+     */
+    public function sendDailyPaymentReport(Request $request, \App\Services\DailyPaymentReportService $reportService): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'nullable|string',
+                'recipient_email' => 'nullable|email|max:150',
+                'force' => 'nullable|boolean',
+            ]);
+
+            $customDate = $validated['date'] ?? null;
+            $recipientEmail = $validated['recipient_email'] ?? null;
+            $force = (bool) ($validated['force'] ?? true); // manual click implies forced send
+
+            $result = $reportService->sendDailyReport($customDate, $recipientEmail, $force, 'admin_api');
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result,
+            ], $result['success'] ? 200 : 422);
+
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@sendDailyPaymentReport failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to dispatch daily payment report: ' . $e->getMessage(),
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get historical execution logs of daily payment reports.
+     *
+     * GET /api/admin/reports/daily-payment-report/logs
+     */
+    public function dailyPaymentReportLogs(Request $request): JsonResponse
+    {
+        try {
+            $perPage = min(max((int) $request->input('per_page', 15), 5), 100);
+            
+            $query = \App\Models\PaymentReportLog::query()->orderBy('triggered_at', 'desc');
+
+            if ($request->filled('status')) {
+                $query->where('status', strtolower($request->input('status')));
+            }
+            if ($request->filled('channel')) {
+                $query->where('channel', strtolower($request->input('channel')));
+            }
+            if ($request->filled('start_date')) {
+                $query->where('report_date', '>=', $request->input('start_date'));
+            }
+            if ($request->filled('end_date')) {
+                $query->where('report_date', '<=', $request->input('end_date'));
+            }
+
+            $paginator = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daily payment report logs retrieved successfully',
+                'data' => $paginator->items(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('CashfreeReportController@dailyPaymentReportLogs failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load daily payment report logs: ' . $e->getMessage(),
+                'error_code' => 'SERVER_ERROR'
+            ], 500);
+        }
+    }
 }
+
+

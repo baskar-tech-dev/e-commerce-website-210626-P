@@ -81,6 +81,72 @@ class StorefrontApiTest extends TestCase
             ->assertJsonPath('data.name', 'Pro Joggers');
     }
 
+    public function test_sold_out_products_appear_on_last_page_in_catalog(): void
+    {
+        // 1. Create a newer product that is SOLD OUT (stock = 0)
+        $soldOutProduct = Product::create([
+            'category_id' => $this->category->id,
+            'name' => 'Sold Out Saree',
+            'slug' => 'sold-out-saree',
+            'mrp' => 2999.00,
+            'selling_price' => 2499.00,
+            'is_active' => true,
+        ]);
+        ProductVariant::create([
+            'product_id' => $soldOutProduct->id,
+            'sku' => 'SO-SAR-1',
+            'stock_quantity' => 0,
+            'is_active' => true,
+        ]);
+
+        // 2. Create another in-stock product
+        $inStockProduct2 = Product::create([
+            'category_id' => $this->category->id,
+            'name' => 'In Stock Blouse',
+            'slug' => 'in-stock-blouse',
+            'mrp' => 999.00,
+            'selling_price' => 799.00,
+            'is_active' => true,
+        ]);
+        ProductVariant::create([
+            'product_id' => $inStockProduct2->id,
+            'sku' => 'IS-BL-1',
+            'stock_quantity' => 5,
+            'is_active' => true,
+        ]);
+
+        // Query Page 1 with per_page = 2 (Total products = 3: $this->product, $inStockProduct2, $soldOutProduct)
+        $responsePage1 = $this->getJson('/api/storefront/products?per_page=2&page=1');
+        $responsePage1->assertStatus(200)
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonCount(2, 'data');
+
+        $page1ProductNames = collect($responsePage1->json('data'))->pluck('name')->toArray();
+        // Page 1 should contain only in-stock items
+        $this->assertContains('In Stock Blouse', $page1ProductNames);
+        $this->assertContains('Pro Joggers', $page1ProductNames);
+        $this->assertNotContains('Sold Out Saree', $page1ProductNames);
+
+        // Query Page 2 (Last Page)
+        $responsePage2 = $this->getJson('/api/storefront/products?per_page=2&page=2');
+        $responsePage2->assertStatus(200)
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonCount(1, 'data');
+
+        $page2ProductNames = collect($responsePage2->json('data'))->pluck('name')->toArray();
+        // Page 2 should contain the sold out item
+        $this->assertContains('Sold Out Saree', $page2ProductNames);
+
+        // Even with sort_by=price_low_high (where sold-out item selling_price is between or higher/lower)
+        // In-stock items should still come first!
+        $responseSortPrice = $this->getJson('/api/storefront/products?per_page=2&page=1&sort_by=price_low_high');
+        $responseSortPrice->assertStatus(200);
+        $sortPriceNames = collect($responseSortPrice->json('data'))->pluck('name')->toArray();
+        $this->assertEquals(['In Stock Blouse', 'Pro Joggers'], $sortPriceNames);
+    }
+
     public function test_can_checkout_placed_order_successfully(): void
     {
         $this->actingAs($this->customer);

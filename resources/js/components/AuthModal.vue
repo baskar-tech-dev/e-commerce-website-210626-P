@@ -142,16 +142,33 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="modal-reg-phone">Mobile Number</label>
-            <input 
-              type="tel" 
-              id="modal-reg-phone" 
-              v-model="registerForm.phone" 
-              class="form-input" 
-              :class="{ 'is-invalid': authStore.validationErrors.phone }" 
-              placeholder="+91 99442 85102" 
-            />
-            <span v-if="authStore.validationErrors.phone" class="error-text">
+            <div class="label-row">
+              <label class="form-label" for="modal-reg-phone">Mobile Number *</label>
+              <span v-if="registerForm.phone" class="phone-digits-counter" :class="{ 'is-valid': registerForm.phone.length === 10 }">
+                {{ registerForm.phone.length }}/10 digits
+              </span>
+            </div>
+            <div class="phone-input-wrapper">
+              <span class="phone-country-prefix" aria-hidden="true">+91</span>
+              <input 
+                type="tel" 
+                id="modal-reg-phone" 
+                v-model="registerForm.phone" 
+                @input="handlePhoneInput"
+                @blur="validatePhoneField"
+                class="form-input phone-input" 
+                :class="{ 'is-invalid': authStore.validationErrors.phone || phoneError }" 
+                placeholder="9876543210" 
+                maxlength="10"
+                inputmode="numeric"
+                autocomplete="tel"
+                required 
+              />
+            </div>
+            <span v-if="phoneError" class="error-text">
+              {{ phoneError }}
+            </span>
+            <span v-else-if="authStore.validationErrors.phone" class="error-text">
               {{ authStore.validationErrors.phone[0] }}
             </span>
           </div>
@@ -253,6 +270,7 @@ const router = useRouter();
 
 const showPassword = ref(false);
 const successMsg = ref('');
+const phoneError = ref('');
 
 const activeTab = computed({
   get: () => authStore.authModalTab || 'login',
@@ -279,46 +297,46 @@ const forgotForm = ref({
   email: ''
 });
 
-const intendedBannerIcon = computed(() => {
-  const dest = authStore.intendedDestination;
-  if (!dest) return '✨';
-  if (dest === 'cart' || dest?.action === 'cart') return '🛒';
-  if (dest === 'wishlist' || dest?.action === 'wishlist') return '❤️';
-  if (dest === 'checkout' || dest?.action === 'checkout') return '🛍️';
-  if (dest === 'write_review' || dest?.action === 'write_review') return '⭐';
-  return '✨';
-});
+const handlePhoneInput = (e) => {
+  // Strip non-digits and cap at 10 digits
+  const raw = registerForm.value.phone ? registerForm.value.phone.toString() : '';
+  const cleaned = raw.replace(/\D/g, '').slice(0, 10);
+  registerForm.value.phone = cleaned;
 
-const intendedBannerTitle = computed(() => {
-  const dest = authStore.intendedDestination;
-  if (!dest) return 'Welcome to Maya Sree';
-  if (dest === 'cart' || dest?.action === 'cart') return 'Item Added to Your Cart!';
-  if (dest === 'wishlist' || dest?.action === 'wishlist') return 'Save Your Favorites';
-  if (dest === 'checkout' || dest?.action === 'checkout') return 'Almost There';
-  if (dest === 'write_review' || dest?.action === 'write_review') return 'Share Your Experience';
-  return 'Maya Sree Customer Account';
-});
+  if (phoneError.value) {
+    validatePhoneField();
+  }
+};
 
-const intendedBannerMessage = computed(() => {
-  const dest = authStore.intendedDestination;
-  if (!dest) return null;
-  if (dest === 'cart' || dest?.action === 'cart') {
-    return 'Create a customer account to save your cart items, track orders in real-time, and get exclusive rewards!';
+const validatePhoneField = () => {
+  phoneError.value = '';
+  if (authStore.validationErrors?.phone) {
+    delete authStore.validationErrors.phone;
   }
-  if (dest === 'wishlist' || dest?.action === 'wishlist') {
-    return 'Create an account or sign in to save your favorite products and access them anytime.';
+
+  const phone = registerForm.value.phone ? registerForm.value.phone.toString().trim() : '';
+
+  if (!phone) {
+    phoneError.value = 'Please enter your 10-digit mobile number.';
+    return false;
   }
-  if (dest === 'checkout' || dest?.action === 'checkout') {
-    return 'Sign in or create an account to continue with your order and track shipping status.';
+
+  if (phone.length < 10) {
+    phoneError.value = `Mobile number must be exactly 10 digits (${phone.length}/10 entered).`;
+    return false;
   }
-  if (dest === 'write_review' || dest?.action === 'write_review') {
-    return 'Please sign in to share your verified purchase experience with this product.';
+
+  if (!/^[6-9]\d{9}$/.test(phone)) {
+    phoneError.value = 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.';
+    return false;
   }
-  return null;
-});
+
+  return true;
+};
 
 const switchTab = (tab) => {
   successMsg.value = '';
+  phoneError.value = '';
   authStore.error = null;
   authStore.validationErrors = {};
   activeTab.value = tab;
@@ -326,6 +344,7 @@ const switchTab = (tab) => {
 
 const closeModal = () => {
   successMsg.value = '';
+  phoneError.value = '';
   authStore.closeAuthModal();
 };
 
@@ -345,6 +364,9 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   successMsg.value = '';
+  if (!validatePhoneField()) {
+    return;
+  }
   try {
     await authStore.register({
       name: registerForm.value.name,
@@ -637,6 +659,49 @@ const dispatchIntendedAction = () => {
   font-size: 0.75rem;
   color: #e53e3e;
   margin-top: 0.25rem;
+}
+
+.phone-digits-counter {
+  font-size: 0.72rem;
+  font-family: 'Poppins', sans-serif;
+  color: #718096;
+  font-weight: 500;
+}
+
+.phone-digits-counter.is-valid {
+  color: #0e6245;
+  font-weight: 600;
+}
+
+.phone-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.phone-country-prefix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85rem;
+  background: #faf5f0;
+  border: 1px solid #e2e8f0;
+  border-right: none;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4a1936;
+  user-select: none;
+}
+
+.phone-input {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  flex: 1;
+  letter-spacing: 0.5px;
 }
 
 .password-input-wrapper {

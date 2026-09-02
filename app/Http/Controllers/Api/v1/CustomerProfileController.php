@@ -71,15 +71,30 @@ class CustomerProfileController extends Controller
             ], 401);
         }
 
+        if ($request->has('phone') && !is_null($request->phone) && trim((string)$request->phone) !== '') {
+            $rawPhone = (string) $request->phone;
+            $digitsOnly = preg_replace('/[^0-9]/', '', $rawPhone);
+            if (strlen($digitsOnly) === 12 && str_starts_with($digitsOnly, '91')) {
+                $digitsOnly = substr($digitsOnly, 2);
+            } elseif (strlen($digitsOnly) === 11 && str_starts_with($digitsOnly, '0')) {
+                $digitsOnly = substr($digitsOnly, 1);
+            }
+            $request->merge(['phone' => $digitsOnly]);
+        }
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name' => 'nullable|string|max:100',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'digits:10', 'regex:/^[6-9]\d{9}$/', 'unique:users,phone,' . $user->id],
             'avatar' => 'nullable|file|mimes:jpeg,jpg,png,webp|max:5120',
             'remove_avatar' => 'nullable|boolean',
             'current_password' => 'nullable|string',
             'new_password' => 'nullable|string|min:8|confirmed',
+        ], [
+            'phone.digits' => 'Mobile number must be exactly 10 digits.',
+            'phone.regex' => 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.',
+            'phone.unique' => 'An account with this mobile number already exists.',
         ]);
 
         if (!empty($validated['current_password']) || !empty($validated['new_password'])) {

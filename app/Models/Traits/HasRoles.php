@@ -119,7 +119,7 @@ trait HasRoles
     public function hasPermissionTo(string $permissionName): bool
     {
         // 1. Super admin always has all permissions
-        if ($this->hasRole('super_admin') || (int)$this->role_id === 1 || ($this->relationLoaded('role') && $this->role?->name === 'super_admin')) {
+        if ($this->hasRole('super_admin') || ($this->relationLoaded('role') && in_array($this->role?->name, ['super_admin', 'Super Admin']))) {
             return true;
         }
 

@@ -23,15 +23,31 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        // Sanitize and normalize mobile number before validation if provided
+        if ($request->has('phone') && !is_null($request->phone)) {
+            $rawPhone = (string) $request->phone;
+            $digitsOnly = preg_replace('/[^0-9]/', '', $rawPhone);
+            // Handle +91 (12 digits) or leading 0 (11 digits)
+            if (strlen($digitsOnly) === 12 && str_starts_with($digitsOnly, '91')) {
+                $digitsOnly = substr($digitsOnly, 2);
+            } elseif (strlen($digitsOnly) === 11 && str_starts_with($digitsOnly, '0')) {
+                $digitsOnly = substr($digitsOnly, 1);
+            }
+            $request->merge(['phone' => $digitsOnly]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'phone' => 'nullable|string|max:20|unique:users,phone',
+            'phone' => ['required', 'string', 'digits:10', 'regex:/^[6-9]\d{9}$/', 'unique:users,phone'],
             'password' => 'required|string|min:8|confirmed',
             'terms' => 'accepted',
         ], [
             'terms.accepted' => 'You must agree to the Terms & Privacy Policy to create an account.',
             'email.unique' => 'An account with this email address already exists. Please sign in.',
+            'phone.required' => 'Please enter your 10-digit mobile number.',
+            'phone.digits' => 'Mobile number must be exactly 10 digits.',
+            'phone.regex' => 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.',
             'phone.unique' => 'An account with this mobile number already exists. Please sign in.',
             'password.confirmed' => 'Passwords do not match.',
             'password.min' => 'Please choose a stronger password (minimum 8 characters).',

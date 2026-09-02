@@ -71,6 +71,10 @@ class ReviewEligibilityService
             ];
         }
 
+        // 4. Check verified purchase requirement if enabled in settings
+        $verifiedPurchaseRequired = Setting::get('verified_purchase_required', 'reviews', false);
+        $deliveredOrderRequired = Setting::get('delivered_order_required', 'reviews', false);
+
         // Fetch orders for this user that include this product (for verified purchase badge)
         $userOrders = Order::where('user_id', $user->id)
             ->whereHas('items', function ($query) use ($product) {
@@ -80,9 +84,29 @@ class ReviewEligibilityService
             ->orderBy('id', 'desc')
             ->get();
 
+        if ($verifiedPurchaseRequired && $userOrders->isEmpty()) {
+            return [
+                'can_review' => false,
+                'reason' => 'not_purchased',
+                'has_reviewed' => false,
+                'is_verified_purchase' => false,
+                'message' => 'Only customers who have purchased this item can leave a review.',
+            ];
+        }
+
         $deliveredOrder = $userOrders->first(function ($order) {
             return $order->status === 'delivered' || !is_null($order->delivered_at);
         });
+
+        if ($deliveredOrderRequired && !$deliveredOrder) {
+            return [
+                'can_review' => false,
+                'reason' => 'order_not_delivered',
+                'has_reviewed' => false,
+                'is_verified_purchase' => false,
+                'message' => 'You can review this item once your order has been delivered.',
+            ];
+        }
 
         $targetOrder = $deliveredOrder ?? $userOrders->first();
         $isVerifiedPurchase = !is_null($targetOrder);

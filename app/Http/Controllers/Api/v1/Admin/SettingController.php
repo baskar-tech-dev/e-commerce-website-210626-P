@@ -38,12 +38,13 @@ class SettingController extends Controller
                 $type = null;
                 if ($group === 'announcement' || $group === 'edit_badges' || $key === 'maya_sree_edit_badges' || ($group === 'shipping' && $key === 'state_rates')) {
                     $type = 'json';
-                } elseif (($group === 'welcome_gift' && $key === 'is_enabled') || ($group === 'email' && $key === 'order_notification_enabled') || ($group === 'payment' && in_array($key, ['cod_active', 'cashfree_active']))) {
+                } elseif (($group === 'welcome_gift' && $key === 'is_enabled') || ($group === 'email' && in_array($key, ['order_notification_enabled', 'daily_payment_report_enabled'])) || ($group === 'payment' && in_array($key, ['cod_active', 'cashfree_active']))) {
                     $type = 'boolean';
                 } elseif ($group === 'shipping' && in_array($key, ['free_shipping_threshold', 'default_shipping_fee'])) {
                     $type = 'number';
                 }
                 Setting::set($key, $value, $group, $type);
+
             }
         }
 

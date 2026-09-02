@@ -180,7 +180,13 @@ class ProductReviewController extends Controller
                 ], 404);
             }
 
-            $user = auth()->user();
+            $user = auth()->user() ?? auth('sanctum')->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please sign in to submit a review.',
+                ], 401);
+            }
             $eligibility = $this->eligibilityService->checkEligibility($user, $product);
 
             if (!$eligibility['can_review']) {

@@ -249,20 +249,6 @@
               Method: {{ payment.payment_method }}
             </span>
           </div>
-
-          <div style="display: flex; gap: 0.4rem; align-items: center;">
-            <router-link :to="`/admin/orders/${payment.order_db_id}`" class="btn btn--secondary btn--sm">
-              View Order
-            </router-link>
-            <button 
-              @click="syncPayment(payment)" 
-              class="btn btn--secondary btn--sm" 
-              :disabled="verifyingId === payment.id"
-              title="Live verify with Cashfree Gateway"
-            >
-              {{ verifyingId === payment.id ? '...' : '⚡ Sync' }}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -286,7 +272,6 @@
           <th>Local Status</th>
           <th>Cashfree Status</th>
           <th>Payment Date</th>
-          <th style="text-align: right;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -359,27 +344,10 @@
           <td style="font-size: 0.82rem; color: var(--color-text-secondary); white-space: nowrap;">
             {{ formatDate(payment.payment_date) }}
           </td>
-
-          <!-- Actions -->
-          <td style="text-align: right; white-space: nowrap;">
-            <div style="display: inline-flex; gap: 0.35rem;">
-              <router-link :to="`/admin/orders/${payment.order_db_id}`" class="btn btn--secondary btn--sm" title="View Full Order Details">
-                👁️ Order
-              </router-link>
-              <button 
-                @click="syncPayment(payment)" 
-                class="btn btn--secondary btn--sm" 
-                :disabled="verifyingId === payment.id"
-                title="Verify live with Cashfree PG"
-              >
-                {{ verifyingId === payment.id ? 'Syncing...' : '⚡ Sync' }}
-              </button>
-            </div>
-          </td>
         </tr>
 
         <tr v-if="payments.length === 0">
-          <td colspan="12" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
+          <td colspan="11" style="text-align: center; padding: 4rem; color: var(--color-text-muted);">
             No Cashfree payment transactions match the active filter criteria.
           </td>
         </tr>

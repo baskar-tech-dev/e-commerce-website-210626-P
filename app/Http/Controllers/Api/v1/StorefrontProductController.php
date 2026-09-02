@@ -100,6 +100,17 @@ class StorefrontProductController extends Controller
                 });
             }
 
+            // Always prioritize in-stock products first, pushing sold-out products to the last page / bottom
+            $stockOrderRaw = 'CASE WHEN EXISTS (
+                SELECT 1 FROM product_variants 
+                WHERE product_variants.product_id = products.id 
+                  AND product_variants.is_active = 1 
+                  AND product_variants.deleted_at IS NULL 
+                  AND product_variants.stock_quantity > 0
+            ) THEN 0 ELSE 1 END ASC';
+
+            $query->orderByRaw($stockOrderRaw);
+
             // Sorting
             $sortBy = $request->input('sort_by', 'newest');
             switch ($sortBy) {
@@ -167,6 +178,14 @@ class StorefrontProductController extends Controller
                 ], 404);
             }
 
+            $stockOrderRaw = 'CASE WHEN EXISTS (
+                SELECT 1 FROM product_variants 
+                WHERE product_variants.product_id = products.id 
+                  AND product_variants.is_active = 1 
+                  AND product_variants.deleted_at IS NULL 
+                  AND product_variants.stock_quantity > 0
+            ) THEN 0 ELSE 1 END ASC';
+
             // Frequently Bought Together (2 complementary products with variants & images)
             $boughtTogether = Product::with(['images', 'variants', 'category'])
                 ->where('id', '!=', $product->id)
@@ -174,6 +193,7 @@ class StorefrontProductController extends Controller
                 ->when($product->category_id, function ($q) use ($product) {
                     $q->where('category_id', $product->category_id);
                 })
+                ->orderByRaw($stockOrderRaw)
                 ->limit(2)
                 ->get();
 
@@ -182,6 +202,7 @@ class StorefrontProductController extends Controller
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $boughtTogether->pluck('id'))
                     ->where('is_active', true)
+                    ->orderByRaw($stockOrderRaw)
                     ->limit(2 - $boughtTogether->count())
                     ->get();
                 $boughtTogether = $boughtTogether->merge($fallback);
@@ -200,6 +221,7 @@ class StorefrontProductController extends Controller
                 ->where('category_id', $product->category_id)
                 ->where('id', '!=', $product->id)
                 ->where('is_active', true)
+                ->orderByRaw($stockOrderRaw)
                 ->limit(4)
                 ->get();
 
