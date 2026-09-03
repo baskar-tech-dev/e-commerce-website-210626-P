@@ -157,8 +157,16 @@ class InstagramReelController extends Controller
      */
     public function uploadVideo(Request $request): JsonResponse
     {
+        // Detect if PHP dropped the file because request exceeded post_max_size in php.ini
+        if ((int) $request->header('Content-Length') > 0 && empty($request->all()) && empty($request->allFiles())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed: Video file size exceeds the server post_max_size or upload_max_filesize limit in php.ini.',
+            ], 413);
+        }
+
         $request->validate([
-            'file' => 'required|file|mimes:mp4,mov,ogg,webm,quicktime|max:51200', // max 50MB
+            'file' => 'required|file|mimes:mp4,mov,ogg,webm,quicktime,m4v|max:51200', // max 50MB
         ]);
 
         try {

@@ -395,9 +395,13 @@ const handleFileUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validate type is video
-  if (file.type && !file.type.startsWith('video/')) {
-    errorMsg.value = 'VIDEO UPLOAD FAILED. CHECK FILE TYPE AND FORMAT.';
+  // Validate type is video (support both MIME type and file extension)
+  const validExtensions = ['mp4', 'mov', 'ogg', 'webm', 'quicktime', 'm4v'];
+  const ext = file.name ? file.name.split('.').pop()?.toLowerCase() : '';
+  const isVideo = (file.type && file.type.startsWith('video/')) || validExtensions.includes(ext);
+
+  if (!isVideo) {
+    errorMsg.value = 'VIDEO UPLOAD FAILED. Please choose a valid video format (.mp4, .mov, .webm, .m4v).';
     return;
   }
 
@@ -425,8 +429,20 @@ const handleFileUpload = async (event) => {
       successMsg.value = 'Video uploaded successfully. Save the form to publish.';
     }
   } catch (err) {
-    errorMsg.value = err.response?.data?.message || 'VIDEO UPLOAD FAILED. CHECK FILE TYPE AND FORMAT.';
-    console.error(err);
+    let msg = 'VIDEO UPLOAD FAILED. CHECK FILE TYPE AND FORMAT.';
+    if (err.response?.status === 413) {
+      msg = 'UPLOAD FAILED: File size exceeds server limit (HTTP 413: Request Entity Too Large). Increase client_max_body_size in Nginx and upload_max_filesize / post_max_size in php.ini on your live production server.';
+    } else if (err.response?.data?.errors?.file) {
+      msg = Array.isArray(err.response.data.errors.file)
+        ? err.response.data.errors.file.join(' ')
+        : err.response.data.errors.file;
+    } else if (err.response?.data?.message) {
+      msg = err.response.data.message;
+    } else if (err.message) {
+      msg = `Upload failed: ${err.message}`;
+    }
+    errorMsg.value = msg;
+    console.error('Video upload error details:', err);
   } finally {
     uploading.value = false;
   }
