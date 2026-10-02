@@ -63,6 +63,9 @@
                 <span v-else-if="tab === 'hero_slides'" style="color: #6E1F3A; font-weight: 700;"
                     >👑 🖼️ Hero Banner Slides</span
                 >
+                <span v-else-if="tab === 'story_image'" style="color: #6E1F3A; font-weight: 700;"
+                    >👑 📖 Our Story Image</span
+                >
             </button>
         </div>
 
@@ -2837,8 +2840,217 @@
                     </div>
                 </div>
 
+                <!-- Tab 11: Our Story & Founder Image (Super Admin Only) -->
+                <div
+                    v-if="activeTab === 'story_image' && isSuperAdmin"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-lg);
+                    "
+                >
+                    <!-- Header Section -->
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            flex-wrap: wrap;
+                            gap: var(--spacing-sm);
+                            border-bottom: 1px solid var(--color-border);
+                            padding-bottom: var(--spacing-md);
+                        "
+                    >
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: linear-gradient(135deg, #6E1F3A, #9b2c4d); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                    👑 SUPER ADMIN
+                                </span>
+                                <h2 class="card-header-title" style="margin: 0;">
+                                    Our Story & Founder Portrait
+                                </h2>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.85rem; display: block; margin-top: 4px;">
+                                Manage the featured arched portrait shown in the "Where Comfort Meets Beauty & Elegance" section on the storefront homepage.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Grid: Preview & Settings Form -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; align-items: start;">
+                        <!-- Left: Arched Live Preview -->
+                        <div style="display: flex; flex-direction: column; align-items: center; background: #faf8f5; border: 1px solid #e8decb; border-radius: 12px; padding: 1.5rem; text-align: center;">
+                            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #8c7355; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+                                Live Storefront Preview
+                            </span>
+                            
+                            <div style="width: 200px; aspect-ratio: 4/5; border-radius: 80px 80px 8px 8px; overflow: hidden; border: 4px solid #ffffff; box-shadow: 0 10px 25px -5px rgba(110, 31, 58, 0.15); background: #faf8f5; display: flex; align-items: center; justify-content: center;">
+                                <img 
+                                    :src="storyAdminPreview || storyAdminImage || '/asset/mother.jpg'" 
+                                    alt="Story Founder Portrait" 
+                                    :style="{ width: '100%', height: '100%', objectFit: storyAdminFit, objectPosition: storyAdminPosition, display: 'block' }" 
+                                />
+                            </div>
+
+                            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 4px;">
+                                <span v-if="storyAdminImage && storyAdminImage !== '/asset/mother.jpg'" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; background: #ecfdf5; color: #047857; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid #a7f3d0;">
+                                    ✓ Custom Image Active
+                                </span>
+                                <span v-else style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid #cbd5e1;">
+                                    Default System Image
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Right: Actions & Upload Controls -->
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <!-- Fit Mode Selector -->
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <label class="form-label" style="font-weight: 600; color: #334155; margin: 0;">
+                                    Image Fit & Framing Mode:
+                                </label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button 
+                                        type="button" 
+                                        class="btn"
+                                        :class="storyAdminFit === 'contain' ? 'btn--primary' : 'btn--secondary'"
+                                        @click="setStoryFit('contain', 'center')"
+                                        style="padding: 7px 14px; font-size: 0.8rem; font-weight: 600;"
+                                    >
+                                        🔲 Fit Entire Photo (No Crop / Full View)
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn"
+                                        :class="storyAdminFit === 'cover' && storyAdminPosition === 'top center' ? 'btn--primary' : 'btn--secondary'"
+                                        @click="setStoryFit('cover', 'top center')"
+                                        style="padding: 7px 14px; font-size: 0.8rem; font-weight: 600;"
+                                    >
+                                        👤 Fill Frame (Face / Top Focus)
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn"
+                                        :class="storyAdminFit === 'cover' && storyAdminPosition === 'center' ? 'btn--primary' : 'btn--secondary'"
+                                        @click="setStoryFit('cover', 'center')"
+                                        style="padding: 7px 14px; font-size: 0.8rem; font-weight: 600;"
+                                    >
+                                        🎯 Fill Frame (Centered)
+                                    </button>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.78rem;">
+                                    <span v-if="storyAdminFit === 'contain'"><strong>Fit Entire Photo:</strong> Fits the complete portrait into the arched frame without cutting off head or feet.</span>
+                                    <span v-else-if="storyAdminPosition === 'top center'"><strong>Face / Top Focus:</strong> Fills the arched frame aligned to the top, keeping the face in view.</span>
+                                    <span v-else><strong>Centered Fill:</strong> Fills the entire arch centered.</span>
+                                </span>
+                            </div>
+
+                            <!-- Source Mode Selector (Upload vs URL) -->
+                            <div style="display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 8px; max-width: 320px;">
+                                <button 
+                                    type="button" 
+                                    class="btn"
+                                    :class="storyAdminMode === 'file' ? 'btn--primary' : 'btn--secondary'"
+                                    @click="storyAdminMode = 'file'"
+                                    style="flex: 1; padding: 6px 12px; font-size: 0.82rem; font-weight: 600; justify-content: center;"
+                                >
+                                    📁 Upload File
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn"
+                                    :class="storyAdminMode === 'url' ? 'btn--primary' : 'btn--secondary'"
+                                    @click="storyAdminMode = 'url'"
+                                    style="flex: 1; padding: 6px 12px; font-size: 0.82rem; font-weight: 600; justify-content: center;"
+                                >
+                                    🔗 Image URL
+                                </button>
+                            </div>
+
+                            <!-- File Drop / Upload Box -->
+                            <div 
+                                v-if="storyAdminMode === 'file'"
+                                style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 1.75rem 1.25rem; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s ease;"
+                                @click="triggerStoryAdminFileInput"
+                                @dragover.prevent
+                                @drop.prevent="handleStoryAdminFileDrop"
+                            >
+                                <input 
+                                    ref="storyAdminFileInput" 
+                                    type="file" 
+                                    accept="image/jpeg,image/png,image/webp,image/avif" 
+                                    style="display: none;" 
+                                    @change="handleStoryAdminFileSelect"
+                                />
+                                <div v-if="storyAdminFile" style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.95rem; font-weight: 600; color: #166534;">
+                                        ✓ Selected: {{ storyAdminFile.name }}
+                                    </span>
+                                    <span style="font-size: 0.78rem; color: #64748b;">
+                                        {{ (storyAdminFile.size / 1024 / 1024).toFixed(2) }} MB • Click to choose a different file
+                                    </span>
+                                </div>
+                                <div v-else style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #64748b;">
+                                    <span style="font-size: 2rem;">📤</span>
+                                    <span style="font-size: 0.95rem; font-weight: 600; color: #1e293b;">Click to upload or drag and drop</span>
+                                    <span style="font-size: 0.78rem;">JPG, PNG, WEBP up to 10MB</span>
+                                </div>
+                            </div>
+
+                            <!-- URL Input Box -->
+                            <div v-else class="form-group" style="margin: 0;">
+                                <label class="form-label" style="font-weight: 600; color: #334155;">Direct Image URL</label>
+                                <input 
+                                    type="url" 
+                                    v-model="storyAdminUrlInput" 
+                                    class="form-input" 
+                                    placeholder="https://yourdomain.com/images/founder.jpg"
+                                    @input="onStoryAdminUrlInput"
+                                    style="font-size: 0.9rem;"
+                                />
+                                <span class="text-muted" style="font-size: 0.78rem; display: block; margin-top: 4px;">
+                                    Paste a public image URL to use as the founder story portrait.
+                                </span>
+                            </div>
+
+                            <!-- Feedback Messages -->
+                            <div v-if="storyAdminError" style="padding: 10px 14px; border-radius: 8px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 0.85rem;">
+                                {{ storyAdminError }}
+                            </div>
+                            <div v-if="storyAdminMsg" style="padding: 10px 14px; border-radius: 8px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 0.85rem; font-weight: 600;">
+                                {{ storyAdminMsg }}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 0.5rem;">
+                                <button 
+                                    type="button" 
+                                    class="btn btn--primary" 
+                                    @click="saveStoryAdminImage"
+                                    :disabled="storyAdminSaving"
+                                    style="padding: 10px 24px; font-size: 0.9rem;"
+                                >
+                                    {{ storyAdminSaving ? 'Saving...' : '💾 Save & Update Story Image' }}
+                                </button>
+                                
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary" 
+                                    @click="resetStoryAdminToDefault"
+                                    :disabled="storyAdminSaving || (storyAdminImage === '/asset/mother.jpg' && !storyAdminFile && !storyAdminUrlInput && storyAdminFit === 'contain')"
+                                    style="padding: 10px 16px; font-size: 0.85rem; color: #b91c1c;"
+                                    title="Restore original founder photo"
+                                >
+                                    🔄 Reset to Original Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div
+                    v-if="!['hero_slides', 'occasions', 'story_image'].includes(activeTab)"
                     style="
                         margin-top: var(--spacing-lg);
                         padding-top: var(--spacing-md);
@@ -3132,6 +3344,7 @@ const availableTabs = computed(() => {
     ];
     if (isSuperAdmin.value) {
         tabs.push("hero_slides");
+        tabs.push("story_image");
     }
     return tabs;
 });
@@ -4229,6 +4442,165 @@ const deleteHeroSlide = async (slide) => {
     }
 };
 
+// ==========================================
+// 👑 Our Story & Founder Image (Super Admin Only)
+// ==========================================
+const storyAdminImage = ref('/asset/mother.jpg');
+const storyAdminDefault = ref('/asset/mother.jpg');
+const storyAdminFit = ref('contain');
+const storyAdminPosition = ref('top center');
+const storyAdminMode = ref('file'); // 'file' | 'url'
+const storyAdminFile = ref(null);
+const storyAdminUrlInput = ref('');
+const storyAdminPreview = ref('');
+const storyAdminFileInput = ref(null);
+const storyAdminUploading = ref(false);
+const storyAdminSaving = ref(false);
+const storyAdminMsg = ref('');
+const storyAdminError = ref('');
+
+const fetchStoryAdminSetting = async () => {
+    if (!isSuperAdmin.value) return;
+    try {
+        const res = await axios.get('/api/admin/story-image');
+        if (res.data?.success && res.data.data) {
+            storyAdminImage.value = res.data.data.story_image || '/asset/mother.jpg';
+            storyAdminPreview.value = res.data.data.story_image || '/asset/mother.jpg';
+            storyAdminFit.value = res.data.data.story_image_fit || 'contain';
+            storyAdminPosition.value = res.data.data.story_image_position || 'top center';
+            if (res.data.data.is_custom) {
+                storyAdminUrlInput.value = res.data.data.story_image;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load story admin setting:', err);
+    }
+};
+
+const setStoryFit = (fit, position) => {
+    storyAdminFit.value = fit;
+    storyAdminPosition.value = position;
+};
+
+const triggerStoryAdminFileInput = () => {
+    if (storyAdminFileInput.value) {
+        storyAdminFileInput.value.click();
+    }
+};
+
+const handleStoryAdminFileSelect = (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        storyAdminError.value = 'Please select a valid image file (JPG, PNG, WEBP).';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        storyAdminError.value = 'Image size exceeds 10MB limit.';
+        return;
+    }
+    storyAdminError.value = '';
+    storyAdminFile.value = file;
+    storyAdminPreview.value = URL.createObjectURL(file);
+};
+
+const handleStoryAdminFileDrop = (e) => {
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        storyAdminError.value = 'Please drop a valid image file (JPG, PNG, WEBP).';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        storyAdminError.value = 'Image size exceeds 10MB limit.';
+        return;
+    }
+    storyAdminError.value = '';
+    storyAdminFile.value = file;
+    storyAdminPreview.value = URL.createObjectURL(file);
+};
+
+const onStoryAdminUrlInput = () => {
+    storyAdminError.value = '';
+    storyAdminPreview.value = storyAdminUrlInput.value.trim() || storyAdminImage.value || '/asset/mother.jpg';
+};
+
+const saveStoryAdminImage = async () => {
+    if (!isSuperAdmin.value) return;
+    storyAdminSaving.value = true;
+    storyAdminError.value = '';
+    storyAdminMsg.value = '';
+
+    try {
+        if (storyAdminMode.value === 'file' && storyAdminFile.value) {
+            const formData = new FormData();
+            formData.append('image', storyAdminFile.value);
+            formData.append('fit', storyAdminFit.value);
+            formData.append('position', storyAdminPosition.value);
+            const res = await axios.post('/api/admin/story-image/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            if (res.data?.success && res.data.data?.story_image) {
+                storyAdminImage.value = res.data.data.story_image;
+                storyAdminPreview.value = res.data.data.story_image;
+                storyAdminFit.value = res.data.data.story_image_fit || storyAdminFit.value;
+                storyAdminPosition.value = res.data.data.story_image_position || storyAdminPosition.value;
+                storyAdminFile.value = null;
+                storyAdminMsg.value = '✓ Storefront Our Story image and fit settings updated successfully!';
+                setTimeout(() => { storyAdminMsg.value = ''; }, 4000);
+            }
+        } else {
+            const imageUrl = storyAdminUrlInput.value.trim() || storyAdminImage.value;
+            const res = await axios.post('/api/admin/story-image/update', {
+                image_url: imageUrl,
+                fit: storyAdminFit.value,
+                position: storyAdminPosition.value,
+            });
+            if (res.data?.success && res.data.data?.story_image) {
+                storyAdminImage.value = res.data.data.story_image;
+                storyAdminPreview.value = res.data.data.story_image;
+                storyAdminFit.value = res.data.data.story_image_fit || storyAdminFit.value;
+                storyAdminPosition.value = res.data.data.story_image_position || storyAdminPosition.value;
+                storyAdminMsg.value = '✓ Storefront Our Story image and fit settings updated successfully!';
+                setTimeout(() => { storyAdminMsg.value = ''; }, 4000);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to save story image in admin:', err);
+        storyAdminError.value = err.response?.data?.message || 'Failed to update story image.';
+    } finally {
+        storyAdminSaving.value = false;
+    }
+};
+
+const resetStoryAdminToDefault = async () => {
+    if (!isSuperAdmin.value) return;
+    if (!confirm('Are you sure you want to reset the Our Story image back to the original default photo (/asset/mother.jpg)?')) return;
+
+    storyAdminSaving.value = true;
+    storyAdminError.value = '';
+    storyAdminMsg.value = '';
+
+    try {
+        const res = await axios.post('/api/admin/story-image/update', { reset: true });
+        if (res.data?.success) {
+            storyAdminImage.value = res.data.data?.story_image || '/asset/mother.jpg';
+            storyAdminPreview.value = storyAdminImage.value;
+            storyAdminFit.value = res.data.data?.story_image_fit || 'contain';
+            storyAdminPosition.value = res.data.data?.story_image_position || 'top center';
+            storyAdminUrlInput.value = '';
+            storyAdminFile.value = null;
+            storyAdminMsg.value = '✓ Reset to original default image!';
+            setTimeout(() => { storyAdminMsg.value = ''; }, 4000);
+        }
+    } catch (err) {
+        console.error('Failed to reset story image in admin:', err);
+        storyAdminError.value = err.response?.data?.message || 'Failed to reset story image.';
+    } finally {
+        storyAdminSaving.value = false;
+    }
+};
+
 onMounted(() => {
     fetchSettings();
     fetchAnnouncementsList();
@@ -4236,5 +4608,6 @@ onMounted(() => {
     fetchOccasionsList();
     fetchCoupons();
     fetchHeroSlides();
+    fetchStoryAdminSetting();
 });
 </script>

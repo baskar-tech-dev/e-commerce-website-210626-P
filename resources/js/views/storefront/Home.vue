@@ -139,7 +139,12 @@
       <div class="container story-grid">
         <div class="story-image-block">
           <div class="story-img-frame">
-            <img :src="'/asset/mother.jpg'" alt="Founder Mrs. Archana Ayyapparaj" class="story-founder-img">
+            <img 
+              :src="storyImageUrl || '/asset/mother.jpg'" 
+              alt="Founder Mrs. Archana Ayyapparaj" 
+              class="story-founder-img"
+              :style="{ objectFit: storyImageFit || 'contain', objectPosition: storyImagePosition || 'top center' }"
+            >
           </div>
         </div>
         
@@ -912,7 +917,9 @@ import {
   Compass,
   Gift,
   Flame,
-  Crown
+  Crown,
+  Camera,
+  UploadCloud
 } from 'lucide-vue-next';
 
 import { useAuthStore } from '../../stores/auth';
@@ -932,6 +939,24 @@ const activeFaq = ref(null);
 const showStoryModal = ref(false);
 const showVideoModal = ref(false);
 const clubPhone = ref('');
+
+// Story Image State & Loader
+const storyImageUrl = ref('/asset/mother.jpg');
+const storyImageFit = ref('contain');
+const storyImagePosition = ref('top center');
+
+const fetchStorySettings = async () => {
+  try {
+    const res = await axios.get('/api/storefront/story-settings');
+    if (res.data?.success && res.data.data) {
+      if (res.data.data.story_image) storyImageUrl.value = res.data.data.story_image;
+      if (res.data.data.story_image_fit) storyImageFit.value = res.data.data.story_image_fit;
+      if (res.data.data.story_image_position) storyImagePosition.value = res.data.data.story_image_position;
+    }
+  } catch (err) {
+    console.warn('Failed to load story settings:', err);
+  }
+};
 
 const activeReels = ref([]);
 const showReelModal = ref(false);
@@ -1594,6 +1619,7 @@ const getPrimaryImage = (product) => {
 onMounted(() => {
   updateScreenSize();
   fetchHeroSlides();
+  fetchStorySettings();
   fetchProducts();
   fetchEditBadges();
   fetchOccasions();
@@ -2844,6 +2870,7 @@ onUnmounted(() => {
 }
 
 .story-img-frame {
+  position: relative;
   width: 100%;
   max-width: 280px;
   aspect-ratio: 4/5;
@@ -2851,12 +2878,24 @@ onUnmounted(() => {
   overflow: hidden;
   border: 5px solid #ffffff;
   box-shadow: var(--shadow-md);
+  background: #faf8f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.story-img-frame:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(110, 31, 58, 0.15);
 }
 
 .story-founder-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: top center;
+  display: block;
 }
 
 .story-content-block {

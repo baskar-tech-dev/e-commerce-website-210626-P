@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\v1\Admin\MenuController;
 use App\Http\Controllers\Api\v1\Admin\ColorController;
 use App\Http\Controllers\Api\v1\Admin\SizeGroupController;
 use App\Http\Controllers\Api\v1\Admin\SizeController;
+use App\Http\Controllers\Api\v1\Admin\StoryImageController;
 use App\Http\Controllers\Api\v1\StorefrontProductController;
 use App\Http\Controllers\Api\v1\ProductReviewController;
 use App\Http\Controllers\Api\v1\StorefrontCheckoutController;
@@ -89,6 +90,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/hero-slides', [\App\Http\Controllers\Api\v1\StorefrontHeroSlideController::class, 'index']);
     Route::get('storefront/edit-badges', [StorefrontProductController::class, 'getEditBadges']);
     Route::get('storefront/occasions', [StorefrontProductController::class, 'getOccasions']);
+    Route::get('storefront/story-settings', [StoryImageController::class, 'getStorySettings']);
     Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
 
     // Public Product Reviews
@@ -239,6 +241,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         Route::put('hero-slides/{id}', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'update']);
         Route::post('hero-slides/reorder', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'reorder']);
         Route::delete('hero-slides/{id}', [\App\Http\Controllers\Api\v1\Admin\HeroSlideController::class, 'destroy']);
+
+        // Homepage Story & Founder Image Management (Super Admin Only)
+        Route::get('story-image', [StoryImageController::class, 'show']);
+        Route::post('story-image/upload', [StoryImageController::class, 'uploadStoryImage']);
+        Route::post('story-image/update', [StoryImageController::class, 'updateStoryImage']);
     });
 
     // Order Management (requires 'manage_orders')
