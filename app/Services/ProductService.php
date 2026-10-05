@@ -57,6 +57,14 @@ class ProductService
             }
             $data['slug'] = $this->makeSlugUnique($data['slug']);
 
+            // Enforce that products under an inactive category cannot be active
+            if (isset($data['category_id'])) {
+                $category = \App\Models\Category::find($data['category_id']);
+                if ($category && (!$category->is_active || ($category->parent && !$category->parent->is_active))) {
+                    $data['is_active'] = false;
+                }
+            }
+
             // Create product
             $product = $this->productRepository->create($data);
 
@@ -111,6 +119,15 @@ class ProductService
 
             if (!empty($data['slug'])) {
                 $data['slug'] = $this->makeSlugUnique($data['slug'], $id);
+            }
+
+            // Enforce that products under an inactive category cannot be active
+            $catId = $data['category_id'] ?? $product->category_id;
+            if ($catId) {
+                $category = \App\Models\Category::find($catId);
+                if ($category && (!$category->is_active || ($category->parent && !$category->parent->is_active))) {
+                    $data['is_active'] = false;
+                }
             }
 
             // Update product

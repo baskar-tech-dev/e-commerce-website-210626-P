@@ -52,6 +52,13 @@ class MenuSeeder extends Seeder
                 'permission_name' => 'manage_reports',
             ],
             [
+                'name' => 'Sales Statement',
+                'path' => '/admin/reports/sales-statement',
+                'icon' => 'FileSpreadsheet',
+                'group' => 'Reports',
+                'permission_name' => 'manage_reports',
+            ],
+            [
                 'name' => 'Payments',
                 'path' => '/admin/reports/payments',
                 'icon' => 'CreditCard',

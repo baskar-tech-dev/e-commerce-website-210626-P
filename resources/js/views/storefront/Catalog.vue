@@ -1032,6 +1032,13 @@ const fetchFilterMetadata = async () => {
           filters.value.category_id = blouseCat.id;
           fetchProducts(1); // refetch products to target the blouses filter
         }
+      } else if (filters.value.category_id) {
+        // Validate if pre-selected category is active; if inactive, reset it
+        const isCatActive = categories.value.some(c => c.id == filters.value.category_id || (c.children && c.children.some(sub => sub.id == filters.value.category_id)));
+        if (!isCatActive) {
+          filters.value.category_id = '';
+          fetchProducts(1);
+        }
       }
     }
   } catch (err) {
@@ -1069,7 +1076,12 @@ watch(
   () => route.query,
   (newQuery) => {
     if (newQuery.category_id) {
-      filters.value.category_id = newQuery.category_id;
+      if (categories.value.length > 0) {
+        const isCatActive = categories.value.some(c => c.id == newQuery.category_id || (c.children && c.children.some(sub => sub.id == newQuery.category_id)));
+        filters.value.category_id = isCatActive ? newQuery.category_id : '';
+      } else {
+        filters.value.category_id = newQuery.category_id;
+      }
     } else if (!newQuery.occasion && !newQuery.badge) {
       const blouseCat = categories.value.find(c => {
         const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');

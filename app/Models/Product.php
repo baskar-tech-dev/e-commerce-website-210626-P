@@ -83,7 +83,7 @@ class Product extends Model
     ];
 
     /**
-     * Boot function for auto-generating product UUID.
+     * Boot function for auto-generating product UUID and enforcing category active rule.
      */
     protected static function boot()
     {
@@ -94,6 +94,32 @@ class Product extends Model
                 $product->uuid = (string) Str::uuid();
             }
         });
+
+        static::saving(function ($product) {
+            if ($product->category_id) {
+                $category = Category::find($product->category_id);
+                if ($category && (!$category->is_active || ($category->parent && !$category->parent->is_active))) {
+                    $product->is_active = false;
+                }
+            }
+        });
+    }
+
+    /**
+     * Scope a query to only include active products whose category (and parent category) is active.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)
+            ->whereHas('category', function ($q) {
+                $q->where('is_active', true)
+                  ->where(function ($sub) {
+                      $sub->whereNull('parent_id')
+                          ->orWhereHas('parent', function ($p) {
+                              $p->where('is_active', true);
+                          });
+                  });
+            });
     }
 
     /**

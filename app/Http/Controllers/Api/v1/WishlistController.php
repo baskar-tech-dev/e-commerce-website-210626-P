@@ -24,7 +24,7 @@ class WishlistController extends Controller
         $items = Wishlist::with(['product' => function ($q) {
             $q->with(['images' => function ($imgQuery) {
                 $imgQuery->orderBy('is_primary', 'desc');
-            }]);
+            }, 'category.parent']);
         }])
         ->where('user_id', $user->id)
         ->latest()
@@ -32,7 +32,7 @@ class WishlistController extends Controller
 
         $formatted = $items->map(function ($item) {
             $product = $item->product;
-            if (!$product) {
+            if (!$product || !$product->is_active || !$product->category || !$product->category->is_active || ($product->category->parent && !$product->category->parent->is_active)) {
                 return null;
             }
             $primaryImage = $product->images->first()?->image_path ?? '/asset/profile/logo.png';
@@ -70,14 +70,17 @@ class WishlistController extends Controller
             'product_id' => 'required',
         ]);
 
-        $product = Product::where('id', $validated['product_id'])
-            ->orWhere('uuid', $validated['product_id'])
+        $product = Product::active()
+            ->where(function ($q) use ($validated) {
+                $q->where('id', $validated['product_id'])
+                  ->orWhere('uuid', $validated['product_id']);
+            })
             ->first();
 
         if (!$product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found',
+                'message' => 'Product not found or is currently unavailable',
             ], 404);
         }
 

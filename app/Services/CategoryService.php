@@ -44,7 +44,12 @@ class CategoryService
 
         $data = $this->processCategoryImage($data);
 
-        return $this->categoryRepository->create($data);
+        $category = $this->categoryRepository->create($data);
+        if ($category && !$category->is_active) {
+            $category->deactivateProductsAndChildren();
+        }
+
+        return $category;
     }
 
     public function updateCategory(int $id, array $data): ?Category
@@ -61,7 +66,12 @@ class CategoryService
 
         $data = $this->processCategoryImage($data);
 
-        return $this->categoryRepository->update($id, $data);
+        $category = $this->categoryRepository->update($id, $data);
+        if ($category && !$category->is_active) {
+            $category->deactivateProductsAndChildren();
+        }
+
+        return $category;
     }
 
     /**
@@ -111,6 +121,10 @@ class CategoryService
             throw new \Exception("Cannot delete category with subcategories.", 409);
         }
         
+        if ($category) {
+            $category->deactivateProductsAndChildren();
+        }
+
         return $this->categoryRepository->delete($id);
     }
 

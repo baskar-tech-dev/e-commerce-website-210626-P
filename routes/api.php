@@ -281,6 +281,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
 
     // Reports (Granular permission per report)
     Route::middleware('permission:reports_sales')->get('reports/sales', [ReportController::class, 'sales']);
+    Route::middleware('permission:reports_sales')->get('reports/sales-statement', [ReportController::class, 'salesStatement']);
+    Route::middleware('permission:reports_sales')->get('reports/sales-statement/export', [ReportController::class, 'exportSalesStatement']);
     Route::middleware('permission:reports_inventory')->get('reports/inventory', [ReportController::class, 'inventory']);
     Route::middleware('permission:reports_customers')->get('reports/customers', [ReportController::class, 'customers']);
     Route::middleware('permission:payments')->group(function () {

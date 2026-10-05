@@ -13,7 +13,7 @@ class StorefrontProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Product::with(['category', 'images', 'variants'])->where('is_active', true);
+            $query = Product::with(['category', 'images', 'variants'])->active();
 
             // Search query
             if ($request->has('search') && !empty($request->input('search'))) {
@@ -27,14 +27,29 @@ class StorefrontProductController extends Controller
                 });
             }
 
-            // Category Filter
+            // Category Filter (only include active category and active children)
             if ($request->has('category_id') && !empty($request->input('category_id'))) {
-                $categoryId = $request->input('category_id');
-                $categoryIds = Category::where('parent_id', $categoryId)
-                    ->pluck('id')
-                    ->push((int)$categoryId)
-                    ->toArray();
-                $query->whereIn('category_id', $categoryIds);
+                $categoryId = (int) $request->input('category_id');
+                $category = Category::where('id', $categoryId)
+                    ->where('is_active', true)
+                    ->where(function ($sub) {
+                        $sub->whereNull('parent_id')
+                            ->orWhereHas('parent', function ($p) {
+                                $p->where('is_active', true);
+                            });
+                    })
+                    ->first();
+
+                if (!$category) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $categoryIds = Category::where('parent_id', $categoryId)
+                        ->where('is_active', true)
+                        ->pluck('id')
+                        ->push($categoryId)
+                        ->toArray();
+                    $query->whereIn('category_id', $categoryIds);
+                }
             }
 
             // Featured Filter
@@ -171,7 +186,7 @@ class StorefrontProductController extends Controller
                 ], 404);
             }
 
-            if (!$product->is_active) {
+            if (!$product->is_active || !$product->category || !$product->category->is_active || ($product->category->parent && !$product->category->parent->is_active)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Product is not available',
@@ -188,8 +203,8 @@ class StorefrontProductController extends Controller
 
             // Frequently Bought Together (2 complementary products with variants & images)
             $boughtTogether = Product::with(['images', 'variants', 'category'])
+                ->active()
                 ->where('id', '!=', $product->id)
-                ->where('is_active', true)
                 ->when($product->category_id, function ($q) use ($product) {
                     $q->where('category_id', $product->category_id);
                 })
@@ -199,9 +214,9 @@ class StorefrontProductController extends Controller
 
             if ($boughtTogether->count() < 2) {
                 $fallback = Product::with(['images', 'variants', 'category'])
+                    ->active()
                     ->where('id', '!=', $product->id)
                     ->whereNotIn('id', $boughtTogether->pluck('id'))
-                    ->where('is_active', true)
                     ->orderByRaw($stockOrderRaw)
                     ->limit(2 - $boughtTogether->count())
                     ->get();
@@ -210,17 +225,17 @@ class StorefrontProductController extends Controller
 
             // More Products For You (Curated Recommendation Grid)
             $moreForYou = Product::with(['images', 'variants', 'category'])
+                ->active()
                 ->where('id', '!=', $product->id)
-                ->where('is_active', true)
                 ->inRandomOrder()
                 ->limit(8)
                 ->get();
 
             // Related Products (4 products in same category)
             $related = Product::with(['images', 'variants', 'category'])
+                ->active()
                 ->where('category_id', $product->category_id)
                 ->where('id', '!=', $product->id)
-                ->where('is_active', true)
                 ->orderByRaw($stockOrderRaw)
                 ->limit(4)
                 ->get();

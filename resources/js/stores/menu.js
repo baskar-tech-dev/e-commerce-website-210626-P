@@ -19,6 +19,7 @@ export const useMenuStore = defineStore('menu', {
         // Find which group contains Reports
         let reportGroupKey = null;
         let hasReportMenu = false;
+        let hasSalesStatement = false;
         let hasPayments = false;
         let hasSettlements = false;
 
@@ -27,6 +28,9 @@ export const useMenuStore = defineStore('menu', {
             if (items.some(m => m.path === '/admin/reports' || m.name?.toLowerCase() === 'reports')) {
               reportGroupKey = groupName;
               hasReportMenu = true;
+            }
+            if (items.some(m => m.path === '/admin/reports/sales-statement')) {
+              hasSalesStatement = true;
             }
             if (items.some(m => m.path === '/admin/reports/payments')) {
               hasPayments = true;
@@ -37,8 +41,17 @@ export const useMenuStore = defineStore('menu', {
           }
         }
 
-        // If user can see Reports, ensure Payments and Settlements are also listed in sidebar
+        // If user can see Reports, ensure Sales Statement, Payments and Settlements are also listed in sidebar
         if (hasReportMenu && reportGroupKey && data[reportGroupKey]) {
+          if (!hasSalesStatement) {
+            data[reportGroupKey].push({
+              id: 'sales-statement-runtime',
+              name: 'Sales Statement',
+              path: '/admin/reports/sales-statement',
+              icon: 'FileSpreadsheet',
+              group: reportGroupKey,
+            });
+          }
           if (!hasPayments) {
             data[reportGroupKey].push({
               id: 'cf-payments-runtime',

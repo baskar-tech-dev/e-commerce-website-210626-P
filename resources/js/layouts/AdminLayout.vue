@@ -107,11 +107,11 @@ import { useMenuStore } from '@/stores/menu';
 import { 
   Shirt, ChevronRight, ChevronLeft, Menu as MenuIcon, Bell, MessageSquare, Maximize,
   LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings,
-  ChevronDown, LogOut, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus, CreditCard, Landmark
+  ChevronDown, LogOut, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus, CreditCard, Landmark, FileSpreadsheet
 } from 'lucide-vue-next';
 
 const iconMap = markRaw({
-  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus, CreditCard, Landmark
+  LayoutDashboard, ShoppingCart, RefreshCcw, TrendingUp, FileText, Users, Key, ShoppingBag, Folder, Package, ClipboardList, Ticket, Tag, Tags, Settings, Film, Star, Truck, Palette, Layers, Boxes, PackageCheck, PackagePlus, CreditCard, Landmark, FileSpreadsheet
 });
 
 const authStore = useAuthStore();
