@@ -200,9 +200,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         
         Route::apiResource('coupons', CouponController::class);
         
-        Route::apiResource('blog/posts', BlogPostController::class);
-        Route::apiResource('blog/categories', BlogCategoryController::class);
-        Route::apiResource('blog/tags', BlogTagController::class);
+        Route::name('blog.')->prefix('blog')->group(function () {
+            Route::apiResource('posts', BlogPostController::class);
+            Route::apiResource('categories', BlogCategoryController::class);
+            Route::apiResource('tags', BlogTagController::class);
+        });
         
         // Instagram Reels & YouTube Videos
         Route::apiResource('instagram-reels', \App\Http\Controllers\Api\v1\Admin\InstagramReelController::class);

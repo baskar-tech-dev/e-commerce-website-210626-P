@@ -468,7 +468,7 @@ class ReportController extends Controller
             // Pagination
             $isAll = $request->input('per_page') === 'all';
             if ($isAll) {
-                $orders = $query->limit(2000)->get();
+                $orders = $query->limit(10000)->get();
                 $paginationMeta = [
                     'current_page' => 1,
                     'last_page' => 1,
@@ -476,7 +476,7 @@ class ReportController extends Controller
                     'total' => $orders->count(),
                 ];
             } else {
-                $perPage = min(max((int) $request->input('per_page', 20), 5), 100);
+                $perPage = min(max((int) $request->input('per_page', 25), 5), 500);
                 $p = $query->paginate($perPage);
                 $orders = collect($p->items());
                 $paginationMeta = [
@@ -711,6 +711,46 @@ class ReportController extends Controller
                         $itemsBreakdown
                     ]);
                 }
+
+                // Append Grand Total Row at bottom
+                $totalUnits = $orders->sum('total_items');
+                $totalGross = $orders->sum(fn($o) => $o->items->sum(fn($i) => ($i->unit_mrp ?: $i->unit_price) * $i->quantity) ?: $o->subtotal);
+                $totalDiscount = $orders->sum('discount_amount');
+                $totalSubtotal = $orders->sum('subtotal');
+                $totalCgst = $orders->sum('cgst_amount');
+                $totalSgst = $orders->sum('sgst_amount');
+                $totalIgst = $orders->sum('igst_amount');
+                $totalTax = $orders->sum('tax_amount');
+                $totalShipping = $orders->sum('shipping_amount');
+                $grandTotalSum = $orders->sum('grand_total');
+
+                fputcsv($file, [
+                    'GRAND TOTAL',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    $totalUnits,
+                    number_format((float) $totalGross, 2, '.', ''),
+                    number_format((float) $totalDiscount, 2, '.', ''),
+                    number_format((float) $totalSubtotal, 2, '.', ''),
+                    number_format((float) $totalCgst, 2, '.', ''),
+                    number_format((float) $totalSgst, 2, '.', ''),
+                    number_format((float) $totalIgst, 2, '.', ''),
+                    number_format((float) $totalTax, 2, '.', ''),
+                    number_format((float) $totalShipping, 2, '.', ''),
+                    number_format((float) $grandTotalSum, 2, '.', ''),
+                    '',
+                    '',
+                    ''
+                ]);
 
                 fclose($file);
             };
