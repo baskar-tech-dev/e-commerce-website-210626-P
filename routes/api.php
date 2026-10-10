@@ -312,6 +312,20 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         // Announcement Management
         Route::patch('announcements/{id}/toggle', [\App\Http\Controllers\Api\v1\Admin\AnnouncementController::class, 'toggleActive']);
         Route::post('announcements/reorder', [\App\Http\Controllers\Api\v1\Admin\AnnouncementController::class, 'reorder']);
-        Route::apiResource('announcements', \App\Http\Controllers\Api\v1\Admin\AnnouncementController::class);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Inventory Management System (IMS) Integration API
+|--------------------------------------------------------------------------
+*/
+Route::prefix('ims')->group(function () {
+    Route::get('categories', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'categories']);
+    Route::get('products', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'index']);
+    Route::get('products/{id_or_sku}', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'show']);
+    Route::put('products/{id_or_sku}', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'update']);
+    Route::post('products', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'store']);
+    Route::post('products/sync-stock-price', [\App\Http\Controllers\Api\v1\ImsIntegrationController::class, 'syncStockPrice']);
+});
+

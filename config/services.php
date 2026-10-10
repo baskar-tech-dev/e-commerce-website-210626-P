@@ -42,4 +42,9 @@ return [
         'api_version' => env('CASHFREE_API_VERSION', '2023-08-01'),
     ],
 
+    'ims' => [
+        'api_key' => env('IMS_API_KEY'),
+        'cdn_url' => env('IMS_CDN_URL') ?: env('APP_URL'),
+    ],
+
 ];
