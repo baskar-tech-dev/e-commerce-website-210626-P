@@ -13,7 +13,12 @@ class StorefrontHeroSlideController extends Controller
      */
     public function index(): JsonResponse
     {
-        $slides = HeroSlide::active()->get();
+        try {
+            $slides = HeroSlide::active()->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('StorefrontHeroSlideController fallback: ' . $e->getMessage());
+            $slides = [];
+        }
 
         return response()->json([
             'success' => true,

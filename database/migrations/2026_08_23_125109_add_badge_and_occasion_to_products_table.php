@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             if (!Schema::hasColumn('products', 'badge')) {
-                $table->string('badge', 60)->nullable()->after('is_bestseller');
+                $table->string('badge', 255)->nullable()->after('is_bestseller');
             }
             if (!Schema::hasColumn('products', 'occasion')) {
-                $table->string('occasion', 60)->nullable()->after('badge')->index();
+                $table->string('occasion', 255)->nullable()->after('badge')->index();
             }
         });
     }

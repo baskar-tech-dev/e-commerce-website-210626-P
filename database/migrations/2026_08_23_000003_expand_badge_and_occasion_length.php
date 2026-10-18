@@ -13,8 +13,12 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::getConnection()->getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(255) NULL");
-            DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(255) NULL");
+            if (Schema::hasColumn('products', 'badge')) {
+                DB::statement("ALTER TABLE products MODIFY COLUMN badge VARCHAR(255) NULL");
+            }
+            if (Schema::hasColumn('products', 'occasion')) {
+                DB::statement("ALTER TABLE products MODIFY COLUMN occasion VARCHAR(255) NULL");
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="storefront-layout" :class="{ 'storefront-layout--announcement-sticky': isAnnouncementSticky && !isScrolled, 'storefront-layout--scrolled': isScrolled }">
     <!-- Brand Splash Screen Overlay -->
-    <SplashScreen :show="showSplash" />
+    <SplashScreen :show="showSplash" @close="showSplash = false" />
 
     <!-- Luxury Welcome Gift Modal -->
     <WelcomeGiftModal />
@@ -412,10 +412,12 @@ import SplashScreen from '../components/SplashScreen.vue';
 import WelcomeGiftModal from '../components/WelcomeGiftModal.vue';
 import AuthModal from '../components/AuthModal.vue';
 import { useAuthStore } from '../stores/auth';
+import { useFestivalStore } from '../stores/festival';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const festivalStore = useFestivalStore();
 
 const showAccountDropdown = ref(false);
 
@@ -623,12 +625,13 @@ const handleLayoutScroll = () => {
 
 onMounted(() => {
   if (isInitialLoad.value) {
-    triggerSplash(3200); // 3.2s cinematic splash sequence on initial load
+    triggerSplash(3400); // 3.4s cinematic splash sequence on initial load
     isInitialLoad.value = false;
   }
   if (authStore.token) {
     authStore.fetchUser();
   }
+  festivalStore.fetchFestivalConfig();
   getCartCount();
   getWishlistCount();
   fetchCategories();

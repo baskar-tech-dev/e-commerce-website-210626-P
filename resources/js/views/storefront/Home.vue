@@ -1,7 +1,32 @@
 <template>
   <div class="storefront-home">
     <!-- 4. Hero Carousel Section -->
-    <section class="hero-section">
+    <section 
+      class="hero-section" 
+      :class="{ 'hero-section--festive': festivalStore.isFestivalActive }"
+      :style="heroSectionBackgroundStyle"
+    >
+      <!-- Festive Background Overlay Tint -->
+      <div 
+        v-if="festivalStore.isFestivalActive && hasHeroBackgroundImage"
+        class="festive-hero-overlay"
+        :style="{ opacity: festivalStore.heroOverlayOpacity }"
+      ></div>
+
+      <!-- Festive Hanging Toran along Top Edge -->
+      <div v-if="festivalStore.hasOrnaments" class="festive-hero-toran" aria-hidden="true">
+        <div class="toran-gold-bar"></div>
+        <div class="toran-garland-mesh"></div>
+      </div>
+
+      <!-- Festive Floating Brass Diyas (Negative Spaces) -->
+      <div v-if="festivalStore.hasOrnaments" class="festive-floating-diya festive-diya--left" aria-hidden="true">
+        <span class="diya-glow-symbol flame-glow">🪔</span>
+      </div>
+      <div v-if="festivalStore.hasOrnaments" class="festive-floating-diya festive-diya--right" aria-hidden="true">
+        <span class="diya-glow-symbol flame-glow">🪔</span>
+      </div>
+
       <div class="hero-carousel">
         <!-- Slides -->
         <div 
@@ -28,7 +53,7 @@
             </div>
             
             <div class="hero-content">
-              <span class="hero-tag">{{ slide.tag }}</span>
+              <span class="hero-tag">{{ festivalStore.isFestivalActive && festivalStore.headerBadgeText ? festivalStore.headerBadgeText : slide.tag }}</span>
               <h2 class="hero-script">{{ slide.script }} <span class="heart-icon">♡</span></h2>
               <h1 class="hero-title" v-html="slide.title"></h1>
               <p class="hero-desc">{{ slide.desc }}</p>
@@ -70,12 +95,14 @@
 
     <!-- 5. Featured Collection Section -->
     <section class="section featured-collection-section">
-      <div class="section-header text-center">
-        <span class="section-tag">Curated For You</span>
+      <div class="section-header text-center" :class="{ 'section-header--festive': festivalStore.isFestivalActive }">
+        <span class="section-tag">{{ festivalStore.isFestivalActive ? '✦ Festive Collection ✦' : 'Curated For You' }}</span>
         <h2 class="section-title">Featured Collection</h2>
         <div class="header-line">
           <span class="line"></span>
-          <span class="diamond">♦</span>
+          <span v-if="festivalStore.isFestivalActive && festivalStore.sectionHeaderMotif === 'diya'" class="festive-motif flame-glow">🪔</span>
+          <span v-else-if="festivalStore.isFestivalActive && festivalStore.sectionHeaderMotif === 'sparkle'" class="festive-motif">✨</span>
+          <span v-else class="diamond">♦</span>
           <span class="line"></span>
         </div>
       </div>
@@ -85,11 +112,20 @@
             v-for="product in visibleFeaturedProducts" 
             :key="product.id" 
             class="product-card"
-            :class="{ 'card-sold-out': isProductSoldOut(product) }"
+            :class="{ 'card-sold-out': isProductSoldOut(product), 'product-card--festive': festivalStore.isFestivalActive }"
           >
             <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
             <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
             <span v-else-if="product.badge" class="product-tag selling-fast">{{ product.badge }}</span>
+            <span 
+              v-else-if="festivalStore.isProductBadgeFestive" 
+              class="product-tag festive-discount-tag"
+              :class="`festive-badge--${festivalStore.productBadgeStyle || 'maroon_gold'}`"
+            >
+              <span v-if="festivalStore.productBadgeIcon && festivalStore.productBadgeIcon !== 'none'">{{ festivalStore.productBadgeIcon }} </span>
+              <span v-if="festivalStore.productBadgePrefix">{{ festivalStore.productBadgePrefix.trim() }} </span>
+              {{ getProductDiscount(product) ? getProductDiscount(product) + '% OFF' : 'FESTIVE PICK' }}
+            </span>
             <span v-else class="product-tag selling-fast">Featured</span>
             <div class="product-image-container">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
@@ -190,12 +226,14 @@
 
     <!-- 7. New Arrivals Section -->
     <section class="section new-arrivals-section">
-      <div class="section-header text-center">
-        <span class="section-tag">Fresh Off The Runway</span>
+      <div class="section-header text-center" :class="{ 'section-header--festive': festivalStore.isFestivalActive }">
+        <span class="section-tag">{{ festivalStore.isFestivalActive && festivalStore.sectionHeaderTag ? festivalStore.sectionHeaderTag : 'Fresh Off The Runway' }}</span>
         <h2 class="section-title">New Arrivals</h2>
         <div class="header-line">
           <span class="line"></span>
-          <span class="diamond">♦</span>
+          <span v-if="festivalStore.isFestivalActive && festivalStore.sectionHeaderMotif === 'diya'" class="festive-motif flame-glow">🪔</span>
+          <span v-else-if="festivalStore.isFestivalActive && festivalStore.sectionHeaderMotif === 'sparkle'" class="festive-motif">✨</span>
+          <span v-else class="diamond">♦</span>
           <span class="line"></span>
         </div>
       </div>
@@ -205,11 +243,20 @@
             v-for="product in visibleNewArrivalsProducts" 
             :key="product.id" 
             class="product-card"
-            :class="{ 'card-sold-out': isProductSoldOut(product) }"
+            :class="{ 'card-sold-out': isProductSoldOut(product), 'product-card--festive': festivalStore.isFestivalActive }"
           >
             <span v-if="isProductSoldOut(product)" class="product-tag badge-sold-out">SOLD OUT</span>
             <span v-else-if="isProductLowStock(product)" class="product-tag badge-low-stock">⚡ ONLY FEW LEFT</span>
             <span v-else-if="product.badge" class="product-tag new-arrival">{{ product.badge }}</span>
+            <span 
+              v-else-if="festivalStore.isProductBadgeFestive" 
+              class="product-tag festive-discount-tag"
+              :class="`festive-badge--${festivalStore.productBadgeStyle || 'maroon_gold'}`"
+            >
+              <span v-if="festivalStore.productBadgeIcon && festivalStore.productBadgeIcon !== 'none'">{{ festivalStore.productBadgeIcon }} </span>
+              <span v-if="festivalStore.productBadgePrefix">{{ festivalStore.productBadgePrefix.trim() }} </span>
+              {{ getProductDiscount(product) ? getProductDiscount(product) + '% OFF' : 'FESTIVE EDIT' }}
+            </span>
             <span v-else class="product-tag new-arrival">New</span>
             <div class="product-image-container" :class="{ 'image-sold-out': isProductSoldOut(product) }">
               <router-link :to="`/products/${product.uuid}`" class="product-img-link" style="display: block; width: 100%; height: 100%;">
@@ -923,11 +970,13 @@ import {
 } from 'lucide-vue-next';
 
 import { useAuthStore } from '../../stores/auth';
+import { useFestivalStore } from '../../stores/festival';
 
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 
 const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
+const festivalStore = useFestivalStore();
 
 const products = ref([]);
 const loading = ref(true);
@@ -1169,6 +1218,47 @@ const isMobileScreen = ref(false);
 
 const updateScreenSize = () => {
   isMobileScreen.value = window.innerWidth <= 768;
+};
+
+const hasHeroBackgroundImage = computed(() => {
+  if (!festivalStore.isFestivalActive) return false;
+  return Boolean(
+    (isMobileScreen.value && festivalStore.heroMobileImage) || 
+    festivalStore.heroDesktopImage
+  );
+});
+
+const heroSectionBackgroundStyle = computed(() => {
+  if (!festivalStore.isFestivalActive) return {};
+  const bgImg = (isMobileScreen.value && festivalStore.heroMobileImage) 
+    ? festivalStore.heroMobileImage 
+    : (festivalStore.heroDesktopImage || '');
+  if (!bgImg) return {};
+  return {
+    backgroundImage: `url(${bgImg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    position: 'relative',
+  };
+});
+
+const getProductDiscount = (product) => {
+  if (!product) return 0;
+  if (product.variants && product.variants.length > 0) {
+    const discounts = product.variants
+      .filter(v => parseFloat(v.mrp) > parseFloat(v.selling_price))
+      .map(v => Math.round(((parseFloat(v.mrp) - parseFloat(v.selling_price)) / parseFloat(v.mrp)) * 100));
+    if (discounts.length > 0) {
+      return Math.max(...discounts);
+    }
+  }
+  const mrp = parseFloat(product.mrp || 0);
+  const sell = parseFloat(product.selling_price || 0);
+  if (mrp > sell && mrp > 0) {
+    return Math.round(((mrp - sell) / mrp) * 100);
+  }
+  return 0;
 };
 
 const visibleFeaturedProducts = computed(() => {
@@ -5073,6 +5163,170 @@ onUnmounted(() => {
   .storefront-home .products-carousel-scroll {
     padding-left: 16px !important;
     padding-right: 16px !important;
+  }
+}
+
+/* ====================================================
+   FESTIVAL MODE - LUXURY ETHNIC TOUCHPOINTS
+   ==================================================== */
+
+/* Section 1: Hero Section Festive Layering */
+.hero-section--festive {
+  position: relative;
+  overflow: hidden;
+  transition: background-image 0.5s ease-in-out;
+}
+
+.festive-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #2D0A16; /* Deep Maroon tint */
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hanging Toran Garland along top edge */
+.festive-hero-toran {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.toran-gold-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #B8860B 0%, #D4AF37 25%, #F7E7A9 50%, #D4AF37 75%, #B8860B 100%);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}
+
+.toran-garland-mesh {
+  height: 16px;
+  background-image: 
+    radial-gradient(circle at 10px 0, #D4AF37 5px, transparent 6px),
+    radial-gradient(circle at 30px 0, #6E1F3A 6px, transparent 7px);
+  background-size: 40px 18px;
+  opacity: 0.95;
+}
+
+/* Floating Brass Diyas in Negative Flanks */
+.festive-floating-diya {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+  user-select: none;
+}
+
+.festive-diya--left {
+  top: 18px;
+  left: 20px;
+  animation: diyaFloatingMotion 4.2s ease-in-out infinite alternate;
+}
+
+.festive-diya--right {
+  bottom: 24px;
+  right: 24px;
+  animation: diyaFloatingMotion 3.8s ease-in-out 1.5s infinite alternate;
+}
+
+.diya-glow-symbol {
+  font-size: 1.8rem;
+  display: block;
+}
+
+@keyframes diyaFloatingMotion {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-9px) rotate(2deg);
+  }
+}
+
+.flame-glow {
+  animation: diyaFlickerFlame 2s ease-in-out infinite;
+}
+
+@keyframes diyaFlickerFlame {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.75));
+    opacity: 0.92;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(245, 158, 11, 1));
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Section 2: Section Header Festive Motif */
+.section-header--festive .section-tag {
+  color: #B8860B !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.15em !important;
+}
+
+.section-header--festive .header-line .line {
+  background: linear-gradient(90deg, transparent 0%, #D4AF37 50%, transparent 100%) !important;
+  height: 1.5px !important;
+}
+
+.section-header--festive .festive-motif {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Section 3: Product Card Festive Discount Badge */
+.festive-discount-tag {
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  border-radius: 6px !important;
+  transition: all 0.25s ease !important;
+}
+
+.festive-badge--maroon_gold {
+  background: linear-gradient(135deg, #6E1F3A 0%, #4A1224 100%) !important;
+  color: #F7E7A9 !important;
+  border: 1px solid #D4AF37 !important;
+  box-shadow: 0 4px 10px rgba(110, 31, 58, 0.3) !important;
+}
+
+.festive-badge--gold_maroon {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%) !important;
+  color: #4A1224 !important;
+  border: 1px solid #FFE58F !important;
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.35) !important;
+}
+
+.festive-badge--emerald_gold {
+  background: linear-gradient(135deg, #065F46 0%, #064E3B 100%) !important;
+  color: #F7E7A9 !important;
+  border: 1px solid #34D399 !important;
+  box-shadow: 0 4px 10px rgba(6, 95, 70, 0.35) !important;
+}
+
+.festive-badge--crimson_gold {
+  background: linear-gradient(135deg, #9F1239 0%, #4C0519 100%) !important;
+  color: #FEE2E2 !important;
+  border: 1px solid #F43F5E !important;
+  box-shadow: 0 4px 10px rgba(159, 18, 57, 0.35) !important;
+}
+
+.product-card--festive:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+@media (max-width: 768px) {
+  .festive-floating-diya {
+    display: none; /* Keep mobile view clean and uncluttered */
+  }
+  .toran-garland-mesh {
+    height: 10px;
+    background-size: 24px 12px;
   }
 }
 </style>

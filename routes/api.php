@@ -28,6 +28,8 @@ use App\Http\Controllers\Api\v1\Admin\ColorController;
 use App\Http\Controllers\Api\v1\Admin\SizeGroupController;
 use App\Http\Controllers\Api\v1\Admin\SizeController;
 use App\Http\Controllers\Api\v1\Admin\StoryImageController;
+use App\Http\Controllers\Api\v1\Admin\FestivalModeController;
+use App\Http\Controllers\Api\v1\StorefrontFestivalController;
 use App\Http\Controllers\Api\v1\StorefrontProductController;
 use App\Http\Controllers\Api\v1\ProductReviewController;
 use App\Http\Controllers\Api\v1\StorefrontCheckoutController;
@@ -91,6 +93,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/edit-badges', [StorefrontProductController::class, 'getEditBadges']);
     Route::get('storefront/occasions', [StorefrontProductController::class, 'getOccasions']);
     Route::get('storefront/story-settings', [StoryImageController::class, 'getStorySettings']);
+    Route::get('storefront/festival-mode', [StorefrontFestivalController::class, 'index']);
     Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
 
     // Public Product Reviews
@@ -248,6 +251,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
         Route::get('story-image', [StoryImageController::class, 'show']);
         Route::post('story-image/upload', [StoryImageController::class, 'uploadStoryImage']);
         Route::post('story-image/update', [StoryImageController::class, 'updateStoryImage']);
+
+        // Festival Mode Management
+        Route::get('festival-mode', [FestivalModeController::class, 'show']);
+        Route::post('festival-mode', [FestivalModeController::class, 'update']);
+        Route::post('festival-mode/upload-hero', [FestivalModeController::class, 'uploadHeroBanner']);
     });
 
     // Order Management (requires 'manage_orders')

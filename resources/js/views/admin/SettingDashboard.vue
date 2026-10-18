@@ -66,6 +66,9 @@
                 <span v-else-if="tab === 'story_image'" style="color: #6E1F3A; font-weight: 700;"
                     >👑 📖 Our Story Image</span
                 >
+                <span v-else-if="tab === 'festival_mode'" style="color: #6E1F3A; font-weight: 700;"
+                    >🎉 🪔 Festival Mode</span
+                >
             </button>
         </div>
 
@@ -3048,9 +3051,471 @@
                     </div>
                 </div>
 
+                <!-- Tab 12: Festival Mode Management -->
+                <div
+                    v-if="activeTab === 'festival_mode'"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-lg);
+                    "
+                >
+                    <!-- Header & Live Status Card -->
+                    <div style="background: linear-gradient(135deg, #6E1F3A 0%, #4A1224 100%); color: #FAF8F5; padding: 1.5rem; border-radius: 12px; border: 1.5px solid #D4AF37; box-shadow: 0 8px 24px rgba(110, 31, 58, 0.25);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.5rem;">🎉</span>
+                                    <h2 style="font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #F7E7A9; margin: 0;">Festival Mode & Celebration Styling</h2>
+                                </div>
+                                <p style="font-size: 0.85rem; color: #F3E8EE; margin: 6px 0 0 0; max-width: 650px;">
+                                    Transform your storefront with festive themes. Applies to the 3 targeted sections (Hero Section, Section Header, Product Cards) and the Cinematic Splash Screen.
+                                </p>
+                            </div>
+                            <div>
+                                <span v-if="festivalForm.is_enabled" style="display: inline-flex; align-items: center; gap: 6px; background: #065f46; color: #a7f3d0; border: 1px solid #34d399; padding: 6px 14px; border-radius: 9999px; font-weight: 700; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(52, 211, 153, 0.3);">
+                                    <span style="width: 8px; height: 8px; background: #34d399; border-radius: 50%; display: inline-block;"></span>
+                                    LIVE ON STOREFRONT
+                                </span>
+                                <span v-else style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); color: #FAF8F5; border: 1px solid rgba(255,255,255,0.3); padding: 6px 14px; border-radius: 9999px; font-weight: 600; font-size: 0.8rem;">
+                                    ⚪ INACTIVE (STANDARD MODE)
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Master Enable / Disable Switch -->
+                        <div style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid rgba(212, 175, 55, 0.35); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input 
+                                    type="checkbox" 
+                                    v-model="festivalForm.is_enabled" 
+                                    style="width: 22px; height: 22px; accent-color: #D4AF37; cursor: pointer;"
+                                />
+                                <span style="font-weight: 700; font-size: 1rem; color: #FFFFFF;">
+                                    Enable Festival Mode Storefront
+                                </span>
+                            </label>
+                            <span style="font-size: 0.8rem; color: #F7E7A9;">
+                                Toggle off at any time to instantly revert to standard luxury styling.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Block 1: Festival Preset & General Details -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700;">
+                            ✨ Festival Campaign Preset
+                        </div>
+                        <div class="responsive-grid-1-2" style="gap: var(--spacing-md);">
+                            <div class="form-group">
+                                <label class="form-label">Active Festival Celebration</label>
+                                <select v-model="festivalForm.festival_key" class="form-input">
+                                    <option value="diwali">🪔 Diwali (Festival of Lights)</option>
+                                    <option value="pongal">🌾 Pongal / Makar Sankranti</option>
+                                    <option value="navratri">✨ Navratri & Durga Puja</option>
+                                    <option value="eid">🌙 Eid Celebration</option>
+                                    <option value="newyear">⭐ Christmas & New Year</option>
+                                    <option value="custom">👑 Custom Festive Campaign</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Festival Campaign Title</label>
+                                <input type="text" v-model="festivalForm.festival_name" class="form-input" placeholder="e.g. Diwali Grand Celebration" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block 2: Section 1 - Hero Background Banners & Ornaments -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🖼️ Section 1: Hero Background Banners & Ornaments</span>
+                            <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: 600; background: #FDF2F8; padding: 2px 8px; border-radius: 6px;">Shared Image 1</span>
+                        </div>
+
+                        <!-- Desktop & Mobile Uploaders Grid -->
+                        <div class="responsive-grid-1-2" style="gap: var(--spacing-md);">
+                            
+                            <!-- Desktop Banner -->
+                            <div style="background: #FDFBF7; border: 1px solid #E5E0D8; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="font-size: 0.85rem; color: #2D2424;">🖥️ Desktop Banner (1920×800)</strong>
+                                    <span v-if="festivalForm.hero_desktop_image" style="font-size: 0.72rem; color: #065f46; font-weight: 700;">✓ Banner Set</span>
+                                </div>
+                                <div style="height: 120px; background: #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+                                    <img v-if="festivalForm.hero_desktop_image" :src="festivalForm.hero_desktop_image" alt="Desktop Banner Preview" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    <span v-else style="font-size: 0.8rem; color: #64748b; text-align: center; padding: 10px;">No custom desktop banner.<br>Uses default luxury background.</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="file" ref="desktopFileInputRef" accept="image/*" @change="handleDesktopFileSelect" style="display: none;" />
+                                    <button type="button" class="btn btn--secondary" @click="$refs.desktopFileInputRef.click()" :disabled="festivalAdminSaving" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">
+                                        📁 Choose Desktop File
+                                    </button>
+                                    <button v-if="desktopBannerFile" type="button" class="btn btn--primary" @click="uploadFestivalBanner('desktop')" :disabled="festivalAdminSaving" style="padding: 6px 12px; font-size: 0.8rem;">
+                                        Upload
+                                    </button>
+                                    <button v-if="festivalForm.hero_desktop_image" type="button" class="btn btn--secondary" @click="resetBanner('desktop')" style="color: #b91c1c; padding: 6px 10px; font-size: 0.8rem;" title="Clear banner">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Banner -->
+                            <div style="background: #FDFBF7; border: 1px solid #E5E0D8; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="font-size: 0.85rem; color: #2D2424;">📱 Mobile Banner (750×900)</strong>
+                                    <span v-if="festivalForm.hero_mobile_image" style="font-size: 0.72rem; color: #065f46; font-weight: 700;">✓ Mobile Banner Set</span>
+                                </div>
+                                <div style="height: 120px; background: #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
+                                    <img v-if="festivalForm.hero_mobile_image" :src="festivalForm.hero_mobile_image" alt="Mobile Banner Preview" style="width: 100%; height: 100%; object-fit: contain;" />
+                                    <span v-else style="font-size: 0.8rem; color: #64748b; text-align: center; padding: 10px;">No custom mobile banner.<br>Falls back to desktop banner.</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="file" ref="mobileFileInputRef" accept="image/*" @change="handleMobileFileSelect" style="display: none;" />
+                                    <button type="button" class="btn btn--secondary" @click="$refs.mobileFileInputRef.click()" :disabled="festivalAdminSaving" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">
+                                        📁 Choose Mobile File
+                                    </button>
+                                    <button v-if="mobileBannerFile" type="button" class="btn btn--primary" @click="uploadFestivalBanner('mobile')" :disabled="festivalAdminSaving" style="padding: 6px 12px; font-size: 0.8rem;">
+                                        Upload
+                                    </button>
+                                    <button v-if="festivalForm.hero_mobile_image" type="button" class="btn btn--secondary" @click="resetBanner('mobile')" style="color: #b91c1c; padding: 6px 10px; font-size: 0.8rem;" title="Clear banner">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Overlay Contrast Tint & Hero Badge -->
+                        <div class="responsive-grid-1-2" style="gap: var(--spacing-md); margin-top: 8px;">
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; justify-content: space-between;">
+                                    <span>Background Overlay Contrast Tint</span>
+                                    <strong>{{ Math.round((festivalForm.hero_overlay_opacity || 0) * 100) }}%</strong>
+                                </label>
+                                <input type="range" v-model.number="festivalForm.hero_overlay_opacity" min="0" max="0.8" step="0.05" class="form-input" style="padding: 4px 0;" />
+                                <span class="text-muted" style="font-size: 0.75rem;">Darkens the banner slightly so text and buttons remain crystal clear.</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hero Badge Tagline</label>
+                                <input type="text" v-model="festivalForm.header_badge_text" class="form-input" placeholder="e.g. FESTIVAL & WEDDING SPECIAL" />
+                                <span class="text-muted" style="font-size: 0.75rem;">Appears as the pill badge directly above the hero title.</span>
+                            </div>
+                        </div>
+
+                        <!-- Ornaments Toggle & Style -->
+                        <div style="background: #FFFDF9; border: 1px solid #F1E5C6; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input type="checkbox" v-model="festivalForm.ornaments_enabled" style="width: 18px; height: 18px; accent-color: #6E1F3A; cursor: pointer;" />
+                                    <span style="font-weight: 700; color: #6E1F3A; font-size: 0.9rem;">Show Festive Ornaments on Hero Section</span>
+                                </label>
+                                <span style="font-size: 0.75rem; color: #8A6D3B;">Hanging Toran along top + floating brass diyas in corner flanks</span>
+                            </div>
+
+                            <div v-if="festivalForm.ornaments_enabled" class="responsive-grid-1-2" style="gap: var(--spacing-md); pt-2;">
+                                <div class="form-group">
+                                    <label class="form-label">Ornament Style Preset</label>
+                                    <select v-model="festivalForm.ornament_type" class="form-input">
+                                        <option value="diyas_toran">🪔 Brass Diyas & Hanging Marigold Toran (Diwali/Traditional)</option>
+                                        <option value="lanterns">🌙 Royal Crescent & Hanging Lanterns (Eid/Regal)</option>
+                                        <option value="stars">✨ Twinkling Golden Stars & Ribbon (New Year/Celebration)</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #475569; background: #F8F5F0; padding: 10px; border-radius: 8px;">
+                                    <span>🛡️</span>
+                                    <span>Engineered with <code>pointer-events: none</code> and GPU CSS transforms so clicks and gestures are never blocked.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block 3: Section 2 - Section Header ("New Arrivals") -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                            <span>✨ Section 2: Section Headers & Dividers</span>
+                            <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: 600; background: #FDF2F8; padding: 2px 8px; border-radius: 6px;">Shared Image 2</span>
+                        </div>
+                        <div class="responsive-grid-1-2" style="gap: var(--spacing-md);">
+                            <div class="form-group">
+                                <label class="form-label">Section Tagline Text</label>
+                                <input type="text" v-model="festivalForm.section_header_tag" class="form-input" placeholder="e.g. FRESH OFF THE RUNWAY • FESTIVE EDIT" />
+                                <span class="text-muted" style="font-size: 0.75rem;">Replaces the uppercase subtitle above "New Arrivals".</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Center Divider Motif</label>
+                                <select v-model="festivalForm.section_header_motif" class="form-input">
+                                    <option value="diya">🪔 Golden Diya Motif</option>
+                                    <option value="sparkle">✨ Golden Sparkle Motif</option>
+                                    <option value="diamond">♦ Classic Diamond (Normal)</option>
+                                </select>
+                                <span class="text-muted" style="font-size: 0.75rem;">Emblem centered on the gold-gradient divider lines.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block 4: Section 3 - Product Cards Discount Badges -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🏷️ Section 3: Product Cards Discount Badges</span>
+                            <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: 600; background: #FDF2F8; padding: 2px 8px; border-radius: 6px;">Shared Image 3</span>
+                        </div>
+
+                        <!-- Toggle -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" v-model="festivalForm.product_badges_enabled" style="width: 18px; height: 18px; accent-color: #6E1F3A; cursor: pointer;" />
+                                <span style="font-weight: 700; color: #6E1F3A; font-size: 0.9rem;">Apply Festive Styling to Product Card Badges</span>
+                            </label>
+                            <span style="font-size: 0.75rem; color: #64748b;">Transforms badges on Homepage & Catalog grids</span>
+                        </div>
+
+                        <!-- Settings Grid & Live Preview (Visible when enabled) -->
+                        <div v-if="festivalForm.product_badges_enabled" style="display: flex; flex-direction: column; gap: var(--spacing-md); margin-top: 4px;">
+                            <div class="responsive-grid-1-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+                                
+                                <!-- Icon Selector -->
+                                <div class="form-group">
+                                    <label class="form-label">Festive Badge Icon</label>
+                                    <select v-model="festivalForm.product_badge_icon" class="form-input">
+                                        <option value="✨">✨ Sparkle (Classic Festive)</option>
+                                        <option value="🪔">🪔 Diya / Deepam (Diwali Tradition)</option>
+                                        <option value="🔥">🔥 Flame / Hot Festive Pick</option>
+                                        <option value="🎉">🎉 Festive Celebration</option>
+                                        <option value="👑">👑 Royal Heritage Crown</option>
+                                        <option value="none">∅ None (Text Only)</option>
+                                    </select>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Icon prepended before badge label.</span>
+                                </div>
+
+                                <!-- Theme / Color Preset Selector -->
+                                <div class="form-group">
+                                    <label class="form-label">Color Theme Preset</label>
+                                    <select v-model="festivalForm.product_badge_style" class="form-input">
+                                        <option value="maroon_gold">👑 Royal Maroon & Gold</option>
+                                        <option value="gold_maroon">🌟 Radiant Gold & Maroon</option>
+                                        <option value="emerald_gold">🌿 Festive Emerald & Gold</option>
+                                        <option value="crimson_gold">🌹 Royal Crimson & Rose Gold</option>
+                                    </select>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Foil gradient & border treatment.</span>
+                                </div>
+
+                                <!-- Custom Badge Prefix -->
+                                <div class="form-group">
+                                    <label class="form-label">Custom Badge Prefix (Optional)</label>
+                                    <input 
+                                        type="text" 
+                                        v-model="festivalForm.product_badge_prefix" 
+                                        class="form-input" 
+                                        placeholder="e.g. DIWALI or FESTIVE" 
+                                        maxlength="20"
+                                    />
+                                    <span class="text-muted" style="font-size: 0.75rem;">Leave empty for standard discount % only.</span>
+                                </div>
+                            </div>
+
+                            <!-- Live Interactive Badge Preview -->
+                            <div style="background: #FDFBF7; border: 1.5px dashed #D4AF37; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 0.78rem; font-weight: 700; color: #6E1F3A; text-transform: uppercase; letter-spacing: 0.05em;">
+                                        ⚡ Live Badge Preview (Storefront Product Card)
+                                    </span>
+                                    <span style="font-size: 0.75rem; color: #64748b;">
+                                        Updates instantly based on your selected icon, style preset, and prefix text.
+                                    </span>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 12px; background: #ffffff; padding: 10px 16px; border-radius: 8px; border: 1px solid #E5E0D8; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                    <!-- Rendered Badge -->
+                                    <div 
+                                        :style="getFestivalBadgePreviewStyle" 
+                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-weight: 700; font-size: 0.82rem; letter-spacing: 0.04em; transition: all 0.25s ease;"
+                                    >
+                                        <span v-if="festivalForm.product_badge_icon && festivalForm.product_badge_icon !== 'none'">{{ festivalForm.product_badge_icon }}</span>
+                                        <span v-if="festivalForm.product_badge_prefix">{{ festivalForm.product_badge_prefix.trim() }}</span>
+                                        <span>15% OFF</span>
+                                    </div>
+                                    <div style="border-left: 1px solid #e2e8f0; padding-left: 12px; display: flex; flex-direction: column;">
+                                        <span style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">₹1,699</span>
+                                        <span style="font-size: 0.72rem; color: #94a3b8; text-decoration: line-through;">₹1,999</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fallback message if disabled -->
+                        <div v-else style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: #64748b;">
+                            ⚪ Product card badges will display the default standard green / black style even when Festival Mode is active.
+                        </div>
+                    </div>
+
+                    <!-- Block 5: Touchpoint A - Cinematic Splash Screen -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🌟 Touchpoint A: Cinematic Splash Screen Greeting</span>
+                            <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: 600; background: #FDF2F8; padding: 2px 8px; border-radius: 6px;">App Launch Intro</span>
+                        </div>
+
+                        <!-- Main Toggle -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" v-model="festivalForm.splash_enabled" style="width: 18px; height: 18px; accent-color: #6E1F3A; cursor: pointer;" />
+                                <span style="font-weight: 700; color: #6E1F3A; font-size: 0.9rem;">Show Festive Greeting on Splash Screen</span>
+                            </label>
+                            <span style="font-size: 0.75rem; color: #64748b;">Displays with glowing golden halo during initial entry</span>
+                        </div>
+
+                        <!-- Editable Content (When Enabled) -->
+                        <div v-if="festivalForm.splash_enabled" style="display: flex; flex-direction: column; gap: var(--spacing-md); margin-top: 4px;">
+                            
+                            <!-- Input -->
+                            <div class="form-group" style="margin: 0;">
+                                <label class="form-label" style="display: flex; justify-content: space-between;">
+                                    <span>Splash Screen Greeting Text</span>
+                                    <span style="font-size: 0.75rem; color: #94a3b8;">{{ (festivalForm.splash_greeting || '').length }}/120 chars</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.splash_greeting" 
+                                    class="form-input" 
+                                    placeholder="e.g. Wishing You a Joyous Festive Season" 
+                                    maxlength="120"
+                                />
+                            </div>
+
+                            <!-- Quick Preset Greeting Chips -->
+                            <div>
+                                <span style="font-size: 0.75rem; color: #475569; font-weight: 600; display: block; margin-bottom: 6px;">
+                                    ⚡ Quick Suggestion Presets (Click to apply):
+                                </span>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;"
+                                        @click="festivalForm.splash_greeting = 'Wishing You a Joyous Festive Season'"
+                                    >
+                                        ✨ Joyous Festive Season
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;"
+                                        @click="festivalForm.splash_greeting = 'Happy Diwali & Prosperous New Year'"
+                                    >
+                                        🪔 Diwali & New Year
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;"
+                                        @click="festivalForm.splash_greeting = 'Happy Pongal & Makar Sankranti'"
+                                    >
+                                        🌾 Pongal / Sankranti
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;"
+                                        @click="festivalForm.splash_greeting = 'Eid Mubarak & Blessed Celebrations'"
+                                    >
+                                        🌙 Eid Mubarak
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;"
+                                        @click="festivalForm.splash_greeting = 'Celebrate in Royal Festive Elegance'"
+                                    >
+                                        👑 Royal Elegance
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Splash Theme Style Selector -->
+                            <div class="form-group" style="margin: 0;">
+                                <label class="form-label">Splash Greeting Theme Style</label>
+                                <select v-model="festivalForm.splash_style" class="form-input">
+                                    <option value="maroon_gold">👑 Royal Maroon & Gold Foil (Primary Brand Contrast - Recommended)</option>
+                                    <option value="gold_amber">🌟 Radiant Gold & Amber Glass (Warm Ivory Bloom)</option>
+                                    <option value="emerald_gold">🌿 Festive Emerald & Gold (Regal Auspicious Silk)</option>
+                                </select>
+                                <span class="text-muted" style="font-size: 0.75rem;">Select the visual color preset for the splash screen greeting pill.</span>
+                            </div>
+
+                            <!-- Live Splash Greeting Preview Card -->
+                            <div style="background: #FCFAF7; border: 1.5px dashed #D4AF37; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; position: relative; overflow: hidden; box-shadow: inset 0 2px 8px rgba(212, 175, 55, 0.06);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 8px;">
+                                    <span style="font-size: 0.72rem; font-weight: 700; color: #6E1F3A; text-transform: uppercase; letter-spacing: 0.08em;">
+                                        ⚡ Live Splash Screen Greeting Preview
+                                    </span>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--primary btn--sm" 
+                                        @click="runAdminSplashTest"
+                                        style="font-size: 0.76rem; padding: 4px 12px; border-radius: 9999px; background: #6E1F3A; border-color: #D4AF37; display: inline-flex; align-items: center; gap: 6px;"
+                                    >
+                                        <span>▶️ Test Full Splash Screen</span>
+                                    </button>
+                                </div>
+
+                                <!-- Mock Brand Title -->
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px;">
+                                    <div style="font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: #2D2424; letter-spacing: 0.18em; text-transform: uppercase;">
+                                        MAYA SREE FASHION
+                                    </div>
+                                    <div style="width: 45px; height: 1px; background: linear-gradient(90deg, transparent, #C58F81, transparent);"></div>
+                                </div>
+
+                                <!-- Rendered Festive Greeting Pill (Dynamic Style) -->
+                                <div 
+                                    :style="getSplashGreetingPreviewStyle"
+                                    style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 7px 22px; border-radius: 9999px; backdrop-filter: blur(8px); transition: all 0.25s ease;"
+                                >
+                                    <span style="font-size: 0.85rem; color: #D4AF37;">✨</span>
+                                    <span style="font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.05em; text-transform: capitalize;">
+                                        {{ festivalForm.splash_greeting || 'Wishing You a Joyous Festive Season' }}
+                                    </span>
+                                    <span style="font-size: 0.85rem; color: #D4AF37;">✨</span>
+                                </div>
+                                
+                                <span style="font-size: 0.72rem; color: #94a3b8; font-style: italic;">
+                                    Click "▶️ Test Full Splash Screen" above to watch the cinematic entrance animation right now!
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Fallback when disabled -->
+                        <div v-else style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: #64748b;">
+                            ⚪ Splash screen will display standard luxury branding without festive greeting text.
+                        </div>
+                    </div>
+
+                    <!-- Save Actions Card -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 1rem 0; border-top: 1px solid var(--color-border);">
+                        <div>
+                            <span v-if="festivalAdminMsg" style="color: #065f46; font-weight: 700; font-size: 0.9rem;">{{ festivalAdminMsg }}</span>
+                            <span v-if="festivalAdminError" style="color: #b91c1c; font-weight: 600; font-size: 0.85rem;">{{ festivalAdminError }}</span>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <a href="/" target="_blank" class="btn btn--secondary" style="font-size: 0.85rem; padding: 10px 18px;">
+                                👁️ View Storefront Live
+                            </a>
+                            <button 
+                                type="button" 
+                                class="btn btn--primary" 
+                                @click="saveFestivalSettings"
+                                :disabled="festivalAdminSaving"
+                                style="padding: 10px 24px; font-size: 0.9rem; font-weight: 700; background: #6E1F3A; border-color: #D4AF37;"
+                            >
+                                <span v-if="festivalAdminSaving">Saving...</span>
+                                <span v-else>💾 Save Festival Settings</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div
-                    v-if="!['hero_slides', 'occasions', 'story_image'].includes(activeTab)"
+                    v-if="!['hero_slides', 'occasions', 'story_image', 'festival_mode'].includes(activeTab)"
                     style="
                         margin-top: var(--spacing-lg);
                         padding-top: var(--spacing-md);
@@ -3312,6 +3777,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cinematic Splash Screen Live Test Preview for Admin -->
+        <SplashScreen :show="adminSplashTestVisible" @close="adminSplashTestVisible = false" />
     </div>
 </template>
 
@@ -3319,9 +3787,12 @@
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import StorefrontAnnouncementBar from "../../components/StorefrontAnnouncementBar.vue";
+import SplashScreen from "../../components/SplashScreen.vue";
 import { useAuthStore } from "../../stores/auth";
+import { useFestivalStore } from "../../stores/festival";
 
 const authStore = useAuthStore();
+const festivalStore = useFestivalStore();
 const isSuperAdmin = computed(() => {
     if (!authStore.user) return false;
     return (
@@ -3345,6 +3816,7 @@ const availableTabs = computed(() => {
     if (isSuperAdmin.value) {
         tabs.push("hero_slides");
         tabs.push("story_image");
+        tabs.push("festival_mode");
     }
     return tabs;
 });
@@ -4601,6 +5073,219 @@ const resetStoryAdminToDefault = async () => {
     }
 };
 
+// ==========================================
+// 🎉 Festival Mode Admin Logic
+// ==========================================
+const festivalForm = ref({
+    is_enabled: false,
+    festival_key: 'diwali',
+    festival_name: 'Diwali Grand Celebration',
+    hero_desktop_image: '',
+    hero_mobile_image: '',
+    hero_overlay_opacity: 0.2,
+    ornaments_enabled: true,
+    ornament_type: 'diyas_toran',
+    splash_enabled: true,
+    splash_greeting: 'Wishing You a Joyous Festive Season',
+    splash_style: 'maroon_gold',
+    header_badge_text: 'FESTIVAL & WEDDING SPECIAL',
+    section_header_tag: 'FRESH OFF THE RUNWAY • FESTIVE EDIT',
+    section_header_motif: 'diya',
+    product_badges_enabled: true,
+    product_badge_icon: '✨',
+    product_badge_style: 'maroon_gold',
+    product_badge_prefix: '',
+});
+
+const getSplashGreetingPreviewStyle = computed(() => {
+    switch (festivalForm.value.splash_style) {
+        case 'gold_amber':
+            return {
+                background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 230, 138, 0.98) 100%)',
+                color: '#6E1F3A',
+                border: '1.2px solid rgba(212, 175, 55, 0.8)',
+                boxShadow: '0 8px 22px rgba(212, 175, 55, 0.3)',
+            };
+        case 'emerald_gold':
+            return {
+                background: 'linear-gradient(135deg, rgba(6, 95, 70, 0.95) 0%, rgba(6, 78, 59, 0.98) 100%)',
+                color: '#F7E7A9',
+                border: '1.2px solid rgba(212, 175, 55, 0.85)',
+                boxShadow: '0 8px 24px rgba(6, 95, 70, 0.35)',
+            };
+        case 'maroon_gold':
+        default:
+            return {
+                background: 'linear-gradient(135deg, rgba(110, 31, 58, 0.95) 0%, rgba(74, 18, 36, 0.98) 100%)',
+                color: '#F7E7A9',
+                border: '1.2px solid rgba(212, 175, 55, 0.85)',
+                boxShadow: '0 8px 24px rgba(110, 31, 58, 0.35)',
+            };
+    }
+});
+
+const adminSplashTestVisible = ref(false);
+const runAdminSplashTest = () => {
+    // Sync current settings locally so test renders live form changes
+    festivalStore.updateConfigLocally(festivalForm.value);
+    adminSplashTestVisible.value = true;
+    setTimeout(() => {
+        adminSplashTestVisible.value = false;
+    }, 4200);
+};
+
+const getFestivalBadgePreviewStyle = computed(() => {
+    switch (festivalForm.value.product_badge_style) {
+        case 'gold_maroon':
+            return {
+                background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+                color: '#4A1224',
+                border: '1px solid #FFE58F',
+                boxShadow: '0 4px 10px rgba(212, 175, 55, 0.35)',
+            };
+        case 'emerald_gold':
+            return {
+                background: 'linear-gradient(135deg, #065F46 0%, #064E3B 100%)',
+                color: '#F7E7A9',
+                border: '1px solid #34D399',
+                boxShadow: '0 4px 10px rgba(6, 95, 70, 0.35)',
+            };
+        case 'crimson_gold':
+            return {
+                background: 'linear-gradient(135deg, #9F1239 0%, #4C0519 100%)',
+                color: '#FEE2E2',
+                border: '1px solid #F43F5E',
+                boxShadow: '0 4px 10px rgba(159, 18, 57, 0.35)',
+            };
+        case 'maroon_gold':
+        default:
+            return {
+                background: 'linear-gradient(135deg, #6E1F3A 0%, #4A1224 100%)',
+                color: '#F7E7A9',
+                border: '1px solid #D4AF37',
+                boxShadow: '0 4px 10px rgba(110, 31, 58, 0.35)',
+            };
+    }
+});
+
+const desktopBannerFile = ref(null);
+const mobileBannerFile = ref(null);
+const desktopFileInputRef = ref(null);
+const mobileFileInputRef = ref(null);
+
+const festivalAdminLoading = ref(false);
+const festivalAdminSaving = ref(false);
+const festivalAdminMsg = ref('');
+const festivalAdminError = ref('');
+
+const fetchFestivalSettings = async () => {
+    try {
+        festivalAdminLoading.value = true;
+        const res = await axios.get('/api/admin/festival-mode');
+        if (res.data?.success && res.data.data) {
+            festivalForm.value = { ...festivalForm.value, ...res.data.data };
+        }
+    } catch (err) {
+        console.warn('Could not fetch festival mode settings for admin:', err);
+    } finally {
+        festivalAdminLoading.value = false;
+    }
+};
+
+const handleDesktopFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        desktopBannerFile.value = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            festivalForm.value.hero_desktop_image = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const handleMobileFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        mobileBannerFile.value = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            festivalForm.value.hero_mobile_image = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const uploadFestivalBanner = async (type) => {
+    const file = type === 'mobile' ? mobileBannerFile.value : desktopBannerFile.value;
+    if (!file) return;
+
+    festivalAdminSaving.value = true;
+    festivalAdminError.value = '';
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('type', type);
+
+        const res = await axios.post('/api/admin/festival-mode/upload-hero', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (res.data?.success && res.data.url) {
+            if (type === 'mobile') {
+                festivalForm.value.hero_mobile_image = res.data.url;
+                mobileBannerFile.value = null;
+            } else {
+                festivalForm.value.hero_desktop_image = res.data.url;
+                desktopBannerFile.value = null;
+            }
+            festivalAdminMsg.value = `✓ ${type === 'mobile' ? 'Mobile' : 'Desktop'} banner uploaded successfully!`;
+            setTimeout(() => { festivalAdminMsg.value = ''; }, 4000);
+        }
+    } catch (err) {
+        console.error('Failed to upload festival banner:', err);
+        festivalAdminError.value = err.response?.data?.message || 'Banner upload failed.';
+    } finally {
+        festivalAdminSaving.value = false;
+    }
+};
+
+const resetBanner = (type) => {
+    if (type === 'mobile') {
+        festivalForm.value.hero_mobile_image = '';
+        mobileBannerFile.value = null;
+    } else {
+        festivalForm.value.hero_desktop_image = '';
+        desktopBannerFile.value = null;
+    }
+};
+
+const saveFestivalSettings = async () => {
+    festivalAdminSaving.value = true;
+    festivalAdminError.value = '';
+    festivalAdminMsg.value = '';
+    try {
+        if (desktopBannerFile.value) {
+            await uploadFestivalBanner('desktop');
+        }
+        if (mobileBannerFile.value) {
+            await uploadFestivalBanner('mobile');
+        }
+
+        const res = await axios.post('/api/admin/festival-mode', festivalForm.value);
+        if (res.data?.success) {
+            festivalStore.updateConfigLocally(festivalForm.value);
+            festivalAdminMsg.value = '✓ Festival Mode settings saved successfully!';
+            setTimeout(() => { festivalAdminMsg.value = ''; }, 4000);
+        }
+    } catch (err) {
+        console.error('Failed to save festival mode settings:', err);
+        festivalAdminError.value = err.response?.data?.message || 'Failed to save festival settings.';
+    } finally {
+        festivalAdminSaving.value = false;
+    }
+};
+
 onMounted(() => {
     fetchSettings();
     fetchAnnouncementsList();
@@ -4609,5 +5294,6 @@ onMounted(() => {
     fetchCoupons();
     fetchHeroSlides();
     fetchStoryAdminSetting();
+    fetchFestivalSettings();
 });
 </script>

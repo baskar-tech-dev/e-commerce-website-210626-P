@@ -1,22 +1,42 @@
 <template>
   <Transition name="splash-fade">
-    <div v-if="show" class="brand-splash-screen" role="dialog" aria-modal="true" aria-label="Maya Sree Cinematic Brand Splash Screen">
+    <div 
+      v-if="show" 
+      class="brand-splash-screen" 
+      :class="{ 'brand-splash-screen--festive': festivalStore.isFestivalActive && festivalStore.splashEnabled }"
+      role="dialog" 
+      aria-modal="true" 
+      aria-label="Maya Sree Cinematic Brand Splash Screen"
+    >
       <!-- 4K Flowing White Silk Fabric Texture Background (#FCFAF7 Ivory Base) -->
       <div class="splash-silk-backdrop"></div>
       <div class="splash-silk-overlay"></div>
 
-      <!-- Center Rose-Gold Soft Lighting Bloom -->
+      <!-- Center Rose-Gold / Festive Warm Lighting Bloom -->
       <div class="splash-center-glow" aria-hidden="true"></div>
 
       <!-- Floating Gold Dust Particles Concentrated Around Logo -->
       <div class="gold-particles-container" aria-hidden="true">
         <div 
-          v-for="n in 22" 
+          v-for="n in 26" 
           :key="n" 
           class="gold-particle" 
+          :class="{ 'gold-particle--festive': festivalStore.isFestivalActive && n % 3 === 0 }"
           :style="getParticleStyle(n)"
         ></div>
       </div>
+
+      <!-- Minimalist 'Enter Store' Skip Button for Quick Entry -->
+      <button 
+        type="button" 
+        class="splash-skip-btn" 
+        @click="$emit('close')"
+        aria-label="Enter storefront"
+        title="Enter Store"
+      >
+        <span>Enter Store</span>
+        <span class="skip-arrow">→</span>
+      </button>
 
       <!-- Main Cinematic Splash Content Container -->
       <div class="splash-content">
@@ -40,18 +60,35 @@
 
         <!-- Delicate Brand Tagline -->
         <p class="splash-tagline">A Mother's Dream • A Fashion Legacy</p>
+
+        <!-- Festive Greeting Highlight (When Festival Mode Active) -->
+        <div 
+          v-if="festivalStore.isFestivalActive && festivalStore.splashEnabled" 
+          class="splash-festive-greeting"
+          :class="`splash-festive-greeting--${festivalStore.splashStyle || 'maroon_gold'}`"
+        >
+          <span class="festive-sparkle">✨</span>
+          <span class="festive-greeting-text">{{ festivalStore.splashGreeting }}</span>
+          <span class="festive-sparkle">✨</span>
+        </div>
       </div>
     </div>
   </Transition>
 </template>
 
 <script setup>
+import { useFestivalStore } from '../stores/festival';
+
 defineProps({
   show: {
     type: Boolean,
     default: true
   }
 });
+
+defineEmits(['close']);
+
+const festivalStore = useFestivalStore();
 
 // Particle generation with organic delays and radial drift around logo center
 const getParticleStyle = (index) => {
@@ -422,6 +459,140 @@ const getParticleStyle = (index) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Festive Golden Bloom for Center Lighting */
+.brand-splash-screen--festive .splash-center-glow {
+  background: radial-gradient(
+    circle,
+    rgba(212, 175, 55, 0.45) 0%,
+    rgba(245, 158, 11, 0.22) 42%,
+    rgba(252, 250, 247, 0) 75%
+  );
+  box-shadow: 0 0 60px rgba(212, 175, 55, 0.2);
+}
+
+.gold-particle--festive {
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.95), 0 0 4px #FFFFFF !important;
+}
+
+/* Minimalist Skip 'Enter Store' Button */
+.splash-skip-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #6E1F3A;
+  font-family: var(--font-family-base), 'Poppins', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+  opacity: 0;
+  animation: skipBtnFadeIn 0.8s ease-out 1.0s forwards;
+}
+
+.splash-skip-btn:hover {
+  background: #6E1F3A;
+  color: #F7E7A9;
+  border-color: #D4AF37;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(110, 31, 58, 0.28);
+}
+
+.splash-skip-btn .skip-arrow {
+  transition: transform 0.2s ease;
+}
+
+.splash-skip-btn:hover .skip-arrow {
+  transform: translateX(3px);
+}
+
+@keyframes skipBtnFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Festive Greeting Banner on Splash Screen */
+.splash-festive-greeting {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 1.15rem;
+  padding: 7px 22px;
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: typographyFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+  transition: all 0.25s ease;
+}
+
+/* Theme 1: Royal Maroon & Gold (Primary Brand Identity) */
+.splash-festive-greeting--maroon_gold {
+  background: linear-gradient(135deg, rgba(110, 31, 58, 0.94) 0%, rgba(74, 18, 36, 0.98) 100%) !important;
+  border: 1.2px solid rgba(212, 175, 55, 0.85) !important;
+  box-shadow: 0 8px 24px rgba(110, 31, 58, 0.32), 0 0 16px rgba(212, 175, 55, 0.28) !important;
+}
+
+.splash-festive-greeting--maroon_gold .festive-greeting-text {
+  color: #F7E7A9 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Theme 2: Radiant Gold & Amber Glass */
+.splash-festive-greeting--gold_amber {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.92) 0%, rgba(253, 230, 138, 0.96) 100%) !important;
+  border: 1.2px solid rgba(212, 175, 55, 0.75) !important;
+  box-shadow: 0 8px 22px rgba(212, 175, 55, 0.28) !important;
+}
+
+.splash-festive-greeting--gold_amber .festive-greeting-text {
+  color: #6E1F3A !important;
+}
+
+/* Theme 3: Festive Emerald & Gold */
+.splash-festive-greeting--emerald_gold {
+  background: linear-gradient(135deg, rgba(6, 95, 70, 0.94) 0%, rgba(6, 78, 59, 0.98) 100%) !important;
+  border: 1.2px solid rgba(212, 175, 55, 0.85) !important;
+  box-shadow: 0 8px 24px rgba(6, 95, 70, 0.32), 0 0 16px rgba(212, 175, 55, 0.25) !important;
+}
+
+.splash-festive-greeting--emerald_gold .festive-greeting-text {
+  color: #F7E7A9 !important;
+}
+
+.festive-greeting-text {
+  font-family: var(--font-family-base), 'Poppins', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: capitalize;
+}
+
+.festive-sparkle {
+  font-size: 0.88rem;
+  color: #D4AF37;
+  display: inline-block;
+  animation: sparkleTwinkle 2s ease-in-out infinite alternate;
+}
+
+@keyframes sparkleTwinkle {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.9)); }
 }
 
 /* Vue Fade Transition */

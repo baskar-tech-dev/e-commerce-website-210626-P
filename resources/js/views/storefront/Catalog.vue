@@ -314,7 +314,16 @@
                 <div class="card-badge-top-left badge-custom" v-else-if="product.badge">
                   {{ product.badge }}
                 </div>
-                <div class="card-badge-top-left" v-else-if="getProductDiscount(product)">
+                <div 
+                  class="card-badge-top-left" 
+                  :class="{ 
+                    'festive-card-badge': festivalStore.isProductBadgeFestive,
+                    [`festive-badge--${festivalStore.productBadgeStyle || 'maroon_gold'}`]: festivalStore.isProductBadgeFestive 
+                  }" 
+                  v-else-if="getProductDiscount(product)"
+                >
+                  <span v-if="festivalStore.isProductBadgeFestive && festivalStore.productBadgeIcon && festivalStore.productBadgeIcon !== 'none'">{{ festivalStore.productBadgeIcon }} </span>
+                  <span v-if="festivalStore.isProductBadgeFestive && festivalStore.productBadgePrefix">{{ festivalStore.productBadgePrefix.trim() }} </span>
                   {{ getProductDiscount(product) }}% OFF
                 </div>
                 <div class="card-badge-top-left best-seller" v-else-if="product.avg_rating >= 4.5 || product.is_bestseller">
@@ -796,10 +805,12 @@ import {
 } from 'lucide-vue-next';
 
 import { useAuthStore } from '../../stores/auth';
+import { useFestivalStore } from '../../stores/festival';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const festivalStore = useFestivalStore();
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 
 const products = ref([]);
@@ -2764,5 +2775,41 @@ onMounted(() => {
   background: #5B163A;
   color: #ffffff;
   border-color: #5B163A;
+}
+
+/* Festival Mode - Product Card Discount Badge */
+.festive-card-badge {
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  border-radius: 6px !important;
+  transition: all 0.25s ease !important;
+}
+
+.festive-badge--maroon_gold {
+  background: linear-gradient(135deg, #6E1F3A 0%, #4A1224 100%) !important;
+  color: #F7E7A9 !important;
+  border: 1px solid #D4AF37 !important;
+  box-shadow: 0 4px 10px rgba(110, 31, 58, 0.35) !important;
+}
+
+.festive-badge--gold_maroon {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%) !important;
+  color: #4A1224 !important;
+  border: 1px solid #FFE58F !important;
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.35) !important;
+}
+
+.festive-badge--emerald_gold {
+  background: linear-gradient(135deg, #065F46 0%, #064E3B 100%) !important;
+  color: #F7E7A9 !important;
+  border: 1px solid #34D399 !important;
+  box-shadow: 0 4px 10px rgba(6, 95, 70, 0.35) !important;
+}
+
+.festive-badge--crimson_gold {
+  background: linear-gradient(135deg, #9F1239 0%, #4C0519 100%) !important;
+  color: #FEE2E2 !important;
+  border: 1px solid #F43F5E !important;
+  box-shadow: 0 4px 10px rgba(159, 18, 57, 0.35) !important;
 }
 </style>
