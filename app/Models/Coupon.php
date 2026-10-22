@@ -84,4 +84,12 @@ class Coupon extends Model
     {
         return $this->hasMany(CouponUsage::class);
     }
+
+    /**
+     * Get orders placed with this coupon.
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }

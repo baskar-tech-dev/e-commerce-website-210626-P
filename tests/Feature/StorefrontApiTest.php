@@ -238,6 +238,44 @@ class StorefrontApiTest extends TestCase
         $this->assertEquals(2, $this->variant->reserved_quantity);
     }
 
+    public function test_checkout_with_coupon_saves_coupon_id_in_orders_table(): void
+    {
+        $this->actingAs($this->customer);
+
+        $response = $this->postJson('/api/storefront/checkout', [
+            'shipping_first_name' => 'John',
+            'shipping_last_name' => 'Buyer',
+            'shipping_phone' => '9876543210',
+            'shipping_address_line_1' => 'Flat 202, Wing B',
+            'shipping_city' => 'Mumbai',
+            'shipping_state' => 'Maharashtra',
+            'shipping_postal_code' => '400001',
+            'payment_method' => 'COD',
+            'coupon_code' => 'SAVE100',
+            'items' => [
+                [
+                    'product_variant_id' => $this->variant->id,
+                    'quantity' => 1,
+                ]
+            ]
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $order = Order::where('user_id', $this->customer->id)->latest('id')->first();
+        $this->assertNotNull($order);
+        $this->assertEquals($this->coupon->id, $order->coupon_id);
+        $this->assertEquals(100.00, (float) $order->discount_amount);
+        $this->assertNotNull($order->coupon);
+        $this->assertEquals('SAVE100', $order->coupon->code);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'coupon_id' => $this->coupon->id,
+        ]);
+    }
+
     public function test_rejects_checkout_if_insufficient_stock(): void
     {
         $this->actingAs($this->customer);

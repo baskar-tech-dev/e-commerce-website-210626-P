@@ -12,6 +12,21 @@ class StockInward extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $primaryKey = 'stock_inward_id';
+    protected $appends = ['id'];
+
+    public function getKeyName()
+    {
+        return \Illuminate\Support\Facades\Schema::hasColumn($this->getTable(), 'stock_inward_id') 
+            ? 'stock_inward_id' 
+            : 'id';
+    }
+
+    public function getIdAttribute(): ?int
+    {
+        return $this->attributes['stock_inward_id'] ?? $this->attributes['id'] ?? null;
+    }
+
     protected $fillable = [
         'inward_number',
         'inward_date',

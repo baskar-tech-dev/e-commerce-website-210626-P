@@ -284,6 +284,7 @@ class StorefrontCheckoutController extends Controller
                 'uuid' => (string) Str::uuid(),
                 'order_number' => $orderNumber,
                 'user_id' => $userId,
+                'coupon_id' => ($couponModel && $discount > 0) ? $couponModel->id : null,
                 'status' => Order::STATUS_ORDER_PLACED,
                 'payment_status' => 'pending',
                 'payment_method' => $validated['payment_method'],

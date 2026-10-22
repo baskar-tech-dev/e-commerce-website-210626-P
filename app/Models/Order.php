@@ -137,6 +137,7 @@ class Order extends Model
         'uuid',
         'order_number',
         'user_id',
+        'coupon_id',
         'status',
         'payment_status',
         'payment_method',
@@ -200,6 +201,7 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'coupon_id' => 'integer',
         'subtotal' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -256,6 +258,14 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the coupon applied to this order.
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /**

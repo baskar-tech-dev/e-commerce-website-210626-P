@@ -32,25 +32,43 @@ class SettingController extends Controller
             'settings' => 'required|array', // e.g. ['general' => ['store_name' => 'My Store']]
         ]);
 
+        $warnings = [];
+
         foreach ($validated['settings'] as $group => $pairs) {
             if (!is_array($pairs)) continue;
             foreach ($pairs as $key => $value) {
                 $type = null;
                 if ($group === 'announcement' || $group === 'edit_badges' || $key === 'maya_sree_edit_badges' || ($group === 'shipping' && $key === 'state_rates')) {
                     $type = 'json';
-                } elseif (($group === 'welcome_gift' && $key === 'is_enabled') || ($group === 'email' && in_array($key, ['order_notification_enabled', 'daily_payment_report_enabled'])) || ($group === 'payment' && in_array($key, ['cod_active', 'cashfree_active']))) {
+                } elseif (($group === 'welcome_gift' && in_array($key, ['is_enabled', 'diwali_reveal_enabled'])) || ($group === 'email' && in_array($key, ['order_notification_enabled', 'daily_payment_report_enabled'])) || ($group === 'payment' && in_array($key, ['cod_active', 'cashfree_active']))) {
                     $type = 'boolean';
                 } elseif ($group === 'shipping' && in_array($key, ['free_shipping_threshold', 'default_shipping_fee'])) {
                     $type = 'number';
                 }
-                Setting::set($key, $value, $group, $type);
 
+                if ($group === 'welcome_gift' && $key === 'coupon_code' && !empty($value)) {
+                    $coupon = \App\Models\Coupon::where('code', strtoupper(trim((string) $value)))->first();
+                    if (!$coupon) {
+                        $warnings[] = "Coupon '{$value}' does not exist in the Coupon database.";
+                    } elseif (!$coupon->is_active) {
+                        $warnings[] = "Coupon '{$value}' is currently marked as inactive.";
+                    } elseif ($coupon->expires_at && $coupon->expires_at->isPast()) {
+                        $warnings[] = "Coupon '{$value}' expired on " . $coupon->expires_at->format('d M Y') . ".";
+                    } elseif ($coupon->starts_at && $coupon->starts_at->isFuture()) {
+                        $warnings[] = "Coupon '{$value}' is scheduled to start on " . $coupon->starts_at->format('d M Y') . ".";
+                    } elseif (!is_null($coupon->max_uses_total) && $coupon->times_used >= $coupon->max_uses_total) {
+                        $warnings[] = "Coupon '{$value}' has reached its maximum total usage limit ({$coupon->times_used}/{$coupon->max_uses_total}).";
+                    }
+                }
+
+                Setting::set($key, $value, $group, $type);
             }
         }
 
         return response()->json([
             'success' => true,
             'message' => 'System settings updated successfully',
+            'warnings' => $warnings,
         ]);
     }
 

@@ -27,7 +27,7 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Order::with('user');
+            $query = Order::with(['user', 'coupon']);
 
             if ($request->filled('status')) {
                 $query->where('status', $request->input('status'));
@@ -89,7 +89,7 @@ class OrderController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $order = Order::with(['user', 'items.product.images', 'items.variant.product.images', 'items.variant.images', 'statusHistory.changedByUser', 'payments'])->find($id);
+            $order = Order::with(['user', 'coupon', 'items.product.images', 'items.variant.product.images', 'items.variant.images', 'statusHistory.changedByUser', 'payments'])->find($id);
 
             if (!$order) {
                 return response()->json([

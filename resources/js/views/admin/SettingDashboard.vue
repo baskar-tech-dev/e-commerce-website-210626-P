@@ -1488,12 +1488,25 @@
                 >
                     <div
                         class="card-header-title"
-                        style="margin-bottom: var(--spacing-xs)"
+                        style="margin-bottom: var(--spacing-xs); display: flex; align-items: center; justify-content: space-between;"
                     >
-                        🎁 Welcome Gift Modal & Offer Configuration
+                        <span>🎁 Welcome Gift Modal & Diwali Reveal Configuration</span>
+                        <span
+                            :style="{
+                                padding: '4px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.78rem',
+                                fontWeight: 'bold',
+                                backgroundColor: settings.welcome_gift.is_enabled ? '#ecfdf5' : '#fef2f2',
+                                color: settings.welcome_gift.is_enabled ? '#047857' : '#b91c1c',
+                                border: settings.welcome_gift.is_enabled ? '1px solid #a7f3d0' : '1px solid #fecaca'
+                            }"
+                        >
+                            {{ settings.welcome_gift.is_enabled ? '🟢 Modal Active' : '🔴 Modal Disabled' }}
+                        </span>
                     </div>
 
-                    <!-- Enable/Disable Toggle Box -->
+                    <!-- Master Enable/Disable Toggle Box -->
                     <div
                         style="
                             background: rgba(255, 255, 255, 0.02);
@@ -1525,139 +1538,296 @@
                                     v-model="settings.welcome_gift.is_enabled"
                                     style="width: 18px; height: 18px; cursor: pointer;"
                                 />
-                                Enable Welcome Gift Popup
+                                Enable Welcome Gift Experience
                             </label>
                             <span style="font-size: 0.8rem; color: var(--color-text-muted); margin-left: 1.6rem;">
-                                Toggles the interactive 3D gift box modal on the storefront homepage when visitors scroll.
+                                Controls whether the Welcome Gift modal and festive reveal entry points appear on the storefront.
                             </span>
                         </div>
-
-                        <span
-                            :style="{
-                                padding: '6px 14px',
-                                borderRadius: '20px',
-                                fontSize: '0.82rem',
-                                fontWeight: 'bold',
-                                backgroundColor: settings.welcome_gift.is_enabled ? '#ecfdf5' : '#fef2f2',
-                                color: settings.welcome_gift.is_enabled ? '#047857' : '#b91c1c',
-                                border: settings.welcome_gift.is_enabled ? '1px solid #a7f3d0' : '1px solid #fecaca'
-                            }"
-                        >
-                            {{ settings.welcome_gift.is_enabled ? '🟢 Popup Active' : '🔴 Popup Disabled' }}
-                        </span>
                     </div>
 
-                    <!-- Offer Code Choice Selection -->
-                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
-                        <div class="form-group">
-                            <label class="form-label" style="font-weight: bold;">
-                                Select Offer / Coupon Code *
-                            </label>
-                            <select
-                                v-model="settings.welcome_gift.coupon_code"
-                                class="form-input"
-                                @change="onCouponSelect"
+                    <!-- Diwali Coupon Reveal Experience Box -->
+                    <div
+                        style="
+                            background: #FCFAF7;
+                            border: 1.5px solid #C8A15A;
+                            border-radius: 12px;
+                            padding: var(--spacing-md);
+                            display: flex;
+                            flex-direction: column;
+                            gap: var(--spacing-md);
+                            box-shadow: 0 4px 16px rgba(200, 161, 90, 0.12);
+                        "
+                    >
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid rgba(200, 161, 90, 0.25); padding-bottom: 12px;">
+                            <div>
+                                <h4 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.15rem; color: #6E1F3A; display: flex; align-items: center; gap: 8px;">
+                                    <span>🪔</span>
+                                    <span>Diwali Golden Rangoli Reveal Mode</span>
+                                </h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: #6B6B6B;">
+                                    Replaces the standard box with the Diwali Golden Rangoli reveal, golden light blast, and festive floating diya.
+                                </p>
+                            </div>
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                    color: #6E1F3A;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                    background: rgba(200, 161, 90, 0.15);
+                                    padding: 8px 16px;
+                                    border-radius: 30px;
+                                    border: 1px solid #C8A15A;
+                                "
                             >
-                                <option value="" disabled>-- Select New Customer Coupon (From Coupon Master) --</option>
-                                <option v-for="c in availableCoupons" :key="c.id" :value="c.code">
-                                    {{ c.code }} — {{ c.name }} ({{ c.type === 'percentage' ? c.value + '% OFF' : (c.type === 'flat' ? '₹' + c.value + ' OFF' : 'Free Shipping') }})
-                                </option>
-                            </select>
-                            <span v-if="availableCoupons.length === 0" style="font-size: 0.78rem; color: #b91c1c; display: block; margin-top: 4px;">
-                                ⚠️ No active "New Customers Only" coupons found in Coupon Master. Please create one in <router-link to="/admin/coupons" style="color: var(--color-primary); font-weight: 600; text-decoration: underline;">Coupon Master</router-link>.
-                            </span>
-                            <span v-else style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                Loaded from Coupon Master (Filtered strictly for New Customer Type only).
-                            </span>
+                                <input
+                                    type="checkbox"
+                                    v-model="settings.welcome_gift.diwali_reveal_enabled"
+                                    style="width: 16px; height: 16px; cursor: pointer;"
+                                />
+                                <span>{{ settings.welcome_gift.diwali_reveal_enabled ? '✨ Diwali Reveal Active' : 'Standard Gift Box' }}</span>
+                            </label>
                         </div>
 
+                        <!-- Coupon Selector & Validation -->
+                        <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: bold; color: #1e293b;">
+                                    Select Coupon to Reveal *
+                                </label>
+                                <select
+                                    v-model="settings.welcome_gift.coupon_code"
+                                    class="form-input"
+                                    @change="onCouponSelect"
+                                    style="border-color: #C8A15A;"
+                                >
+                                    <option value="" disabled>-- Select Coupon from Coupon Master --</option>
+                                    <option v-for="c in availableCoupons" :key="c.id" :value="c.code">
+                                        {{ c.code }} — {{ c.name }} ({{ c.type === 'percentage' ? c.value + '% OFF' : (c.type === 'flat' ? '₹' + c.value + ' OFF' : 'Free Shipping') }}) {{ c.is_active ? '✓' : '⚠️ Inactive' }}
+                                    </option>
+                                </select>
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px; display: block;">
+                                    Select any active coupon configured in the system. Revalidated on save and at checkout.
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: bold; color: #1e293b;">
+                                    Active Reveal Code (Uppercase) *
+                                </label>
+                                <input
+                                    type="text"
+                                    v-model="settings.welcome_gift.coupon_code"
+                                    class="form-input"
+                                    style="text-transform: uppercase; font-weight: bold; letter-spacing: 1.5px; border-color: #C8A15A; color: #6E1F3A;"
+                                    placeholder="e.g. MSFDIWALI10"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Selected Coupon Eligibility Live Breakdown -->
+                        <div 
+                            v-if="selectedCouponInfo"
+                            style="
+                                background: #ffffff;
+                                border: 1px solid rgba(200, 161, 90, 0.4);
+                                border-radius: 10px;
+                                padding: 14px 16px;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 8px;
+                            "
+                        >
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong style="font-family: monospace; font-size: 1.05rem; color: #6E1F3A; letter-spacing: 1px;">
+                                        {{ selectedCouponInfo.code }}
+                                    </strong>
+                                    <span style="font-size: 0.82rem; color: #555;">({{ selectedCouponInfo.name }})</span>
+                                </div>
+                                <span
+                                    :style="{
+                                        padding: '3px 10px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold',
+                                        backgroundColor: selectedCouponInfo.status.bg,
+                                        color: selectedCouponInfo.status.color,
+                                        border: '1px solid ' + selectedCouponInfo.status.color
+                                    }"
+                                >
+                                    {{ selectedCouponInfo.status.label }}
+                                </span>
+                            </div>
+
+                            <!-- Warning alert if invalid -->
+                            <div 
+                                v-if="!selectedCouponInfo.status.eligible"
+                                style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem;"
+                            >
+                                ⚠️ <strong>Eligibility Warning:</strong> This coupon is not active for customers ({{ selectedCouponInfo.status.label }}). Storefront will not reveal an invalid offer.
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; font-size: 0.78rem; color: #555; margin-top: 4px;">
+                                <div><strong>Discount:</strong> {{ selectedCouponInfo.type === 'percentage' ? selectedCouponInfo.value + '% OFF' : (selectedCouponInfo.type === 'flat' ? '₹' + selectedCouponInfo.value + ' OFF' : 'Free Shipping') }}</div>
+                                <div><strong>Min. Order:</strong> {{ selectedCouponInfo.min_order_value ? '₹' + selectedCouponInfo.min_order_value : 'None' }}</div>
+                                <div><strong>Max Discount:</strong> {{ selectedCouponInfo.max_discount ? '₹' + selectedCouponInfo.max_discount : 'None' }}</div>
+                                <div><strong>Expires:</strong> {{ selectedCouponInfo.expires_at ? new Date(selectedCouponInfo.expires_at).toLocaleDateString() : 'Never' }}</div>
+                                <div><strong>Usage:</strong> {{ selectedCouponInfo.times_used || 0 }} / {{ selectedCouponInfo.max_uses_total || '∞' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Headline & Subtitle Text Config -->
                         <div class="form-group">
                             <label class="form-label" style="font-weight: bold;">
-                                Active Offer Code (Value) *
+                                Discount Headline Display Text *
                             </label>
                             <input
                                 type="text"
-                                v-model="settings.welcome_gift.coupon_code"
+                                v-model="settings.welcome_gift.discount_text"
                                 class="form-input"
-                                style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px;"
-                                placeholder="e.g. WELCOME10"
+                                placeholder="e.g. Enjoy 10% OFF"
                                 required
                             />
                         </div>
-                    </div>
 
-                    <!-- Headline & Subtitle Text Config -->
-                    <div class="form-group">
-                        <label class="form-label" style="font-weight: bold;">
-                            Discount Headline Text *
-                        </label>
-                        <input
-                            type="text"
-                            v-model="settings.welcome_gift.discount_text"
-                            class="form-input"
-                            placeholder="e.g. Enjoy 10% OFF Your First Order"
-                            required
-                        />
-                    </div>
+                        <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
+                            <div class="form-group">
+                                <label class="form-label">Modal Main Title</label>
+                                <input
+                                    type="text"
+                                    v-model="settings.welcome_gift.title"
+                                    class="form-input"
+                                    :placeholder="settings.welcome_gift.diwali_reveal_enabled ? 'A Little Diwali Magic' : 'A Special Gift Awaits You'"
+                                />
+                            </div>
 
-                    <div class="responsive-grid-1-1" style="gap: var(--spacing-md)">
-                        <div class="form-group">
-                            <label class="form-label">Modal Main Title</label>
-                            <input
-                                type="text"
-                                v-model="settings.welcome_gift.title"
-                                class="form-input"
-                                placeholder="A Special Gift Awaits You"
-                            />
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Modal Subtitle</label>
-                            <input
-                                type="text"
-                                v-model="settings.welcome_gift.subtitle"
-                                class="form-input"
-                                placeholder="Every new member deserves a warm welcome."
-                            />
+                            <div class="form-group">
+                                <label class="form-label">Modal Subtitle</label>
+                                <input
+                                    type="text"
+                                    v-model="settings.welcome_gift.subtitle"
+                                    class="form-input"
+                                    :placeholder="settings.welcome_gift.diwali_reveal_enabled ? 'A festive surprise is waiting for you.' : 'Every new member deserves a warm welcome.'"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     <!-- Live Interactive Card Preview -->
                     <div style="margin-top: var(--spacing-sm);">
-                        <label class="form-label" style="font-weight: bold;">
-                            ✨ Live Storefront Preview (Unsaved Changes)
-                        </label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label class="form-label" style="font-weight: bold; margin: 0;">
+                                ✨ Live Storefront Experience Preview
+                            </label>
+                            <button
+                                type="button"
+                                @click="adminPreviewRevealed = !adminPreviewRevealed"
+                                style="
+                                    background: #6E1F3A;
+                                    color: #FFFFFF;
+                                    border: none;
+                                    padding: 6px 14px;
+                                    border-radius: 20px;
+                                    font-size: 0.78rem;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                "
+                            >
+                                {{ adminPreviewRevealed ? '↺ Reset Preview' : '✨ Test Reveal Action' }}
+                            </button>
+                        </div>
+
                         <div
                             style="
-                                border: 1px solid var(--color-border);
-                                border-radius: 16px;
-                                padding: 24px;
+                                border: 1.5px solid rgba(200, 161, 90, 0.4);
+                                border-radius: 20px;
+                                padding: 28px 24px;
                                 background: #FCFAF7;
-                                max-width: 420px;
+                                max-width: 440px;
                                 margin: 0 auto;
                                 text-align: center;
-                                box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+                                box-shadow: 0 12px 36px rgba(0,0,0,0.08);
                                 position: relative;
                             "
                         >
-                            <div style="font-size: 0.7rem; font-weight: 700; color: #C8A15A; letter-spacing: 1.5px; text-transform: uppercase;">
-                                EXCLUSIVE MEMBER PERK
-                            </div>
-                            <h3 style="font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2D2D2D; margin: 4px 0 6px 0;">
-                                {{ settings.welcome_gift.title || 'A Special Gift Awaits You' }}
-                            </h3>
-                            <p style="font-size: 0.8rem; color: #6B6B6B; margin: 0 0 16px 0;">
-                                {{ settings.welcome_gift.subtitle || 'Every new member deserves a warm welcome.' }}
-                            </p>
-
-                            <!-- Coupon Reveal Mock Box -->
-                            <div style="background: #ffffff; border: 1.5px dashed #C8A15A; border-radius: 12px; padding: 14px;">
-                                <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px;">WELCOME GIFT</div>
-                                <h4 style="font-size: 1.05rem; margin: 4px 0; color: #2D2D2D;">🎉 {{ settings.welcome_gift.discount_text || 'Enjoy 10% OFF Your First Order' }}</h4>
-                                <div style="background: #111111; color: #C8A15A; display: inline-block; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; margin-top: 6px; letter-spacing: 1px;">
-                                    CODE: {{ settings.welcome_gift.coupon_code || 'WELCOME10' }}
+                            <!-- Diwali Theme Preview -->
+                            <template v-if="settings.welcome_gift.diwali_reveal_enabled">
+                                <div style="font-size: 0.7rem; font-weight: 700; color: #C8A15A; letter-spacing: 2px; text-transform: uppercase;">
+                                    ✨ FESTIVE DIWALI SURPRISE ✨
                                 </div>
-                            </div>
+                                <h3 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #6E1F3A; margin: 6px 0 6px 0;">
+                                    {{ settings.welcome_gift.title || 'A Little Diwali Magic' }}
+                                </h3>
+                                <p style="font-size: 0.82rem; color: #6B6B6B; margin: 0 0 18px 0;">
+                                    {{ settings.welcome_gift.subtitle || 'A festive surprise is waiting for you.' }}
+                                </p>
+
+                                <!-- Unrevealed State -->
+                                <div v-if="!adminPreviewRevealed" style="display: flex; flex-direction: column; align-items: center; gap: 14px;">
+                                    <!-- Miniature SVG Rangoli preview -->
+                                    <div style="width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, rgba(200, 161, 90, 0.25) 0%, transparent 70%); display: flex; align-items: center; justify-content: center; border: 1px dashed #C8A15A;">
+                                        <span style="font-size: 2.2rem; filter: drop-shadow(0 2px 8px rgba(200, 161, 90, 0.6));">🪔</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        @click="adminPreviewRevealed = true"
+                                        style="
+                                            background: #6E1F3A;
+                                            color: #FCFAF7;
+                                            border: none;
+                                            padding: 12px 28px;
+                                            border-radius: 30px;
+                                            font-weight: 600;
+                                            font-size: 0.88rem;
+                                            letter-spacing: 0.5px;
+                                            cursor: pointer;
+                                            box-shadow: 0 6px 18px rgba(110, 31, 58, 0.35);
+                                        "
+                                    >
+                                        REVEAL MY OFFER ✨
+                                    </button>
+                                </div>
+
+                                <!-- Revealed State -->
+                                <div v-else style="background: #ffffff; border: 1.5px dashed #C8A15A; border-radius: 14px; padding: 18px; animation: modalRise 400ms ease;">
+                                    <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px;">DIWALI FESTIVE GIFT</div>
+                                    <h4 style="font-family: 'Playfair Display', serif; font-size: 1.15rem; margin: 6px 0; color: #6E1F3A;">
+                                        🎉 {{ settings.welcome_gift.discount_text || 'Enjoy 10% OFF' }}
+                                    </h4>
+                                    <div style="background: #FCFAF7; border: 1px solid #EAE3D9; border-radius: 8px; padding: 6px 12px; margin: 8px 0; display: inline-flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.72rem; color: #6B6B6B;">CODE:</span>
+                                        <strong style="font-family: monospace; font-size: 1.05rem; color: #111111; letter-spacing: 1.5px;">{{ settings.welcome_gift.coupon_code || 'MSFDIWALI10' }}</strong>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+                                        <span style="background: #6E1F3A; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;">SHOP NOW ➔</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Standard Box Preview -->
+                            <template v-else>
+                                <div style="font-size: 0.7rem; font-weight: 700; color: #C8A15A; letter-spacing: 1.5px; text-transform: uppercase;">
+                                    EXCLUSIVE MEMBER PERK
+                                </div>
+                                <h3 style="font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #2D2D2D; margin: 4px 0 6px 0;">
+                                    {{ settings.welcome_gift.title || 'A Special Gift Awaits You' }}
+                                </h3>
+                                <p style="font-size: 0.8rem; color: #6B6B6B; margin: 0 0 16px 0;">
+                                    {{ settings.welcome_gift.subtitle || 'Every new member deserves a warm welcome.' }}
+                                </p>
+                                <div style="background: #ffffff; border: 1.5px dashed #C8A15A; border-radius: 12px; padding: 14px;">
+                                    <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px;">WELCOME GIFT</div>
+                                    <h4 style="font-size: 1.05rem; margin: 4px 0; color: #2D2D2D;">🎉 {{ settings.welcome_gift.discount_text || 'Enjoy 10% OFF' }}</h4>
+                                    <div style="background: #111111; color: #C8A15A; display: inline-block; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; margin-top: 6px; letter-spacing: 1px;">
+                                        CODE: {{ settings.welcome_gift.coupon_code || 'WELCOME10' }}
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -3995,10 +4165,11 @@ const settings = ref({
     },
     welcome_gift: {
         is_enabled: true,
+        diwali_reveal_enabled: true,
         coupon_code: "WELCOME10",
-        discount_text: "Enjoy 10% OFF Your First Order",
-        title: "A Special Gift Awaits You",
-        subtitle: "Every new member deserves a warm welcome.",
+        discount_text: "Enjoy 10% OFF",
+        title: "A Little Diwali Magic",
+        subtitle: "A festive surprise is waiting for you.",
     },
     reviews: {
         login_required: true,
@@ -4370,13 +4541,32 @@ const moveOccasion = async (index, direction) => {
     }
 };
 
+const adminPreviewRevealed = ref(false);
+
+const getCouponStatus = (c) => {
+    if (!c.is_active) return { label: 'Inactive', color: '#b91c1c', bg: '#fef2f2', eligible: false };
+    if (c.starts_at && new Date(c.starts_at) > new Date()) return { label: 'Scheduled', color: '#d97706', bg: '#fffbeb', eligible: false };
+    if (c.expires_at && new Date(c.expires_at) < new Date()) return { label: 'Expired', color: '#b91c1c', bg: '#fef2f2', eligible: false };
+    if (c.max_uses_total && c.times_used >= c.max_uses_total) return { label: 'Usage Limit Reached', color: '#b91c1c', bg: '#fef2f2', eligible: false };
+    return { label: 'Active & Eligible', color: '#047857', bg: '#ecfdf5', eligible: true };
+};
+
+const selectedCouponInfo = computed(() => {
+    const code = (settings.value.welcome_gift.coupon_code || '').toUpperCase().trim();
+    if (!code) return null;
+    const found = availableCoupons.value.find(c => c.code && c.code.toUpperCase() === code);
+    if (!found) return null;
+    return {
+        ...found,
+        status: getCouponStatus(found)
+    };
+});
+
 const availableCoupons = ref([]);
 const fetchCoupons = async () => {
     try {
         const response = await axios.get("/api/admin/coupons", {
             params: {
-                first_order_only: 1,
-                status: "active",
                 per_page: 100
             }
         });
@@ -4393,12 +4583,13 @@ const onCouponSelect = () => {
         (c) => c.code === settings.value.welcome_gift.coupon_code
     );
     if (selected) {
+        const val = parseFloat(selected.value);
         if (selected.type === "percentage") {
-            settings.value.welcome_gift.discount_text = `Enjoy ${selected.value}% OFF Your First Order`;
+            settings.value.welcome_gift.discount_text = `Enjoy ${val}% OFF`;
         } else if (selected.type === "flat") {
-            settings.value.welcome_gift.discount_text = `Enjoy Flat ₹${selected.value} OFF Your First Order`;
+            settings.value.welcome_gift.discount_text = `Enjoy Flat ₹${val} OFF`;
         } else if (selected.type === "free_shipping") {
-            settings.value.welcome_gift.discount_text = "Enjoy Free Shipping On Your First Order";
+            settings.value.welcome_gift.discount_text = "Enjoy Free Shipping";
         }
     }
 };
@@ -4599,10 +4790,13 @@ const fetchSettings = async () => {
                     ...settings.value.welcome_gift,
                     ...data.welcome_gift,
                     is_enabled: filterBool(data.welcome_gift.is_enabled),
-                    coupon_code: data.welcome_gift.coupon_code || "WELCOME10",
-                    discount_text: data.welcome_gift.discount_text || "Enjoy 10% OFF Your First Order",
-                    title: data.welcome_gift.title || "A Special Gift Awaits You",
-                    subtitle: data.welcome_gift.subtitle || "Every new member deserves a warm welcome.",
+                    diwali_reveal_enabled: data.welcome_gift.diwali_reveal_enabled !== undefined
+                        ? filterBool(data.welcome_gift.diwali_reveal_enabled)
+                        : true,
+                    coupon_code: data.welcome_gift.coupon_code || "SAVE5",
+                    discount_text: data.welcome_gift.discount_text || "Enjoy 10% OFF",
+                    title: data.welcome_gift.title || "A Little Diwali Magic",
+                    subtitle: data.welcome_gift.subtitle || "A festive surprise is waiting for you.",
                 };
             }
 
@@ -4687,6 +4881,7 @@ const saveSettings = async () => {
                 welcome_gift: {
                     ...settings.value.welcome_gift,
                     is_enabled: settings.value.welcome_gift.is_enabled ? "1" : "0",
+                    diwali_reveal_enabled: settings.value.welcome_gift.diwali_reveal_enabled ? "1" : "0",
                 },
                 reviews: {
                     ...settings.value.reviews,
@@ -4699,10 +4894,14 @@ const saveSettings = async () => {
 
         const response = await axios.post("/api/admin/settings/batch", payload);
         if (response.data && response.data.success) {
-            successMsg.value = "✓ Store settings updated successfully!";
+            let msg = "✓ Store settings updated successfully!";
+            if (response.data.warnings && response.data.warnings.length > 0) {
+                msg += "\n\n⚠️ Coupon Warnings:\n• " + response.data.warnings.join("\n• ");
+            }
+            successMsg.value = msg;
             setTimeout(() => {
                 successMsg.value = "";
-            }, 4000);
+            }, 6000);
             await fetchSettings();
         }
     } catch (err) {

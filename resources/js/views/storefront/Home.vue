@@ -19,12 +19,63 @@
         <div class="toran-garland-mesh"></div>
       </div>
 
-      <!-- Festive Floating Brass Diyas (Negative Spaces) -->
-      <div v-if="festivalStore.hasOrnaments" class="festive-floating-diya festive-diya--left" aria-hidden="true">
-        <span class="diya-glow-symbol flame-glow">🪔</span>
-      </div>
-      <div v-if="festivalStore.hasOrnaments" class="festive-floating-diya festive-diya--right" aria-hidden="true">
-        <span class="diya-glow-symbol flame-glow">🪔</span>
+      <!-- Festive Floating Brass Diya Lamp (Interactive Hero Visual Enhancement) -->
+      <div 
+        v-if="festivalStore.hasOrnaments" 
+        class="festive-hero-diya-wrapper festive-diya--interactive"
+        role="button"
+        tabindex="0"
+        @click="triggerWelcomeGiftModal"
+        @keydown.enter="triggerWelcomeGiftModal"
+        aria-label="Festive Diwali Gift Lamp — Click to reveal your festive offer"
+        title="Click to reveal your Diwali gift!"
+      >
+        <div class="hero-diya-container">
+          <!-- Ambient Halo Glow -->
+          <div class="hero-diya-halo"></div>
+          
+          <!-- Diya Illustration SVG -->
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="hero-diya-svg">
+            <!-- Brass Bowl -->
+            <path d="M6 34 C6 34 11 44 24 44 C37 44 42 34 42 34 C42 34 34 37 24 37 C14 37 6 34 6 34 Z" fill="url(#heroDiyaBowlGrad)" stroke="#C8A15A" stroke-width="1.2"/>
+            <ellipse cx="24" cy="34" rx="18" ry="4" fill="#F7E7B4" stroke="#9A7B38" stroke-width="1"/>
+            <ellipse cx="24" cy="34" rx="13" ry="2.2" fill="#7A561E" opacity="0.6"/>
+            <!-- Warm Flame Glow -->
+            <circle cx="24" cy="18" r="14" fill="url(#heroDiyaFlameAura)" class="hero-flame-aura"/>
+            <!-- Flickering Flame -->
+            <path d="M24 6 C24 6 17 17 17 22 C17 25.866 20.134 29 24 29 C27.866 29 31 25.866 31 22 C31 17 24 6 24 6 Z" fill="url(#heroDiyaFlameGrad)" class="hero-flame-path"/>
+            <!-- Inner White Hot Flame -->
+            <ellipse cx="24" cy="23" rx="3.5" ry="5.5" fill="#FFFFFF" opacity="0.9"/>
+            <defs>
+              <linearGradient id="heroDiyaBowlGrad" x1="6" y1="34" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#E6C887"/>
+                <stop offset="0.4" stop-color="#C8A15A"/>
+                <stop offset="1" stop-color="#6E1F3A"/>
+              </linearGradient>
+              <linearGradient id="heroDiyaFlameGrad" x1="24" y1="6" x2="24" y2="29" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFFBEB"/>
+                <stop offset="0.3" stop-color="#FBBF24"/>
+                <stop offset="0.75" stop-color="#F97316"/>
+                <stop offset="1" stop-color="#DC2626"/>
+              </linearGradient>
+              <radialGradient id="heroDiyaFlameAura" cx="0.5" cy="0.5" r="0.5">
+                <stop stop-color="#FBBF24" stop-opacity="0.65"/>
+                <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+          </svg>
+
+          <!-- Golden Particle Sparkle Embers -->
+          <div class="hero-diya-sparkles" aria-hidden="true">
+            <span class="sparkle-dot sparkle-dot--1">✦</span>
+            <span class="sparkle-dot sparkle-dot--2">✨</span>
+          </div>
+
+          <!-- Subtle Festive Hint Badge -->
+          <div class="hero-diya-badge">
+            <span>Diwali Offer ✨</span>
+          </div>
+        </div>
       </div>
 
       <div class="hero-carousel">
@@ -977,6 +1028,10 @@ const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
 const festivalStore = useFestivalStore();
+
+const triggerWelcomeGiftModal = () => {
+  window.dispatchEvent(new CustomEvent('open-welcome-gift'));
+};
 
 const products = ref([]);
 const loading = ref(true);
@@ -5208,6 +5263,141 @@ onUnmounted(() => {
     radial-gradient(circle at 30px 0, #6E1F3A 6px, transparent 7px);
   background-size: 40px 18px;
   opacity: 0.95;
+}
+
+/* Festive Floating Brass Diya Lamp (Interactive Hero Visual Enhancement) */
+.festive-hero-diya-wrapper {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  z-index: 25;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  touch-action: manipulation;
+  outline: none;
+}
+
+.festive-hero-diya-wrapper:focus-visible {
+  outline: 2px solid #C8A15A;
+  border-radius: 50%;
+}
+
+.hero-diya-container {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: heroDiyaFloat 4.2s ease-in-out infinite;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.festive-hero-diya-wrapper:hover .hero-diya-container {
+  transform: scale(1.12) translateY(-4px);
+}
+
+.hero-diya-halo {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 161, 90, 0.45) 0%, rgba(200, 161, 90, 0) 70%);
+  animation: pulseGlow 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-diya-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 12px rgba(200, 161, 90, 0.45));
+}
+
+.hero-flame-path {
+  animation: flameFlicker 1.8s ease-in-out infinite alternate;
+  transform-origin: 24px 29px;
+}
+
+.hero-flame-aura {
+  animation: pulseGlow 2s ease-in-out infinite;
+  transform-origin: 24px 18px;
+}
+
+.hero-diya-sparkles {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sparkle-dot {
+  font-size: 0.72rem;
+  color: #C8A15A;
+  animation: sparkleDrift 2.2s ease-in-out infinite alternate;
+}
+.sparkle-dot--2 {
+  animation-delay: 1.1s;
+  font-size: 0.8rem;
+}
+
+.hero-diya-badge {
+  position: absolute;
+  bottom: -16px;
+  background: #FCFAF7;
+  border: 1px solid #C8A15A;
+  color: #6E1F3A;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 7px;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+@keyframes heroDiyaFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+@keyframes sparkleDrift {
+  0% { transform: translateY(0) scale(0.85); opacity: 0.6; }
+  100% { transform: translateY(-4px) scale(1.15); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-diya-container {
+    animation: none !important;
+  }
+  .hero-flame-path, .hero-flame-aura, .sparkle-dot {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .festive-hero-diya-wrapper {
+    top: 12px;
+    left: 14px;
+  }
+  .hero-diya-container {
+    width: 44px;
+    height: 44px;
+  }
+  .hero-diya-badge {
+    display: none;
+  }
 }
 
 /* Floating Brass Diyas in Negative Flanks */
