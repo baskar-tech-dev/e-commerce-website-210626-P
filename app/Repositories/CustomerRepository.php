@@ -14,7 +14,31 @@ class CustomerRepository implements CustomerRepositoryInterface
      */
     public function all(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = User::with(['customerProfile']);
+        $query = User::with(['customerProfile'])
+            ->withCount([
+                'orders as total_orders_count',
+                'orders as paid_orders_count' => function ($q) {
+                    $q->where('payment_status', 'paid');
+                }
+            ])
+            ->withSum([
+                'orders as paid_spent' => function ($q) {
+                    $q->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
+                }
+            ], 'grand_total');
+
+        // Default or explicit: filter to only customers who actually purchased
+        // 'purchased' (default): only customers with placed orders
+        // 'paid': only customers with paid orders
+        // 'all': all registered user accounts
+        $purchaseFilter = $filters['purchase_filter'] ?? 'purchased';
+        if ($purchaseFilter === 'purchased') {
+            $query->whereHas('orders');
+        } elseif ($purchaseFilter === 'paid') {
+            $query->whereHas('orders', function ($q) {
+                $q->where('payment_status', 'paid');
+            });
+        }
 
         // Filter by active status
         if (isset($filters['status']) && $filters['status'] !== '') {
@@ -45,23 +69,15 @@ class CustomerRepository implements CustomerRepositoryInterface
         }
 
         // Sorting
-        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortBy = $filters['sort_by'] ?? 'total_spent';
         switch ($sortBy) {
             case 'total_spent':
-                $query->orderBy(
-                    CustomerProfile::select('total_spent')
-                        ->whereColumn('customer_profiles.user_id', 'users.id')
-                        ->limit(1),
-                    'desc'
-                );
+            case 'paid_spent':
+                $query->orderBy('paid_spent', 'desc');
                 break;
+            case 'paid_orders':
             case 'total_orders':
-                $query->orderBy(
-                    CustomerProfile::select('total_orders')
-                        ->whereColumn('customer_profiles.user_id', 'users.id')
-                        ->limit(1),
-                    'desc'
-                );
+                $query->orderBy('paid_orders_count', 'desc');
                 break;
             case 'created_at':
             default:
@@ -81,11 +97,17 @@ class CustomerRepository implements CustomerRepositoryInterface
     }
 
     /**
-     * Find user with customer profile and addresses.
+     * Find user with customer profile, addresses, and order history.
      */
     public function findWithProfileAndAddresses(int $id): ?User
     {
-        return User::with(['customerProfile', 'addresses'])->find($id);
+        return User::with([
+            'customerProfile',
+            'addresses',
+            'orders' => function ($q) {
+                $q->orderBy('created_at', 'desc');
+            }
+        ])->find($id);
     }
 
     /**
@@ -144,5 +166,32 @@ class CustomerRepository implements CustomerRepositoryInterface
 
             return $user->load(['customerProfile', 'addresses']);
         });
+    }
+
+    /**
+     * Get aggregate customer summary statistics.
+     */
+    public function getCustomerSummary(): array
+    {
+        $totalCustomers = User::count();
+        $purchasedCustomers = User::whereHas('orders')->count();
+        $paidCustomers = User::whereHas('orders', function ($q) {
+            $q->where('payment_status', 'paid');
+        })->count();
+
+        $paidRevenue = (float) \App\Models\Order::where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
+            ->sum('grand_total');
+
+        $totalRevenue = (float) \App\Models\Order::where('status', '!=', 'cancelled')
+            ->sum('grand_total');
+
+        return [
+            'total_customers' => $totalCustomers,
+            'purchased_customers' => $purchasedCustomers,
+            'paid_customers' => $paidCustomers,
+            'paid_revenue' => round($paidRevenue, 2),
+            'total_revenue' => round($totalRevenue, 2),
+        ];
     }
 }

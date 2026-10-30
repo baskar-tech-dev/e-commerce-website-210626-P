@@ -5,6 +5,13 @@ export const useCustomerStore = defineStore('customer', {
   state: () => ({
     customers: [],
     customer: null,
+    summary: {
+      total_customers: 0,
+      purchased_customers: 0,
+      paid_customers: 0,
+      paid_revenue: 0,
+      total_revenue: 0,
+    },
     pagination: {
       current_page: 1,
       last_page: 1,
@@ -25,6 +32,9 @@ export const useCustomerStore = defineStore('customer', {
           this.customers = response.data.data;
           if (response.data.meta) {
             this.pagination = response.data.meta;
+          }
+          if (response.data.summary) {
+            this.summary = response.data.summary;
           }
         }
       } catch (err) {

@@ -31,4 +31,9 @@ interface CustomerRepositoryInterface
      * Update customer status and admin notes.
      */
     public function updateStatusAndNotes(int $id, bool $isActive, ?string $notes): ?User;
+
+    /**
+     * Get aggregate customer summary statistics.
+     */
+    public function getCustomerSummary(): array;
 }

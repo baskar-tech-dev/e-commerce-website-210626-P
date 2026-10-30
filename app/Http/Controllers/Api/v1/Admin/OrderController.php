@@ -59,6 +59,42 @@ class OrderController extends Controller
                 $query->whereDate('created_at', '<=', $request->input('date_to'));
             }
 
+            // Summary metrics calculation (honoring date, search, and payment filters)
+            $baseSummaryQuery = Order::query();
+            if ($request->filled('date_from')) {
+                $baseSummaryQuery->whereDate('created_at', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $baseSummaryQuery->whereDate('created_at', '<=', $request->input('date_to'));
+            }
+            if ($request->filled('payment_status')) {
+                $baseSummaryQuery->where('payment_status', $request->input('payment_status'));
+            }
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $baseSummaryQuery->where(function ($q) use ($search) {
+                    $q->where('order_number', 'like', "%{$search}%")
+                      ->orWhere('shipping_first_name', 'like', "%{$search}%")
+                      ->orWhere('shipping_last_name', 'like', "%{$search}%")
+                      ->orWhereHas('user', function ($uq) use ($search) {
+                          $uq->where('email', 'like', "%{$search}%")
+                             ->orWhere('first_name', 'like', "%{$search}%")
+                             ->orWhere('last_name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            $summary = [
+                'total_orders' => (int) (clone $baseSummaryQuery)->count(),
+                'total_amount' => round((float) (clone $baseSummaryQuery)->sum('grand_total'), 2),
+                'order_placed_count' => (int) (clone $baseSummaryQuery)->whereIn('status', ['order_placed', 'pending'])->count(),
+                'order_placed_amount' => round((float) (clone $baseSummaryQuery)->whereIn('status', ['order_placed', 'pending'])->sum('grand_total'), 2),
+                'processing_count' => (int) (clone $baseSummaryQuery)->whereIn('status', ['processing', 'ready_to_ship', 'order_confirmed', 'confirmed'])->count(),
+                'processing_amount' => round((float) (clone $baseSummaryQuery)->whereIn('status', ['processing', 'ready_to_ship', 'order_confirmed', 'confirmed'])->sum('grand_total'), 2),
+                'delivered_count' => (int) (clone $baseSummaryQuery)->where('status', 'delivered')->count(),
+                'delivered_amount' => round((float) (clone $baseSummaryQuery)->where('status', 'delivered')->sum('grand_total'), 2),
+            ];
+
             $perPage = $request->input('per_page', 15);
             $orders = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
@@ -66,6 +102,7 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Orders retrieved successfully',
                 'data' => $orders->items(),
+                'summary' => $summary,
                 'meta' => [
                     'current_page' => $orders->currentPage(),
                     'last_page' => $orders->lastPage(),

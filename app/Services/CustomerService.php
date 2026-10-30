@@ -51,6 +51,14 @@ class CustomerService
     }
 
     /**
+     * Get aggregate customer summary statistics.
+     */
+    public function getCustomerSummary(): array
+    {
+        return $this->customerRepository->getCustomerSummary();
+    }
+
+    /**
      * Add address for customer with limit of 5.
      */
     public function addAddress(int $userId, array $data): Address

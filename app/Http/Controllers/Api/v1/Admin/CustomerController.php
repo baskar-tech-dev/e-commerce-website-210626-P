@@ -24,18 +24,18 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->input('filter', []);
-        if ($request->has('search')) {
-            $filters['search'] = $request->input('search');
-        }
-        if ($request->has('sort_by')) {
-            $filters['sort_by'] = $request->input('sort_by');
-        }
+        $filters = array_merge(
+            $request->input('filter', []),
+            $request->only(['search', 'status', 'purchase_filter', 'sort_by', 'date_from', 'date_to'])
+        );
 
         $perPage = $request->input('per_page', 15);
         $customers = $this->customerService->getPaginatedCustomers($filters, $perPage);
+        $summary = $this->customerService->getCustomerSummary();
 
-        return CustomerResource::collection($customers);
+        return CustomerResource::collection($customers)->additional([
+            'summary' => $summary,
+        ]);
     }
 
     /**
