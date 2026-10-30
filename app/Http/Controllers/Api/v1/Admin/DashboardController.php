@@ -231,6 +231,82 @@ class DashboardController extends Controller
                     ->map($formatOrderRow),
             ];
 
+            // =========================================================================
+            // 6. Analytics: Top 10 Customers, Top Selling Products, Category-wise %
+            // =========================================================================
+            $topCustomers = \App\Models\User::whereHas('orders', function ($q) {
+                    $q->where('payment_status', 'paid');
+                })
+                ->withCount(['orders as paid_orders_count' => function ($q) {
+                    $q->where('payment_status', 'paid');
+                }])
+                ->withSum(['orders as paid_spent' => function ($q) {
+                    $q->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
+                }], 'grand_total')
+                ->whereNotNull('name')
+                ->orderByDesc('paid_spent')
+                ->take(10)
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'paid_orders' => (int) $user->paid_orders_count,
+                        'paid_spent' => round((float) $user->paid_spent, 2),
+                    ];
+                });
+
+            $topSellingProducts = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.payment_status', 'paid')
+                ->where('orders.status', '!=', 'cancelled')
+                ->select(
+                    'order_items.product_id',
+                    'order_items.product_name',
+                    DB::raw('SUM(order_items.quantity) as total_units_sold'),
+                    DB::raw('SUM(order_items.total_price) as total_revenue')
+                )
+                ->groupBy('order_items.product_id', 'order_items.product_name')
+                ->orderByDesc('total_revenue')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product_name,
+                        'total_units_sold' => (int) $item->total_units_sold,
+                        'total_revenue' => round((float) $item->total_revenue, 2),
+                    ];
+                });
+
+            $categorySalesRaw = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->where('orders.payment_status', 'paid')
+                ->where('orders.status', '!=', 'cancelled')
+                ->select(
+                    DB::raw('COALESCE(categories.name, "Uncategorized") as category_name'),
+                    DB::raw('SUM(order_items.total_price) as total_sales'),
+                    DB::raw('SUM(order_items.quantity) as total_qty')
+                )
+                ->groupBy('categories.name')
+                ->orderByDesc('total_sales')
+                ->get();
+
+            $totalCatSalesSum = (float) $categorySalesRaw->sum('total_sales') ?: 1.0;
+            $categoryWiseSales = $categorySalesRaw->map(function ($cat) use ($totalCatSalesSum) {
+                $sales = round((float) $cat->total_sales, 2);
+                $percentage = round(($sales / $totalCatSalesSum) * 100, 1);
+                return [
+                    'category_name' => $cat->category_name,
+                    'total_sales' => $sales,
+                    'total_qty' => (int) $cat->total_qty,
+                    'percentage' => $percentage,
+                ];
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Dashboard statistics loaded successfully',
@@ -250,6 +326,9 @@ class DashboardController extends Controller
                     'low_stock_alerts' => $lowStockVariants,
                     'recent_orders' => $recentPaidOrders,
                     'payment_exceptions' => $paymentExceptions,
+                    'top_customers' => $topCustomers,
+                    'top_products' => $topSellingProducts,
+                    'category_sales' => $categoryWiseSales,
                 ]
             ]);
         } catch (\Exception $e) {

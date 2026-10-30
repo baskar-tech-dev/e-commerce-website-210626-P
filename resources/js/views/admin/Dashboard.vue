@@ -82,18 +82,53 @@
       </div>
 
       <div class="kpi-grid">
-        <!-- Total Paid Revenue -->
+        <!-- Current Month Revenue (Paid Orders Only) -->
         <div class="kpi-card kpi-card--maroon">
           <div class="kpi-card__header">
-            <span class="kpi-card__title">Total Realized Revenue</span>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span class="kpi-card__title">{{ revenueViewMode === 'month' ? 'Current Month Revenue' : 'Total Realized Revenue' }}</span>
+                <span class="kpi-month-badge">{{ currentMonthLabel }}</span>
+              </div>
+              <div class="kpi-mode-toggle">
+                <button 
+                  type="button" 
+                  class="kpi-mode-btn" 
+                  :class="{ 'kpi-mode-btn--active': revenueViewMode === 'month' }"
+                  @click="revenueViewMode = 'month'"
+                >
+                  This Month
+                </button>
+                <button 
+                  type="button" 
+                  class="kpi-mode-btn" 
+                  :class="{ 'kpi-mode-btn--active': revenueViewMode === 'lifetime' }"
+                  @click="revenueViewMode = 'lifetime'"
+                >
+                  Lifetime
+                </button>
+              </div>
+            </div>
             <div class="kpi-card__icon-badge">
               <TrendingUp :size="18" />
             </div>
           </div>
-          <div class="kpi-card__value">₹{{ formatCurrency(kpis.total_revenue) }}</div>
+          <div class="kpi-card__value">
+            ₹{{ formatCurrency(revenueViewMode === 'month' ? kpis.month_revenue : kpis.total_revenue) }}
+          </div>
           <div class="kpi-card__footer">
-            <span class="kpi-trend kpi-trend--up">₹{{ formatCurrency(kpis.month_revenue) }}</span>
-            <span class="kpi-subtext">this month ({{ kpis.total_orders }} paid orders)</span>
+            <template v-if="revenueViewMode === 'month'">
+              <span class="kpi-trend kpi-trend--up">
+                {{ kpis.month_orders }} paid {{ kpis.month_orders === 1 ? 'order' : 'orders' }}
+              </span>
+              <span class="kpi-subtext">cleared in {{ currentMonthLabel }} • ₹{{ formatCurrency(kpis.total_revenue) }} lifetime</span>
+            </template>
+            <template v-else>
+              <span class="kpi-trend kpi-trend--up">
+                {{ kpis.total_orders }} paid orders all-time
+              </span>
+              <span class="kpi-subtext">₹{{ formatCurrency(kpis.month_revenue) }} in {{ currentMonthLabel }}</span>
+            </template>
           </div>
         </div>
 
@@ -259,7 +294,154 @@
       </div>
 
       <!-- =====================================================================
-           SECTION 3: RECENT PAID ORDERS & LOW STOCK WATCH
+           SECTION 3: VISUAL SALES ANALYTICS & INTELLIGENCE
+           ===================================================================== -->
+      <div class="analytics-section">
+        <div class="section-indicator-row">
+          <div class="section-indicator-badge">
+            <span class="live-dot"></span>
+            <span>Visual Sales Intelligence</span>
+          </div>
+          <span class="section-indicator-note">Top Customers, Best-Selling Products & Category Contribution %</span>
+        </div>
+
+        <!-- Row 1: Category Wise Selling % Pie Chart + Top Products Graph -->
+        <div class="analytics-row-split">
+          <!-- 1. Category Wise Selling % Pie Chart -->
+          <div class="dashboard-card chart-card">
+            <div class="dashboard-card__header">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h2 class="dashboard-card__title">Category Selling %</h2>
+                  <span class="badge-mini badge-mini--paid">Pie Chart</span>
+                </div>
+                <p class="dashboard-card__subtitle">Revenue share distribution across product categories</p>
+              </div>
+            </div>
+
+            <div class="category-pie-layout">
+              <!-- Canvas Container -->
+              <div class="pie-canvas-wrap">
+                <canvas ref="categoryPieCanvas"></canvas>
+              </div>
+
+              <!-- Legend & Breakdown List -->
+              <div class="category-breakdown-list">
+                <div 
+                  v-for="(cat, index) in categorySales" 
+                  :key="index"
+                  class="cat-breakdown-item"
+                >
+                  <div class="cat-color-dot" :style="{ backgroundColor: getCategoryColor(index) }"></div>
+                  <div class="cat-details">
+                    <div class="cat-name-row">
+                      <span class="cat-name">{{ cat.category_name }}</span>
+                      <span class="cat-percent-badge">{{ cat.percentage }}%</span>
+                    </div>
+                    <div class="cat-metrics-row">
+                      <span class="cat-revenue">₹{{ formatCurrency(cat.total_sales) }}</span>
+                      <span class="cat-qty">{{ cat.total_qty }} sold</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Top Selling Products Graph -->
+          <div class="dashboard-card chart-card">
+            <div class="dashboard-card__header">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h2 class="dashboard-card__title">Top Selling Products</h2>
+                  <span class="badge-mini badge-mini--paid">Top 10 Volume</span>
+                </div>
+                <p class="dashboard-card__subtitle">Best performing products ranked by total sales revenue</p>
+              </div>
+              <router-link to="/admin/products" class="dashboard-card__action-link">
+                <span>All Products</span>
+                <ArrowRight :size="14" />
+              </router-link>
+            </div>
+
+            <!-- Canvas Container for Products Bar Chart -->
+            <div class="bar-canvas-wrap">
+              <canvas ref="topProductsCanvas"></canvas>
+            </div>
+
+            <!-- Top Products Quick Highlights Grid -->
+            <div class="top-products-summary-list">
+              <div 
+                v-for="(prod, idx) in topProducts.slice(0, 5)" 
+                :key="prod.product_id"
+                class="top-product-mini-item"
+              >
+                <span class="rank-badge">#{{ idx + 1 }}</span>
+                <div class="top-product-info">
+                  <div class="top-product-title" :title="prod.product_name">{{ prod.product_name }}</div>
+                  <div class="top-product-meta">
+                    <span class="units-badge">{{ prod.total_units_sold }} units</span>
+                    <span class="revenue-text">₹{{ formatCurrency(prod.total_revenue) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Top 10 Customers Graph & Leaderboard -->
+        <div class="dashboard-card chart-card" style="margin-top: 16px;">
+          <div class="dashboard-card__header">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 class="dashboard-card__title">Top 10 Customers by Paid Spend</h2>
+                <span class="badge-mini badge-mini--paid">High-Value Buyers</span>
+              </div>
+              <p class="dashboard-card__subtitle">Top purchasing customers ranked by verified lifetime spending</p>
+            </div>
+            <router-link to="/admin/customers" class="dashboard-card__action-link">
+              <span>View Directory</span>
+              <ArrowRight :size="14" />
+            </router-link>
+          </div>
+
+          <div class="customers-analytics-layout">
+            <!-- Canvas for Customers Horizontal Bar Chart -->
+            <div class="customers-canvas-wrap">
+              <canvas ref="topCustomersCanvas"></canvas>
+            </div>
+
+            <!-- Top Customers Ranked Cards -->
+            <div class="top-customers-rank-grid">
+              <div 
+                v-for="(cust, cIdx) in topCustomers" 
+                :key="cust.id" 
+                class="top-customer-rank-card"
+              >
+                <div class="rank-pill" :class="'rank-pill--' + (cIdx + 1)">#{{ cIdx + 1 }}</div>
+                <div class="customer-rank-details">
+                  <div class="customer-rank-name">{{ cust.name }}</div>
+                  <div class="customer-rank-email">{{ cust.email }}</div>
+                  <div class="customer-rank-stats">
+                    <span class="paid-orders-pill">{{ cust.paid_orders }} Paid Orders</span>
+                    <span class="paid-spend-val">₹{{ formatCurrency(cust.paid_spent) }}</span>
+                  </div>
+                </div>
+                <router-link 
+                  :to="`/admin/customers/${cust.id}`" 
+                  class="btn-customer-inspect" 
+                  title="View Customer Profile"
+                >
+                  <Eye :size="14" />
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           SECTION 4: RECENT PAID ORDERS & LOW STOCK WATCH
            ===================================================================== -->
       <div class="dashboard-split-grid">
         <!-- Left: Recent Paid Orders Table -->
@@ -758,8 +940,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import axios from 'axios';
+import Chart from 'chart.js/auto';
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -785,6 +968,40 @@ import {
 const loading = ref(false);
 const statsLoaded = ref(false);
 const errorMsg = ref('');
+
+// Revenue KPI mode: 'month' (Current Month) or 'lifetime' (All-Time)
+const revenueViewMode = ref('month');
+const currentMonthLabel = computed(() => {
+  return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+});
+
+// Analytics Chart Data & Canvases
+const topCustomers = ref([]);
+const topProducts = ref([]);
+const categorySales = ref([]);
+
+const categoryPieCanvas = ref(null);
+const topProductsCanvas = ref(null);
+const topCustomersCanvas = ref(null);
+
+let categoryPieChart = null;
+let topProductsChart = null;
+let topCustomersChart = null;
+
+const categoryPalette = [
+  '#6E1F3A', // Deep Maroon signature
+  '#C5A880', // Golden Warm
+  '#059669', // Emerald Green
+  '#4338CA', // Indigo
+  '#D97706', // Amber Gold
+  '#0284C7', // Sky Blue
+  '#DC2626', // Crimson Red
+  '#64748B', // Slate
+];
+
+const getCategoryColor = (index) => {
+  return categoryPalette[index % categoryPalette.length];
+};
 
 const activeExceptionTab = ref('pending');
 
@@ -1029,7 +1246,18 @@ const fetchDashboardData = async () => {
       if (data.payment_exceptions) {
         Object.assign(paymentExceptions, data.payment_exceptions);
       }
+      if (data.top_customers) {
+        topCustomers.value = data.top_customers;
+      }
+      if (data.top_products) {
+        topProducts.value = data.top_products;
+      }
+      if (data.category_sales) {
+        categorySales.value = data.category_sales;
+      }
       statsLoaded.value = true;
+      await nextTick();
+      renderAnalyticsCharts();
     }
   } catch (err) {
     console.error('Failed to load dashboard data:', err);
@@ -1038,6 +1266,260 @@ const fetchDashboardData = async () => {
     loading.value = false;
   }
 };
+
+const renderCategoryPieChart = () => {
+  if (!categoryPieCanvas.value) return;
+  if (categoryPieChart) {
+    categoryPieChart.destroy();
+    categoryPieChart = null;
+  }
+  if (!categorySales.value || categorySales.value.length === 0) return;
+
+  const labels = categorySales.value.map(c => c.category_name);
+  const data = categorySales.value.map(c => parseFloat(c.total_sales) || 0);
+  const colors = categorySales.value.map((_, i) => getCategoryColor(i));
+
+  categoryPieChart = new Chart(categoryPieCanvas.value, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverOffset: 8,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: 'Poppins', size: 13, weight: '600' },
+          bodyFont: { family: 'Poppins', size: 12 },
+          padding: 12,
+          cornerRadius: 8,
+          boxPadding: 6,
+          callbacks: {
+            label: function(context) {
+              const val = context.raw || 0;
+              const cat = categorySales.value[context.dataIndex];
+              const pct = cat?.percentage ? `${cat.percentage}%` : '';
+              return ` Revenue: ₹${formatCurrency(val)} (${pct})`;
+            }
+          }
+        }
+      },
+      cutout: '62%'
+    }
+  });
+};
+
+const renderTopProductsChart = () => {
+  if (!topProductsCanvas.value) return;
+  if (topProductsChart) {
+    topProductsChart.destroy();
+    topProductsChart = null;
+  }
+  if (!topProducts.value || topProducts.value.length === 0) return;
+
+  const labels = topProducts.value.map(p => {
+    const name = p.product_name || 'Product';
+    return name.length > 18 ? name.substring(0, 16) + '…' : name;
+  });
+  const revenueData = topProducts.value.map(p => parseFloat(p.total_revenue) || 0);
+
+  topProductsChart = new Chart(topProductsCanvas.value, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Total Revenue (₹)',
+          data: revenueData,
+          backgroundColor: 'rgba(110, 31, 58, 0.88)',
+          hoverBackgroundColor: '#6E1F3A',
+          borderColor: '#6E1F3A',
+          borderWidth: 1,
+          borderRadius: 6,
+          maxBarThickness: 32,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: 'Poppins', size: 12, weight: '600' },
+          bodyFont: { family: 'Poppins', size: 12 },
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            title: function(items) {
+              const idx = items[0].dataIndex;
+              return topProducts.value[idx]?.product_name || '';
+            },
+            label: function(context) {
+              const idx = context.dataIndex;
+              const prod = topProducts.value[idx];
+              return [
+                ` Revenue: ₹${formatCurrency(context.raw)}`,
+                ` Units Sold: ${prod?.total_units_sold || 0} pcs`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            font: { family: 'Poppins', size: 11 },
+            color: '#64748B',
+            maxRotation: 30,
+            minRotation: 0,
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(226, 232, 240, 0.7)',
+          },
+          ticks: {
+            font: { family: 'Poppins', size: 11 },
+            color: '#64748B',
+            callback: function(val) {
+              if (val >= 1000) {
+                return '₹' + (val / 1000).toFixed(0) + 'k';
+              }
+              return '₹' + val;
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const renderTopCustomersChart = () => {
+  if (!topCustomersCanvas.value) return;
+  if (topCustomersChart) {
+    topCustomersChart.destroy();
+    topCustomersChart = null;
+  }
+  if (!topCustomers.value || topCustomers.value.length === 0) return;
+
+  const labels = topCustomers.value.map(c => c.name || 'Customer');
+  const spentData = topCustomers.value.map(c => parseFloat(c.paid_spent) || 0);
+
+  topCustomersChart = new Chart(topCustomersCanvas.value, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Total Paid Spend (₹)',
+          data: spentData,
+          backgroundColor: 'rgba(197, 168, 128, 0.85)',
+          hoverBackgroundColor: '#B89758',
+          borderColor: '#C5A880',
+          borderWidth: 1,
+          borderRadius: 6,
+          maxBarThickness: 24,
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleFont: { family: 'Poppins', size: 12, weight: '600' },
+          bodyFont: { family: 'Poppins', size: 12 },
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex;
+              const cust = topCustomers.value[idx];
+              return [
+                ` Lifetime Paid: ₹${formatCurrency(context.raw)}`,
+                ` Verified Paid Orders: ${cust?.paid_orders || 0}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(226, 232, 240, 0.7)',
+          },
+          ticks: {
+            font: { family: 'Poppins', size: 11 },
+            color: '#64748B',
+            callback: function(val) {
+              if (val >= 1000) {
+                return '₹' + (val / 1000).toFixed(0) + 'k';
+              }
+              return '₹' + val;
+            }
+          }
+        },
+        y: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            font: { family: 'Poppins', size: 11 },
+            color: '#334155',
+          }
+        }
+      }
+    }
+  });
+};
+
+const renderAnalyticsCharts = () => {
+  renderCategoryPieChart();
+  renderTopProductsChart();
+  renderTopCustomersChart();
+};
+
+onBeforeUnmount(() => {
+  if (categoryPieChart) {
+    categoryPieChart.destroy();
+    categoryPieChart = null;
+  }
+  if (topProductsChart) {
+    topProductsChart.destroy();
+    topProductsChart = null;
+  }
+  if (topCustomersChart) {
+    topCustomersChart.destroy();
+    topCustomersChart = null;
+  }
+});
 
 onMounted(() => {
   fetchDashboardData();
@@ -1351,6 +1833,53 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #64748B;
+}
+
+.kpi-month-badge {
+  display: inline-block;
+  background: rgba(110, 31, 58, 0.08);
+  color: #6E1F3A;
+  border: 1px solid rgba(110, 31, 58, 0.2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.kpi-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 2px;
+  margin-top: 4px;
+  gap: 2px;
+}
+
+.kpi-mode-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.kpi-mode-btn:hover {
+  color: #1e293b;
+}
+
+.kpi-mode-btn--active {
+  background: #ffffff;
+  color: #6E1F3A;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .kpi-card__icon-badge {
@@ -2441,5 +2970,369 @@ onMounted(() => {
 
 .status-val--online {
   color: #16a34a;
+}
+
+/* ==========================================================================
+   SECTION 3: VISUAL SALES INTELLIGENCE & ANALYTICS CHARTS
+   ========================================================================== */
+.analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analytics-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .analytics-row-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Category Pie Chart */
+.category-pie-layout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 4px;
+}
+
+@media (max-width: 640px) {
+  .category-pie-layout {
+    flex-direction: column;
+  }
+}
+
+.pie-canvas-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.category-breakdown-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.cat-breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fafaf9;
+  border: 1px solid #f0eee9;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.cat-breakdown-item:hover {
+  background: #f5f3ef;
+  border-color: #e5e0d8;
+  transform: translateX(2px);
+}
+
+.cat-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cat-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cat-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cat-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat-percent-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6E1F3A;
+  background: rgba(110, 31, 58, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.cat-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.73rem;
+  color: #64748b;
+}
+
+.cat-revenue {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cat-qty {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* Top Selling Products */
+.bar-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  margin-bottom: 12px;
+}
+
+.top-products-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.top-product-mini-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: #fdfcfb;
+  border: 1px solid #f1eeea;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.top-product-mini-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.rank-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #854d0e;
+  background: #fef9c3;
+  border: 1px solid #fef08a;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.top-product-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.top-product-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-product-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.units-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.revenue-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6E1F3A;
+}
+
+/* Top 10 Customers */
+.customers-analytics-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .customers-analytics-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.customers-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 380px;
+}
+
+.top-customers-rank-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.top-customer-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #f1eeea;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.top-customer-rank-card:hover {
+  border-color: #C5A880;
+  box-shadow: 0 2px 8px rgba(110, 31, 58, 0.05);
+}
+
+.rank-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.rank-pill--1 {
+  background: linear-gradient(135deg, #fef08a, #fde047);
+  color: #854d0e;
+  font-weight: 800;
+  border: 1px solid #facc15;
+}
+
+.rank-pill--2 {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  color: #334155;
+  font-weight: 800;
+  border: 1px solid #94a3b8;
+}
+
+.rank-pill--3 {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #9a3412;
+  font-weight: 800;
+  border: 1px solid #fb923c;
+}
+
+.customer-rank-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.customer-rank-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-rank-email {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.customer-rank-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.paid-orders-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.paid-spend-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6E1F3A;
+}
+
+.btn-customer-inspect {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-customer-inspect:hover {
+  background: #6E1F3A;
+  color: #ffffff;
+  border-color: #6E1F3A;
 }
 </style>
