@@ -52,56 +52,68 @@ class DashboardController extends Controller
             $totalCustomersCount = CustomerProfile::count() ?: \App\Models\User::where('role_id', '!=', 1)->count();
 
             // =========================================================================
-            // 2. 9-Stage Order Lifecycle Pipeline (PAID Orders Only)
+            // 2. 9-Stage Order Lifecycle Pipeline (PAID Orders Only, with Date Filtering)
             // =========================================================================
+            $pipelineQuery = clone $paidQuery;
+            $pipelineDateFrom = $request->input('pipeline_date_from');
+            $pipelineDateTo = $request->input('pipeline_date_to');
+
+            if (!empty($pipelineDateFrom)) {
+                $pipelineQuery->whereDate('created_at', '>=', $pipelineDateFrom);
+            }
+
+            if (!empty($pipelineDateTo)) {
+                $pipelineQuery->whereDate('created_at', '<=', $pipelineDateTo);
+            }
+
             $pipeline = [
                 'order_placed' => [
                     'label' => 'Order Placed',
                     'icon' => '📝',
-                    'count' => (clone $paidQuery)->whereIn('status', ['order_placed', 'pending'])->count(),
-                    'amount' => round((float) (clone $paidQuery)->whereIn('status', ['order_placed', 'pending'])->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->whereIn('status', ['order_placed', 'pending'])->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->whereIn('status', ['order_placed', 'pending'])->sum('grand_total'), 2),
                     'code' => 'order_placed',
                 ],
                 'order_confirmed' => [
                     'label' => 'Order Confirmed',
                     'icon' => '✓',
-                    'count' => (clone $paidQuery)->whereIn('status', ['order_confirmed', 'confirmed'])->count(),
-                    'amount' => round((float) (clone $paidQuery)->whereIn('status', ['order_confirmed', 'confirmed'])->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->whereIn('status', ['order_confirmed', 'confirmed'])->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->whereIn('status', ['order_confirmed', 'confirmed'])->sum('grand_total'), 2),
                     'code' => 'order_confirmed',
                 ],
                 'processing' => [
                     'label' => 'Processing',
                     'icon' => '⚙️',
-                    'count' => (clone $paidQuery)->where('status', 'processing')->count(),
-                    'amount' => round((float) (clone $paidQuery)->where('status', 'processing')->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->where('status', 'processing')->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->where('status', 'processing')->sum('grand_total'), 2),
                     'code' => 'processing',
                 ],
                 'ready_to_ship' => [
                     'label' => 'Ready to Ship',
                     'icon' => '📦',
-                    'count' => (clone $paidQuery)->where('status', 'ready_to_ship')->count(),
-                    'amount' => round((float) (clone $paidQuery)->where('status', 'ready_to_ship')->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->where('status', 'ready_to_ship')->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->where('status', 'ready_to_ship')->sum('grand_total'), 2),
                     'code' => 'ready_to_ship',
                 ],
                 'shipped' => [
                     'label' => 'Shipped',
                     'icon' => '🚚',
-                    'count' => (clone $paidQuery)->where('status', 'shipped')->count(),
-                    'amount' => round((float) (clone $paidQuery)->where('status', 'shipped')->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->where('status', 'shipped')->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->where('status', 'shipped')->sum('grand_total'), 2),
                     'code' => 'shipped',
                 ],
                 'delivered' => [
                     'label' => 'Delivered',
                     'icon' => '🎉',
-                    'count' => (clone $paidQuery)->where('status', 'delivered')->count(),
-                    'amount' => round((float) (clone $paidQuery)->where('status', 'delivered')->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->where('status', 'delivered')->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->where('status', 'delivered')->sum('grand_total'), 2),
                     'code' => 'delivered',
                 ],
                 'cancelled' => [
                     'label' => 'Cancelled',
                     'icon' => '✕',
-                    'count' => (clone $paidQuery)->where('status', 'cancelled')->count(),
-                    'amount' => round((float) (clone $paidQuery)->where('status', 'cancelled')->sum('grand_total'), 2),
+                    'count' => (clone $pipelineQuery)->where('status', 'cancelled')->count(),
+                    'amount' => round((float) (clone $pipelineQuery)->where('status', 'cancelled')->sum('grand_total'), 2),
                     'code' => 'cancelled',
                 ],
             ];

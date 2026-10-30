@@ -156,17 +156,96 @@
             </div>
             <p class="dashboard-card__subtitle">Active customer purchases with confirmed payment across fulfillment stages</p>
           </div>
-          <router-link to="/admin/orders" class="dashboard-card__action-link">
+          <router-link 
+            :to="`/admin/orders?payment_status=paid${pipelineDateFrom ? '&date_from=' + pipelineDateFrom : ''}${pipelineDateTo ? '&date_to=' + pipelineDateTo : ''}`" 
+            class="dashboard-card__action-link"
+          >
             <span>Manage Orders</span>
             <ArrowRight :size="14" />
           </router-link>
+        </div>
+
+        <!-- Pipeline Date Filter & Date Range Bar -->
+        <div class="pipeline-filter-panel">
+          <div class="pipeline-filter-row">
+            <!-- Date Filter Preset Selector -->
+            <div class="pipeline-filter-field">
+              <label class="pipeline-filter-label">
+                <Calendar :size="14" />
+                <span>Date Filter:</span>
+              </label>
+              <select 
+                v-model="pipelineDatePreset" 
+                @change="onPipelinePresetChange" 
+                class="pipeline-select"
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7">Last 7 Days</option>
+                <option value="last30">Last 30 Days</option>
+                <option value="this_month">This Month</option>
+                <option value="custom">Custom Date Range</option>
+              </select>
+            </div>
+
+            <!-- Custom Date Range Inputs (Native From / To) -->
+            <div v-if="pipelineDatePreset === 'custom' || pipelineDateFrom || pipelineDateTo" class="pipeline-range-box">
+              <div class="pipeline-range-item">
+                <span class="pipeline-range-tag">From:</span>
+                <input 
+                  type="date" 
+                  v-model="pipelineDateFrom" 
+                  @change="onPipelineDateChange" 
+                  class="pipeline-native-date" 
+                  title="From Date"
+                />
+              </div>
+              <span class="pipeline-range-sep">→</span>
+              <div class="pipeline-range-item">
+                <span class="pipeline-range-tag">To:</span>
+                <input 
+                  type="date" 
+                  v-model="pipelineDateTo" 
+                  @change="onPipelineDateChange" 
+                  class="pipeline-native-date" 
+                  title="To Date"
+                />
+              </div>
+              <button 
+                v-if="pipelineDateFrom || pipelineDateTo" 
+                type="button" 
+                @click="clearPipelineDate" 
+                class="btn-date-clear" 
+                title="Clear date range"
+              >
+                <X :size="13" />
+              </button>
+            </div>
+
+            <!-- Active Date Indicator & Reset Button -->
+            <div v-if="pipelineDateFrom || pipelineDateTo" class="pipeline-filter-active-info">
+              <span class="pipeline-filter-date-tag">
+                📅 {{ formatDateLabel(pipelineDateFrom) }} — {{ formatDateLabel(pipelineDateTo) }}
+              </span>
+              <button 
+                type="button" 
+                @click="clearPipelineDate" 
+                class="btn-reset-pipeline"
+                title="Reset date filter to All Dates"
+              >
+                <RotateCcw :size="13" />
+                <span>Reset Date</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="pipeline-grid">
           <router-link 
             v-for="(stage, key) in pipeline" 
             :key="key"
-            :to="`/admin/orders`" 
+            :to="`/admin/orders?status=${stage.code || key}&payment_status=paid${pipelineDateFrom ? '&date_from=' + pipelineDateFrom : ''}${pipelineDateTo ? '&date_to=' + pipelineDateTo : ''}`" 
             class="pipeline-card"
           >
             <div class="pipeline-card__top">
@@ -709,6 +788,56 @@ const errorMsg = ref('');
 
 const activeExceptionTab = ref('pending');
 
+// Date filter state for Customer Orders Pipeline section
+const pipelineDatePreset = ref('all');
+const pipelineDateFrom = ref('');
+const pipelineDateTo = ref('');
+
+const onPipelinePresetChange = () => {
+  const today = new Date();
+  if (pipelineDatePreset.value === 'today') {
+    const str = formatDateToYMD(today);
+    pipelineDateFrom.value = str;
+    pipelineDateTo.value = str;
+  } else if (pipelineDatePreset.value === 'yesterday') {
+    const yest = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    const str = formatDateToYMD(yest);
+    pipelineDateFrom.value = str;
+    pipelineDateTo.value = str;
+  } else if (pipelineDatePreset.value === 'last7') {
+    const past = new Date(today);
+    past.setDate(past.getDate() - 6);
+    pipelineDateFrom.value = formatDateToYMD(past);
+    pipelineDateTo.value = formatDateToYMD(today);
+  } else if (pipelineDatePreset.value === 'last30') {
+    const past = new Date(today);
+    past.setDate(past.getDate() - 29);
+    pipelineDateFrom.value = formatDateToYMD(past);
+    pipelineDateTo.value = formatDateToYMD(today);
+  } else if (pipelineDatePreset.value === 'this_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    pipelineDateFrom.value = formatDateToYMD(firstDay);
+    pipelineDateTo.value = formatDateToYMD(today);
+  } else if (pipelineDatePreset.value === 'all') {
+    pipelineDateFrom.value = '';
+    pipelineDateTo.value = '';
+  }
+  fetchDashboardData();
+};
+
+const onPipelineDateChange = () => {
+  pipelineDatePreset.value = 'custom';
+  fetchDashboardData();
+};
+
+const clearPipelineDate = () => {
+  pipelineDatePreset.value = 'all';
+  pipelineDateFrom.value = '';
+  pipelineDateTo.value = '';
+  fetchDashboardData();
+};
+
 // Date filter state for Payment Exceptions section
 const exceptionDatePreset = ref('all');
 const exceptionDateFrom = ref('');
@@ -870,6 +999,12 @@ const fetchDashboardData = async () => {
   errorMsg.value = '';
   try {
     const params = {};
+    if (pipelineDateFrom.value) {
+      params.pipeline_date_from = pipelineDateFrom.value;
+    }
+    if (pipelineDateTo.value) {
+      params.pipeline_date_to = pipelineDateTo.value;
+    }
     if (exceptionDateFrom.value) {
       params.exception_date_from = exceptionDateFrom.value;
     }
@@ -1389,6 +1524,146 @@ onMounted(() => {
   background: #fef2f2;
   color: #991b1b;
   border: 1px solid #fecaca;
+}
+
+/* ==========================================================================
+   PIPELINE DATE FILTER PANEL - DEEP MAROON BRAND THEME
+   ========================================================================== */
+.pipeline-filter-panel {
+  background: rgba(110, 31, 58, 0.03);
+  border: 1px solid rgba(110, 31, 58, 0.15);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.pipeline-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pipeline-filter-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pipeline-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6E1F3A;
+  white-space: nowrap;
+}
+
+.pipeline-select {
+  height: 38px;
+  padding: 0 28px 0 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1.5px solid rgba(110, 31, 58, 0.28);
+  background-color: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.pipeline-select:focus {
+  border-color: #6E1F3A;
+  box-shadow: 0 0 0 3px rgba(110, 31, 58, 0.12);
+}
+
+.pipeline-range-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid rgba(110, 31, 58, 0.28);
+  border-radius: 8px;
+  padding: 2px 8px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.pipeline-range-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pipeline-range-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6E1F3A;
+  text-transform: uppercase;
+}
+
+.pipeline-native-date {
+  border: none;
+  background: transparent;
+  padding: 2px 2px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+}
+
+.pipeline-native-date:focus {
+  outline: none;
+}
+
+.pipeline-range-sep {
+  color: #6E1F3A;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pipeline-filter-active-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.pipeline-filter-date-tag {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #6E1F3A;
+  background: rgba(110, 31, 58, 0.08);
+  border: 1px solid rgba(110, 31, 58, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.btn-reset-pipeline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #64748B;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-pipeline:hover {
+  color: #6E1F3A;
+  border-color: #6E1F3A;
+  background: rgba(110, 31, 58, 0.06);
 }
 
 /* ==========================================================================
