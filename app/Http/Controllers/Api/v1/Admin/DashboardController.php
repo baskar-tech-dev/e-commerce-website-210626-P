@@ -234,15 +234,32 @@ class DashboardController extends Controller
             // =========================================================================
             // 6. Analytics: Top 10 Customers, Top Selling Products, Category-wise %
             // =========================================================================
-            $topCustomers = \App\Models\User::whereHas('orders', function ($q) {
-                    $q->where('payment_status', 'paid');
-                })
-                ->withCount(['orders as paid_orders_count' => function ($q) {
-                    $q->where('payment_status', 'paid');
-                }])
-                ->withSum(['orders as paid_spent' => function ($q) {
-                    $q->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
-                }], 'grand_total')
+            $analyticsDateFrom = $request->input('analytics_date_from');
+            $analyticsDateTo = $request->input('analytics_date_to');
+
+            $custOrderFilter = function ($q) use ($analyticsDateFrom, $analyticsDateTo) {
+                $q->where('payment_status', 'paid');
+                if (!empty($analyticsDateFrom)) {
+                    $q->whereDate('created_at', '>=', $analyticsDateFrom);
+                }
+                if (!empty($analyticsDateTo)) {
+                    $q->whereDate('created_at', '<=', $analyticsDateTo);
+                }
+            };
+
+            $custSpendFilter = function ($q) use ($analyticsDateFrom, $analyticsDateTo) {
+                $q->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
+                if (!empty($analyticsDateFrom)) {
+                    $q->whereDate('created_at', '>=', $analyticsDateFrom);
+                }
+                if (!empty($analyticsDateTo)) {
+                    $q->whereDate('created_at', '<=', $analyticsDateTo);
+                }
+            };
+
+            $topCustomers = \App\Models\User::whereHas('orders', $custOrderFilter)
+                ->withCount(['orders as paid_orders_count' => $custOrderFilter])
+                ->withSum(['orders as paid_spent' => $custSpendFilter], 'grand_total')
                 ->whereNotNull('name')
                 ->orderByDesc('paid_spent')
                 ->take(10)
@@ -257,10 +274,19 @@ class DashboardController extends Controller
                     ];
                 });
 
-            $topSellingProducts = DB::table('order_items')
+            $productsQuery = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->where('orders.payment_status', 'paid')
-                ->where('orders.status', '!=', 'cancelled')
+                ->where('orders.status', '!=', 'cancelled');
+
+            if (!empty($analyticsDateFrom)) {
+                $productsQuery->whereDate('orders.created_at', '>=', $analyticsDateFrom);
+            }
+            if (!empty($analyticsDateTo)) {
+                $productsQuery->whereDate('orders.created_at', '<=', $analyticsDateTo);
+            }
+
+            $topSellingProductsRaw = $productsQuery
                 ->select(
                     'order_items.product_id',
                     'order_items.product_name',
@@ -270,22 +296,43 @@ class DashboardController extends Controller
                 ->groupBy('order_items.product_id', 'order_items.product_name')
                 ->orderByDesc('total_revenue')
                 ->take(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'product_id' => $item->product_id,
-                        'product_name' => $item->product_name,
-                        'total_units_sold' => (int) $item->total_units_sold,
-                        'total_revenue' => round((float) $item->total_revenue, 2),
-                    ];
-                });
+                ->get();
 
-            $categorySalesRaw = DB::table('order_items')
+            $productIds = $topSellingProductsRaw->pluck('product_id')->filter()->unique();
+            $productsMap = \App\Models\Product::with(['images' => function ($q) {
+                $q->orderBy('is_primary', 'desc')->orderBy('sort_order', 'asc');
+            }])->whereIn('id', $productIds)->get()->keyBy('id');
+
+            $topSellingProducts = $topSellingProductsRaw->map(function ($item) use ($productsMap) {
+                $prod = $productsMap->get($item->product_id);
+                $imageUrl = null;
+                if ($prod) {
+                    $imageUrl = $prod->primary_image_url ?? $prod->images->first()?->url ?? null;
+                }
+                return [
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product_name,
+                    'image_url' => $imageUrl,
+                    'total_units_sold' => (int) $item->total_units_sold,
+                    'total_revenue' => round((float) $item->total_revenue, 2),
+                ];
+            });
+
+            $catQuery = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
                 ->where('orders.payment_status', 'paid')
-                ->where('orders.status', '!=', 'cancelled')
+                ->where('orders.status', '!=', 'cancelled');
+
+            if (!empty($analyticsDateFrom)) {
+                $catQuery->whereDate('orders.created_at', '>=', $analyticsDateFrom);
+            }
+            if (!empty($analyticsDateTo)) {
+                $catQuery->whereDate('orders.created_at', '<=', $analyticsDateTo);
+            }
+
+            $categorySalesRaw = $catQuery
                 ->select(
                     DB::raw('COALESCE(categories.name, "Uncategorized") as category_name'),
                     DB::raw('SUM(order_items.total_price) as total_sales'),

@@ -297,52 +297,183 @@
            SECTION 3: VISUAL SALES ANALYTICS & INTELLIGENCE
            ===================================================================== -->
       <div class="analytics-section">
-        <div class="section-indicator-row">
-          <div class="section-indicator-badge">
-            <span class="live-dot"></span>
-            <span>Visual Sales Intelligence</span>
+        <!-- Section Header with Date Filter -->
+        <div class="dashboard-card analytics-filter-card">
+          <div class="analytics-filter-header">
+            <div class="section-indicator-row" style="margin-bottom: 0;">
+              <div class="section-indicator-badge">
+                <span class="live-dot"></span>
+                <span>Visual Sales Intelligence</span>
+              </div>
+              <span class="section-indicator-note">Top Customers, Best-Selling Products & Category Contribution %</span>
+            </div>
           </div>
-          <span class="section-indicator-note">Top Customers, Best-Selling Products & Category Contribution %</span>
+
+          <!-- Section Date Filter Bar -->
+          <div class="analytics-filter-panel">
+            <div class="pipeline-filter-row">
+              <!-- Date Filter Preset Selector -->
+              <div class="pipeline-filter-field">
+                <label class="pipeline-filter-label">
+                  <Calendar :size="14" />
+                  <span>Date Filter:</span>
+                </label>
+                <select 
+                  v-model="analyticsDatePreset" 
+                  @change="onAnalyticsPresetChange" 
+                  class="pipeline-select"
+                >
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="last7">Last 7 Days</option>
+                  <option value="last30">Last 30 Days</option>
+                  <option value="this_month">This Month</option>
+                  <option value="custom">Custom Date Range</option>
+                </select>
+              </div>
+
+              <!-- Custom Date Range Inputs (Native From / To) -->
+              <div v-if="analyticsDatePreset === 'custom' || analyticsDateFrom || analyticsDateTo" class="pipeline-range-box">
+                <div class="pipeline-range-item">
+                  <span class="pipeline-range-tag">From:</span>
+                  <input 
+                    type="date" 
+                    v-model="analyticsDateFrom" 
+                    @change="onAnalyticsDateChange" 
+                    class="pipeline-native-date" 
+                    title="From Date"
+                  />
+                </div>
+                <span class="pipeline-range-sep">→</span>
+                <div class="pipeline-range-item">
+                  <span class="pipeline-range-tag">To:</span>
+                  <input 
+                    type="date" 
+                    v-model="analyticsDateTo" 
+                    @change="onAnalyticsDateChange" 
+                    class="pipeline-native-date" 
+                    title="To Date"
+                  />
+                </div>
+                <button 
+                  v-if="analyticsDateFrom || analyticsDateTo" 
+                  type="button" 
+                  @click="clearAnalyticsDate" 
+                  class="btn-date-clear" 
+                  title="Clear date range"
+                >
+                  <X :size="13" />
+                </button>
+              </div>
+
+              <!-- Active Date Indicator & Reset Button -->
+              <div v-if="analyticsDateFrom || analyticsDateTo" class="pipeline-filter-active-info">
+                <span class="pipeline-filter-date-tag">
+                  📅 {{ formatDateLabel(analyticsDateFrom) }} — {{ formatDateLabel(analyticsDateTo) }}
+                </span>
+                <button 
+                  type="button" 
+                  @click="clearAnalyticsDate" 
+                  class="btn-reset-pipeline"
+                  title="Reset date filter to All Dates"
+                >
+                  <RotateCcw :size="13" />
+                  <span>Reset Date</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Row 1: Category Wise Selling % Pie Chart + Top Products Graph -->
+        <!-- Row 1: Category Wise Selling % Ranked Progress Bars + Top Products Graph -->
         <div class="analytics-row-split">
-          <!-- 1. Category Wise Selling % Pie Chart -->
+          <!-- 1. Category Wise Selling %: Ranked Horizontal Progress Bars -->
           <div class="dashboard-card chart-card">
             <div class="dashboard-card__header">
               <div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <h2 class="dashboard-card__title">Category Selling %</h2>
-                  <span class="badge-mini badge-mini--paid">Pie Chart</span>
+                  <span class="badge-mini badge-mini--paid">Performance Bars</span>
                 </div>
-                <p class="dashboard-card__subtitle">Revenue share distribution across product categories</p>
+                <p class="dashboard-card__subtitle">Revenue contribution & volume share across product categories</p>
+              </div>
+              <router-link to="/admin/categories" class="dashboard-card__action-link">
+                <span>All Categories</span>
+                <ArrowRight :size="14" />
+              </router-link>
+            </div>
+
+            <!-- Top Summary Strip -->
+            <div class="cat-summary-strip">
+              <div class="cat-summary-metric">
+                <span class="cat-summary-label">Total Category Sales</span>
+                <span class="cat-summary-val">₹{{ formatCurrency(totalCategorySales) }}</span>
+              </div>
+              <div class="cat-summary-divider"></div>
+              <div class="cat-summary-metric">
+                <span class="cat-summary-label">Volume Sold</span>
+                <span class="cat-summary-val cat-summary-val--emerald">{{ totalCategoryUnits }} units</span>
+              </div>
+              <div class="cat-summary-divider"></div>
+              <div class="cat-summary-metric">
+                <span class="cat-summary-label">Categories</span>
+                <span class="cat-summary-val">{{ categorySales.length }} active</span>
               </div>
             </div>
 
-            <div class="category-pie-layout">
-              <!-- Canvas Container -->
-              <div class="pie-canvas-wrap">
-                <canvas ref="categoryPieCanvas"></canvas>
-              </div>
+            <!-- Multi-Segment Proportional Distribution Bar (Shopify/Stripe style) -->
+            <div class="cat-distribution-track" title="Proportional revenue contribution">
+              <div 
+                v-for="(cat, idx) in categorySales" 
+                :key="'bar-' + idx"
+                class="cat-distribution-segment"
+                :style="{ 
+                  width: Math.max(parseFloat(cat.percentage), 2.5) + '%', 
+                  backgroundColor: getCategoryColor(idx) 
+                }"
+                :title="`${cat.category_name}: ${cat.percentage}% (₹${formatCurrency(cat.total_sales)})`"
+              ></div>
+            </div>
 
-              <!-- Legend & Breakdown List -->
-              <div class="category-breakdown-list">
-                <div 
-                  v-for="(cat, index) in categorySales" 
-                  :key="index"
-                  class="cat-breakdown-item"
-                >
-                  <div class="cat-color-dot" :style="{ backgroundColor: getCategoryColor(index) }"></div>
-                  <div class="cat-details">
-                    <div class="cat-name-row">
-                      <span class="cat-name">{{ cat.category_name }}</span>
-                      <span class="cat-percent-badge">{{ cat.percentage }}%</span>
-                    </div>
-                    <div class="cat-metrics-row">
-                      <span class="cat-revenue">₹{{ formatCurrency(cat.total_sales) }}</span>
-                      <span class="cat-qty">{{ cat.total_qty }} sold</span>
-                    </div>
+            <!-- Ranked Horizontal Progress Comparison Rows -->
+            <div class="cat-ranked-progress-list">
+              <div 
+                v-for="(cat, index) in categorySales" 
+                :key="index"
+                class="cat-ranked-row-item"
+              >
+                <!-- Row Header: Rank + Bullet + Name + Revenue + % Badge -->
+                <div class="cat-row-top">
+                  <div class="cat-row-name-wrap">
+                    <span class="cat-rank-num">#{{ index + 1 }}</span>
+                    <div class="cat-color-dot" :style="{ backgroundColor: getCategoryColor(index) }"></div>
+                    <span class="cat-row-name" :title="cat.category_name">{{ cat.category_name }}</span>
                   </div>
+                  <div class="cat-row-stats">
+                    <span class="cat-row-units">{{ cat.total_qty }} sold</span>
+                    <span class="cat-row-revenue">₹{{ formatCurrency(cat.total_sales) }}</span>
+                    <span 
+                      class="cat-row-percent-badge" 
+                      :style="{ 
+                        color: getCategoryColor(index), 
+                        backgroundColor: getCategoryLightColor(index) 
+                      }"
+                    >
+                      {{ cat.percentage }}%
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Horizontal Progress Track & Fill Bar -->
+                <div class="cat-progress-track">
+                  <div 
+                    class="cat-progress-fill" 
+                    :style="{ 
+                      width: Math.max(parseFloat(cat.percentage), 1.5) + '%', 
+                      backgroundColor: getCategoryColor(index) 
+                    }"
+                  ></div>
                 </div>
               </div>
             </div>
@@ -369,7 +500,7 @@
               <canvas ref="topProductsCanvas"></canvas>
             </div>
 
-            <!-- Top Products Quick Highlights Grid -->
+            <!-- Top Products Quick Highlights Grid with Product Image -->
             <div class="top-products-summary-list">
               <div 
                 v-for="(prod, idx) in topProducts.slice(0, 5)" 
@@ -377,6 +508,17 @@
                 class="top-product-mini-item"
               >
                 <span class="rank-badge">#{{ idx + 1 }}</span>
+
+                <!-- Product Thumbnail Image -->
+                <div class="top-product-thumb">
+                  <img 
+                    :src="prod.image_url || '/asset/product-placeholder.jpg'" 
+                    :alt="prod.product_name"
+                    class="top-product-img"
+                    @error="$event.target.src = '/asset/product-placeholder.jpg'" 
+                  />
+                </div>
+
                 <div class="top-product-info">
                   <div class="top-product-title" :title="prod.product_name">{{ prod.product_name }}</div>
                   <div class="top-product-meta">
@@ -980,6 +1122,14 @@ const topCustomers = ref([]);
 const topProducts = ref([]);
 const categorySales = ref([]);
 
+const totalCategorySales = computed(() => {
+  return categorySales.value.reduce((acc, cat) => acc + (parseFloat(cat.total_sales) || 0), 0);
+});
+
+const totalCategoryUnits = computed(() => {
+  return categorySales.value.reduce((acc, cat) => acc + (parseInt(cat.total_qty) || 0), 0);
+});
+
 const categoryPieCanvas = ref(null);
 const topProductsCanvas = ref(null);
 const topCustomersCanvas = ref(null);
@@ -999,8 +1149,23 @@ const categoryPalette = [
   '#64748B', // Slate
 ];
 
+const categoryLightPalette = [
+  'rgba(110, 31, 58, 0.1)',    // Deep Maroon light
+  'rgba(197, 168, 128, 0.22)', // Golden Warm light
+  'rgba(5, 150, 105, 0.14)',   // Emerald light
+  'rgba(67, 56, 202, 0.12)',   // Indigo light
+  'rgba(217, 119, 6, 0.14)',   // Amber light
+  'rgba(2, 132, 199, 0.14)',   // Sky Blue light
+  'rgba(220, 38, 38, 0.12)',   // Crimson light
+  'rgba(100, 116, 139, 0.14)', // Slate light
+];
+
 const getCategoryColor = (index) => {
   return categoryPalette[index % categoryPalette.length];
+};
+
+const getCategoryLightColor = (index) => {
+  return categoryLightPalette[index % categoryLightPalette.length];
 };
 
 const activeExceptionTab = ref('pending');
@@ -1126,6 +1291,56 @@ const clearExceptionDate = () => {
   fetchDashboardData();
 };
 
+// Date filter state for Visual Sales Analytics section
+const analyticsDatePreset = ref('all');
+const analyticsDateFrom = ref('');
+const analyticsDateTo = ref('');
+
+const onAnalyticsPresetChange = () => {
+  const today = new Date();
+  if (analyticsDatePreset.value === 'today') {
+    const str = formatDateToYMD(today);
+    analyticsDateFrom.value = str;
+    analyticsDateTo.value = str;
+  } else if (analyticsDatePreset.value === 'yesterday') {
+    const yest = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    const str = formatDateToYMD(yest);
+    analyticsDateFrom.value = str;
+    analyticsDateTo.value = str;
+  } else if (analyticsDatePreset.value === 'last7') {
+    const past = new Date(today);
+    past.setDate(past.getDate() - 6);
+    analyticsDateFrom.value = formatDateToYMD(past);
+    analyticsDateTo.value = formatDateToYMD(today);
+  } else if (analyticsDatePreset.value === 'last30') {
+    const past = new Date(today);
+    past.setDate(past.getDate() - 29);
+    analyticsDateFrom.value = formatDateToYMD(past);
+    analyticsDateTo.value = formatDateToYMD(today);
+  } else if (analyticsDatePreset.value === 'this_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    analyticsDateFrom.value = formatDateToYMD(firstDay);
+    analyticsDateTo.value = formatDateToYMD(today);
+  } else if (analyticsDatePreset.value === 'all') {
+    analyticsDateFrom.value = '';
+    analyticsDateTo.value = '';
+  }
+  fetchDashboardData();
+};
+
+const onAnalyticsDateChange = () => {
+  analyticsDatePreset.value = 'custom';
+  fetchDashboardData();
+};
+
+const clearAnalyticsDate = () => {
+  analyticsDatePreset.value = 'all';
+  analyticsDateFrom.value = '';
+  analyticsDateTo.value = '';
+  fetchDashboardData();
+};
+
 const kpis = reactive({
   total_revenue: 0,
   total_orders: 0,
@@ -1228,6 +1443,12 @@ const fetchDashboardData = async () => {
     if (exceptionDateTo.value) {
       params.exception_date_to = exceptionDateTo.value;
     }
+    if (analyticsDateFrom.value) {
+      params.analytics_date_from = analyticsDateFrom.value;
+    }
+    if (analyticsDateTo.value) {
+      params.analytics_date_to = analyticsDateTo.value;
+    }
     const res = await axios.get('/api/admin/dashboard/stats', { params });
     if (res.data && res.data.success && res.data.data) {
       const data = res.data.data;
@@ -1289,7 +1510,7 @@ const renderCategoryPieChart = () => {
           backgroundColor: colors,
           borderColor: '#ffffff',
           borderWidth: 2,
-          hoverOffset: 8,
+          hoverOffset: 6,
         }
       ]
     },
@@ -1317,7 +1538,7 @@ const renderCategoryPieChart = () => {
           }
         }
       },
-      cutout: '62%'
+      cutout: '72%'
     }
   });
 };
@@ -2981,6 +3202,54 @@ onMounted(() => {
   gap: 16px;
 }
 
+.analytics-filter-card {
+  padding: 16px 20px;
+}
+
+.analytics-filter-header {
+  margin-bottom: 12px;
+}
+
+.analytics-filter-panel {
+  background: rgba(110, 31, 58, 0.03);
+  border: 1px solid rgba(110, 31, 58, 0.15);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.chart-model-toggle {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-chart-model {
+  border: none;
+  background: transparent;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-chart-model:hover {
+  color: #1e293b;
+}
+
+.btn-chart-model--active {
+  background: #6E1F3A;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(110, 31, 58, 0.2);
+}
+
 .analytics-row-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2998,51 +3267,119 @@ onMounted(() => {
   flex-direction: column;
 }
 
-/* Category Pie Chart */
-.category-pie-layout {
+/* ==========================================================================
+   STYLE 1: RANKED HORIZONTAL PROGRESS BARS & DISTRIBUTION
+   ========================================================================== */
+.cat-summary-strip {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 8px 4px;
+  justify-content: space-between;
+  background: #fdfbf7;
+  border: 1px solid rgba(197, 168, 128, 0.28);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
 }
 
-@media (max-width: 640px) {
-  .category-pie-layout {
-    flex-direction: column;
-  }
-}
-
-.pie-canvas-wrap {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  flex-shrink: 0;
-  margin: 0 auto;
-}
-
-.category-breakdown-list {
-  flex: 1;
+.cat-summary-metric {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 180px;
+  gap: 2px;
 }
 
-.cat-breakdown-item {
+.cat-summary-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748b;
+}
+
+.cat-summary-val {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #6E1F3A;
+  font-family: 'Poppins', sans-serif;
+}
+
+.cat-summary-val--emerald {
+  color: #059669;
+}
+
+.cat-summary-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(197, 168, 128, 0.35);
+}
+
+/* Multi-Segment Distribution Track (Shopify/Stripe style) */
+.cat-distribution-track {
   display: flex;
-  align-items: center;
+  width: 100%;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f1f5f9;
+  margin-bottom: 16px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  gap: 2px;
+}
+
+.cat-distribution-segment {
+  height: 100%;
+  border-radius: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.cat-distribution-segment:hover {
+  opacity: 0.85;
+}
+
+/* Ranked Horizontal Progress List */
+.cat-ranked-progress-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  padding: 8px 12px;
+}
+
+.cat-ranked-row-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
   background: #fafaf9;
   border: 1px solid #f0eee9;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
-.cat-breakdown-item:hover {
+.cat-ranked-row-item:hover {
   background: #f5f3ef;
   border-color: #e5e0d8;
   transform: translateX(2px);
+}
+
+.cat-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cat-row-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cat-rank-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  width: 20px;
+  flex-shrink: 0;
 }
 
 .cat-color-dot {
@@ -3052,23 +3389,8 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.cat-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.cat-name-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.cat-name {
-  font-size: 0.8rem;
+.cat-row-name {
+  font-size: 0.82rem;
   font-weight: 600;
   color: #1e293b;
   white-space: nowrap;
@@ -3076,31 +3398,47 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
-.cat-percent-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #6E1F3A;
-  background: rgba(110, 31, 58, 0.08);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.cat-metrics-row {
+.cat-row-stats {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.73rem;
-  color: #64748b;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.cat-revenue {
-  font-weight: 600;
+.cat-row-units {
+  font-size: 0.73rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cat-row-revenue {
+  font-size: 0.85rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
-.cat-qty {
-  font-size: 0.7rem;
-  color: #94a3b8;
+.cat-row-percent-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  min-width: 44px;
+  text-align: center;
+}
+
+/* Horizontal Progress Track */
+.cat-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cat-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Top Selling Products */
@@ -3145,6 +3483,25 @@ onMounted(() => {
   padding: 2px 7px;
   border-radius: 6px;
   flex-shrink: 0;
+}
+
+.top-product-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .top-product-info {
