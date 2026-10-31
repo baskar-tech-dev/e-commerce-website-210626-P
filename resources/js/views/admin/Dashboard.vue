@@ -611,18 +611,18 @@
             <table class="recent-orders-table">
               <thead>
                 <tr>
-                  <th>Order #</th>
-                  <th>Customer</th>
-                  <th>Date</th>
-                  <th>Total</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th style="text-align: right; width: 50px;">Action</th>
+                  <th style="min-width: 140px;">Order #</th>
+                  <th style="min-width: 155px;">Customer</th>
+                  <th style="min-width: 145px;">Date</th>
+                  <th style="min-width: 90px; text-align: right;">Total</th>
+                  <th style="min-width: 115px; text-align: center;">Payment</th>
+                  <th style="min-width: 110px; text-align: center;">Status</th>
+                  <th style="text-align: right; width: 44px;">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="order in recentOrders" :key="order.id">
-                  <td>
+                  <td class="order-num-cell">
                     <router-link :to="`/admin/orders/${order.id}`" class="order-num-link">
                       {{ order.order_number }}
                     </router-link>
@@ -637,13 +637,13 @@
                     <span>{{ order.date }}</span>
                     <span class="order-time-ago">{{ order.time_ago }}</span>
                   </td>
-                  <td class="order-amount-cell">
+                  <td class="order-amount-cell" style="text-align: right;">
                     ₹{{ formatCurrency(order.grand_total) }}
                   </td>
-                  <td>
+                  <td style="text-align: center;">
                     <span class="badge-payment badge-payment--paid">PAID ({{ order.payment_method }})</span>
                   </td>
-                  <td>
+                  <td style="text-align: center;">
                     <span :class="['order-badge', getBadgeClass(order.status)]">
                       {{ order.status_label }}
                     </span>
@@ -904,19 +904,19 @@
             <table class="recent-orders-table">
               <thead>
                 <tr>
-                  <th>Order #</th>
-                  <th>Customer</th>
-                  <th>Date</th>
-                  <th>Items</th>
-                  <th>Grand Total</th>
-                  <th>Payment Status</th>
-                  <th>Order Status</th>
-                  <th style="text-align: right; width: 50px;">Action</th>
+                  <th style="min-width: 140px;">Order #</th>
+                  <th style="min-width: 155px;">Customer</th>
+                  <th style="min-width: 145px;">Date</th>
+                  <th style="min-width: 75px; text-align: center;">Items</th>
+                  <th style="min-width: 95px; text-align: right;">Grand Total</th>
+                  <th style="min-width: 125px; text-align: center;">Payment Status</th>
+                  <th style="min-width: 110px; text-align: center;">Order Status</th>
+                  <th style="text-align: right; width: 44px;">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="order in currentExceptionOrders" :key="order.id">
-                  <td>
+                  <td class="order-num-cell">
                     <router-link :to="`/admin/orders/${order.id}`" class="order-num-link">
                       {{ order.order_number }}
                     </router-link>
@@ -931,11 +931,11 @@
                     <span>{{ order.date }}</span>
                     <span class="order-time-ago">{{ order.time_ago }}</span>
                   </td>
-                  <td>{{ order.items_count }} {{ order.items_count === 1 ? 'item' : 'items' }}</td>
-                  <td class="order-amount-cell">
+                  <td style="text-align: center; white-space: nowrap;">{{ order.items_count }} {{ order.items_count === 1 ? 'item' : 'items' }}</td>
+                  <td class="order-amount-cell" style="text-align: right;">
                     ₹{{ formatCurrency(order.grand_total) }}
                   </td>
-                  <td>
+                  <td style="text-align: center;">
                     <span 
                       class="badge-payment" 
                       :class="getPaymentBadgeClass(order.payment_status)"
@@ -943,7 +943,7 @@
                       {{ (order.payment_status || 'UNKNOWN').toUpperCase() }} ({{ order.payment_method }})
                     </span>
                   </td>
-                  <td>
+                  <td style="text-align: center;">
                     <span :class="['order-badge', getBadgeClass(order.status)]">
                       {{ order.status_label }}
                     </span>
@@ -2477,11 +2477,11 @@ onMounted(() => {
    ========================================================================== */
 .dashboard-split-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
   gap: 24px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .dashboard-split-grid {
     grid-template-columns: 1fr;
   }
@@ -2489,28 +2489,50 @@ onMounted(() => {
 
 /* Recent Orders Table */
 .recent-orders-table-wrap {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recent-orders-table-wrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.recent-orders-table-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.recent-orders-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.recent-orders-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .recent-orders-table {
   width: 100%;
+  min-width: 780px;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
 
 .recent-orders-table th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-weight: 600;
   color: #64748B;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1.5px solid #e2e8f0;
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .recent-orders-table td {
-  padding: 12px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -2519,10 +2541,17 @@ onMounted(() => {
   background: #faf8f5;
 }
 
+.order-num-cell {
+  white-space: nowrap;
+}
+
 .order-num-link {
   font-weight: 700;
   color: #6E1F3A;
   text-decoration: none;
+  white-space: nowrap;
+  display: inline-block;
+  letter-spacing: 0.2px;
 }
 
 .order-num-link:hover {
@@ -2532,16 +2561,23 @@ onMounted(() => {
 .customer-info-cell {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .customer-name {
   font-weight: 600;
   color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .customer-email {
   font-size: 0.72rem;
   color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .order-date-cell {
