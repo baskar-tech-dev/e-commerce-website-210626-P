@@ -115,6 +115,9 @@
             <option value="last7">Last 7 Days</option>
             <option value="last30">Last 30 Days</option>
             <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="this_year">This Year</option>
+            <option value="last_year">Last Year</option>
             <option value="custom">Custom Range</option>
           </select>
         </div>
@@ -538,6 +541,20 @@ const onPresetChange = () => {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     filters.date_from = formatDateToYMD(firstDay);
     filters.date_to = formatDateToYMD(today);
+  } else if (selectedDatePreset.value === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    filters.date_from = formatDateToYMD(firstDay);
+    filters.date_to = formatDateToYMD(lastDay);
+  } else if (selectedDatePreset.value === 'this_year') {
+    const firstDay = new Date(today.getFullYear(), 0, 1);
+    filters.date_from = formatDateToYMD(firstDay);
+    filters.date_to = formatDateToYMD(today);
+  } else if (selectedDatePreset.value === 'last_year') {
+    const firstDay = new Date(today.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(today.getFullYear() - 1, 11, 31);
+    filters.date_from = formatDateToYMD(firstDay);
+    filters.date_to = formatDateToYMD(lastDay);
   } else if (selectedDatePreset.value === 'all') {
     filters.date_from = '';
     filters.date_to = '';

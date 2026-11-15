@@ -17,6 +17,9 @@ class StorefrontFestivalController extends Controller
     {
         $isEnabled = (bool) Setting::get('is_enabled', self::GROUP, false);
 
+        $festName = Setting::get('festival_name', self::GROUP, 'Diwali');
+        $festUpper = strtoupper(trim($festName) ?: 'DIWALI');
+
         $data = [
             'is_enabled' => $isEnabled,
             'festival_key' => Setting::get('festival_key', self::GROUP, 'diwali'),
@@ -36,6 +39,12 @@ class StorefrontFestivalController extends Controller
             'product_badge_icon' => Setting::get('product_badge_icon', self::GROUP, '✨'),
             'product_badge_style' => Setting::get('product_badge_style', self::GROUP, 'maroon_gold'),
             'product_badge_prefix' => Setting::get('product_badge_prefix', self::GROUP, ''),
+            'festival_icon' => Setting::get('festival_icon', self::GROUP, 'diya'),
+            'hero_offer_text' => Setting::get('hero_offer_text', self::GROUP, "{$festName} Offer ✨"),
+            'floating_bar_text' => Setting::get('floating_bar_text', self::GROUP, "REVEAL YOUR {$festUpper} GIFT"),
+            'floating_bar_mobile_text' => Setting::get('floating_bar_mobile_text', self::GROUP, "{$festName} Gift ✨"),
+            'revealed_festive_tag' => Setting::get('revealed_festive_tag', self::GROUP, "✦ {$festUpper} FESTIVE GIFT UNLOCKED ✦"),
+            'voucher_badge_text' => Setting::get('voucher_badge_text', self::GROUP, "{$festUpper} SPECIAL"),
         ];
 
         return response()->json([

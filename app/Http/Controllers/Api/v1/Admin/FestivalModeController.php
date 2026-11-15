@@ -37,6 +37,12 @@ class FestivalModeController extends Controller
             'product_badge_icon' => Setting::get('product_badge_icon', self::GROUP, '✨'),
             'product_badge_style' => Setting::get('product_badge_style', self::GROUP, 'maroon_gold'),
             'product_badge_prefix' => Setting::get('product_badge_prefix', self::GROUP, ''),
+            'festival_icon' => Setting::get('festival_icon', self::GROUP, 'diya'),
+            'hero_offer_text' => Setting::get('hero_offer_text', self::GROUP, 'Diwali Offer ✨'),
+            'floating_bar_text' => Setting::get('floating_bar_text', self::GROUP, 'REVEAL YOUR DIWALI GIFT'),
+            'floating_bar_mobile_text' => Setting::get('floating_bar_mobile_text', self::GROUP, 'Diwali Gift ✨'),
+            'revealed_festive_tag' => Setting::get('revealed_festive_tag', self::GROUP, '✦ DIWALI FESTIVE GIFT UNLOCKED ✦'),
+            'voucher_badge_text' => Setting::get('voucher_badge_text', self::GROUP, 'DIWALI SPECIAL'),
         ];
 
         return response()->json([
@@ -69,6 +75,12 @@ class FestivalModeController extends Controller
             'product_badge_icon' => 'nullable|string|max:20',
             'product_badge_style' => 'nullable|string|max:50',
             'product_badge_prefix' => 'nullable|string|max:50',
+            'festival_icon' => 'nullable|string|max:50',
+            'hero_offer_text' => 'nullable|string|max:100',
+            'floating_bar_text' => 'nullable|string|max:100',
+            'floating_bar_mobile_text' => 'nullable|string|max:100',
+            'revealed_festive_tag' => 'nullable|string|max:100',
+            'voucher_badge_text' => 'nullable|string|max:100',
         ]);
 
         Setting::set('is_enabled', $validated['is_enabled'], self::GROUP, 'boolean');
@@ -123,6 +135,33 @@ class FestivalModeController extends Controller
         }
         if (array_key_exists('product_badge_prefix', $validated)) {
             Setting::set('product_badge_prefix', $validated['product_badge_prefix'] ?? '', self::GROUP, 'text');
+        }
+        if (array_key_exists('festival_icon', $validated)) {
+            Setting::set('festival_icon', $validated['festival_icon'] ?? 'diya', self::GROUP, 'text');
+            Setting::set('festival_icon', $validated['festival_icon'] ?? 'diya', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('hero_offer_text', $validated)) {
+            Setting::set('hero_offer_text', $validated['hero_offer_text'] ?? '', self::GROUP, 'text');
+            Setting::set('hero_offer_text', $validated['hero_offer_text'] ?? '', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('floating_bar_text', $validated)) {
+            Setting::set('floating_bar_text', $validated['floating_bar_text'] ?? '', self::GROUP, 'text');
+            Setting::set('floating_bar_text', $validated['floating_bar_text'] ?? '', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('floating_bar_mobile_text', $validated)) {
+            Setting::set('floating_bar_mobile_text', $validated['floating_bar_mobile_text'] ?? '', self::GROUP, 'text');
+            Setting::set('floating_bar_mobile_text', $validated['floating_bar_mobile_text'] ?? '', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('revealed_festive_tag', $validated)) {
+            Setting::set('revealed_festive_tag', $validated['revealed_festive_tag'] ?? '', self::GROUP, 'text');
+            Setting::set('revealed_festive_tag', $validated['revealed_festive_tag'] ?? '', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('voucher_badge_text', $validated)) {
+            Setting::set('voucher_badge_text', $validated['voucher_badge_text'] ?? '', self::GROUP, 'text');
+            Setting::set('voucher_badge_text', $validated['voucher_badge_text'] ?? '', 'welcome_gift', 'text');
+        }
+        if (array_key_exists('festival_name', $validated)) {
+            Setting::set('festival_name', $validated['festival_name'] ?? '', 'welcome_gift', 'text');
         }
 
         return response()->json([

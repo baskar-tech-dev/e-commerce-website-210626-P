@@ -19,6 +19,20 @@ class StorefrontWelcomeGiftController extends Controller
         // Check if festival mode is active globally
         $isFestivalActive = (bool) Setting::get('is_enabled', 'festival', false);
 
+        // Festival Name & Icon resolution
+        $festivalName = (string) ($settings->get('festival_name') ?: Setting::get('festival_name', 'festival', 'Diwali'));
+        if (empty(trim($festivalName))) {
+            $festivalName = 'Diwali';
+        }
+        $festUpper = strtoupper(trim($festivalName));
+
+        $festivalIcon = (string) ($settings->get('festival_icon') ?: Setting::get('festival_icon', 'festival', 'diya'));
+        $heroOfferText = (string) ($settings->get('hero_offer_text') ?: Setting::get('hero_offer_text', 'festival', "{$festivalName} Offer ✨"));
+        $floatingBarText = (string) ($settings->get('floating_bar_text') ?: Setting::get('floating_bar_text', 'festival', "REVEAL YOUR {$festUpper} GIFT"));
+        $floatingBarMobileText = (string) ($settings->get('floating_bar_mobile_text') ?: Setting::get('floating_bar_mobile_text', 'festival', "{$festivalName} Gift ✨"));
+        $revealedFestiveTag = (string) ($settings->get('revealed_festive_tag') ?: Setting::get('revealed_festive_tag', 'festival', "✦ {$festUpper} FESTIVE GIFT UNLOCKED ✦"));
+        $voucherBadgeText = (string) ($settings->get('voucher_badge_text') ?: Setting::get('voucher_badge_text', 'festival', "{$festUpper} SPECIAL"));
+
         // Diwali reveal setting (defaults to festival mode status or true if explicitly enabled)
         $diwaliRevealRaw = $settings->get('diwali_reveal_enabled', null);
         $diwaliRevealEnabled = $diwaliRevealRaw !== null 
@@ -34,7 +48,8 @@ class StorefrontWelcomeGiftController extends Controller
             $discountText = preg_replace('/(\d+)\.00(?=%|\s|$)/', '$1', $discountText);
             $discountText = preg_replace('/(\s*(?:on|for)?\s*your\s*first\s*order)/i', '', $discountText);
             $discountText = trim($discountText) ?: 'Enjoy 10% OFF';
-            $title = trim(str_replace('*', '', (string) $settings->get('title', 'A Little Diwali Magic')));
+            $defaultTitle = "A Little {$festivalName} Magic";
+            $title = trim(str_replace('*', '', (string) $settings->get('title', $defaultTitle)));
             $subtitle = trim(str_replace('*', '', (string) $settings->get('subtitle', 'A festive surprise is waiting for you.')));
         } else {
             $title = $settings->get('title', 'A Special Gift Awaits You');
@@ -77,6 +92,13 @@ class StorefrontWelcomeGiftController extends Controller
             'data' => [
                 'is_enabled' => $isEnabled,
                 'diwali_reveal_enabled' => $diwaliRevealEnabled,
+                'festival_name' => $festivalName,
+                'festival_icon' => $festivalIcon,
+                'hero_offer_text' => $heroOfferText,
+                'floating_bar_text' => $floatingBarText,
+                'floating_bar_mobile_text' => $floatingBarMobileText,
+                'revealed_festive_tag' => $revealedFestiveTag,
+                'voucher_badge_text' => $voucherBadgeText,
                 'coupon_code' => $couponCode,
                 'discount_text' => $discountText,
                 'title' => $title,

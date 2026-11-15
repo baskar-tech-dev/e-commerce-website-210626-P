@@ -33,6 +33,12 @@ export const useFestivalStore = defineStore('festival', {
       productBadgeIcon: cached.product_badge_icon !== undefined ? cached.product_badge_icon : '✨',
       productBadgeStyle: cached.product_badge_style || 'maroon_gold',
       productBadgePrefix: cached.product_badge_prefix || '',
+      festivalIcon: cached.festival_icon || 'diya',
+      heroOfferText: cached.hero_offer_text || '',
+      floatingBarText: cached.floating_bar_text || '',
+      floatingBarMobileText: cached.floating_bar_mobile_text || '',
+      revealedFestiveTag: cached.revealed_festive_tag || '',
+      voucherBadgeText: cached.voucher_badge_text || '',
       loading: false,
       initialized: false,
     };
@@ -65,6 +71,12 @@ export const useFestivalStore = defineStore('festival', {
       if (d.product_badge_icon !== undefined) this.productBadgeIcon = d.product_badge_icon;
       if (d.product_badge_style !== undefined) this.productBadgeStyle = d.product_badge_style;
       if (d.product_badge_prefix !== undefined) this.productBadgePrefix = d.product_badge_prefix;
+      if (d.festival_icon !== undefined) this.festivalIcon = d.festival_icon;
+      if (d.hero_offer_text !== undefined) this.heroOfferText = d.hero_offer_text;
+      if (d.floating_bar_text !== undefined) this.floatingBarText = d.floating_bar_text;
+      if (d.floating_bar_mobile_text !== undefined) this.floatingBarMobileText = d.floating_bar_mobile_text;
+      if (d.revealed_festive_tag !== undefined) this.revealedFestiveTag = d.revealed_festive_tag;
+      if (d.voucher_badge_text !== undefined) this.voucherBadgeText = d.voucher_badge_text;
 
       try {
         localStorage.setItem('maya_sree_festival_config', JSON.stringify({
@@ -86,6 +98,12 @@ export const useFestivalStore = defineStore('festival', {
           product_badge_icon: this.productBadgeIcon,
           product_badge_style: this.productBadgeStyle,
           product_badge_prefix: this.productBadgePrefix,
+          festival_icon: this.festivalIcon,
+          hero_offer_text: this.heroOfferText,
+          floating_bar_text: this.floatingBarText,
+          floating_bar_mobile_text: this.floatingBarMobileText,
+          revealed_festive_tag: this.revealedFestiveTag,
+          voucher_badge_text: this.voucherBadgeText,
         }));
       } catch (e) {
         // ignore

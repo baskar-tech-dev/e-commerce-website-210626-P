@@ -19,7 +19,7 @@
         <div class="toran-garland-mesh"></div>
       </div>
 
-      <!-- Festive Floating Brass Diya Lamp (Interactive Hero Visual Enhancement) -->
+      <!-- Festive Floating Brass Diya / Motif Lamp (Interactive Hero Visual Enhancement) -->
       <div 
         v-if="festivalStore.hasOrnaments" 
         class="festive-hero-diya-wrapper festive-diya--interactive"
@@ -27,43 +27,15 @@
         tabindex="0"
         @click="triggerWelcomeGiftModal"
         @keydown.enter="triggerWelcomeGiftModal"
-        aria-label="Festive Diwali Gift Lamp — Click to reveal your festive offer"
-        title="Click to reveal your Diwali gift!"
+        :aria-label="`${festivalStore.festivalName || 'Festive'} Gift — Click to reveal your festive offer`"
+        :title="`Click to reveal your ${festivalStore.festivalName || 'festive'} gift!`"
       >
         <div class="hero-diya-container">
           <!-- Ambient Halo Glow -->
           <div class="hero-diya-halo"></div>
           
-          <!-- Diya Illustration SVG -->
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="hero-diya-svg">
-            <!-- Brass Bowl -->
-            <path d="M6 34 C6 34 11 44 24 44 C37 44 42 34 42 34 C42 34 34 37 24 37 C14 37 6 34 6 34 Z" fill="url(#heroDiyaBowlGrad)" stroke="#C8A15A" stroke-width="1.2"/>
-            <ellipse cx="24" cy="34" rx="18" ry="4" fill="#F7E7B4" stroke="#9A7B38" stroke-width="1"/>
-            <ellipse cx="24" cy="34" rx="13" ry="2.2" fill="#7A561E" opacity="0.6"/>
-            <!-- Warm Flame Glow -->
-            <circle cx="24" cy="18" r="14" fill="url(#heroDiyaFlameAura)" class="hero-flame-aura"/>
-            <!-- Flickering Flame -->
-            <path d="M24 6 C24 6 17 17 17 22 C17 25.866 20.134 29 24 29 C27.866 29 31 25.866 31 22 C31 17 24 6 24 6 Z" fill="url(#heroDiyaFlameGrad)" class="hero-flame-path"/>
-            <!-- Inner White Hot Flame -->
-            <ellipse cx="24" cy="23" rx="3.5" ry="5.5" fill="#FFFFFF" opacity="0.9"/>
-            <defs>
-              <linearGradient id="heroDiyaBowlGrad" x1="6" y1="34" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#E6C887"/>
-                <stop offset="0.4" stop-color="#C8A15A"/>
-                <stop offset="1" stop-color="#6E1F3A"/>
-              </linearGradient>
-              <linearGradient id="heroDiyaFlameGrad" x1="24" y1="6" x2="24" y2="29" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#FFFBEB"/>
-                <stop offset="0.3" stop-color="#FBBF24"/>
-                <stop offset="0.75" stop-color="#F97316"/>
-                <stop offset="1" stop-color="#DC2626"/>
-              </linearGradient>
-              <radialGradient id="heroDiyaFlameAura" cx="0.5" cy="0.5" r="0.5">
-                <stop stop-color="#FBBF24" stop-opacity="0.65"/>
-                <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
-              </radialGradient>
-            </defs>
-          </svg>
+          <!-- Dynamic Festive Icon -->
+          <FestiveIcon :name="festivalStore.festivalIcon || 'diya'" size="hero" />
 
           <!-- Golden Particle Sparkle Embers -->
           <div class="hero-diya-sparkles" aria-hidden="true">
@@ -73,7 +45,7 @@
 
           <!-- Subtle Festive Hint Badge -->
           <div class="hero-diya-badge">
-            <span>Diwali Offer ✨</span>
+            <span>{{ festivalStore.heroOfferText || `${festivalStore.festivalName || 'Diwali'} Offer ✨` }}</span>
           </div>
         </div>
       </div>
@@ -1022,6 +994,7 @@ import {
 
 import { useAuthStore } from '../../stores/auth';
 import { useFestivalStore } from '../../stores/festival';
+import FestiveIcon from '../../components/FestiveIcon.vue';
 
 const emit = defineEmits(['update-wishlist-count', 'update-cart-count']);
 

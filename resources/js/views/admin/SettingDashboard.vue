@@ -1702,7 +1702,7 @@
                                     type="text"
                                     v-model="settings.welcome_gift.title"
                                     class="form-input"
-                                    :placeholder="settings.welcome_gift.diwali_reveal_enabled ? 'A Little Diwali Magic' : 'A Special Gift Awaits You'"
+                                    :placeholder="settings.welcome_gift.diwali_reveal_enabled ? `A Little ${festivalForm.festival_name || 'Diwali'} Magic` : 'A Special Gift Awaits You'"
                                 />
                             </div>
 
@@ -1715,6 +1715,21 @@
                                     :placeholder="settings.welcome_gift.diwali_reveal_enabled ? 'A festive surprise is waiting for you.' : 'Every new member deserves a warm welcome.'"
                                 />
                             </div>
+                        </div>
+
+                        <!-- Shortcut to Festival Mode Icon & Text Settings -->
+                        <div style="background: #FFFDF9; border: 1px solid #F1E5C6; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span>
+                                🎨 <strong>Festival Campaign:</strong> Active Festival: <strong>{{ festivalForm.festival_name || 'Diwali' }}</strong> • Icon: <strong>{{ festivalForm.festival_icon || 'diya' }}</strong>
+                            </span>
+                            <button 
+                                type="button" 
+                                class="btn btn--secondary btn--sm" 
+                                @click="activeTab = 'festival_mode'" 
+                                style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; color: #6E1F3A; font-weight: 600;"
+                            >
+                                Customize Icon & Floating Texts in Festival Mode →
+                            </button>
                         </div>
                     </div>
 
@@ -1755,13 +1770,13 @@
                                 position: relative;
                             "
                         >
-                            <!-- Diwali Theme Preview -->
+                            <!-- Festival Theme Preview -->
                             <template v-if="settings.welcome_gift.diwali_reveal_enabled">
                                 <div style="font-size: 0.7rem; font-weight: 700; color: #C8A15A; letter-spacing: 2px; text-transform: uppercase;">
-                                    ✨ FESTIVE DIWALI SURPRISE ✨
+                                    {{ festivalForm.revealed_festive_tag || `✦ ${(festivalForm.festival_name || 'DIWALI').toUpperCase()} FESTIVE SURPRISE ✦` }}
                                 </div>
                                 <h3 style="font-family: 'Playfair Display', serif; font-size: 1.45rem; color: #6E1F3A; margin: 6px 0 6px 0;">
-                                    {{ settings.welcome_gift.title || 'A Little Diwali Magic' }}
+                                    {{ settings.welcome_gift.title || `A Little ${festivalForm.festival_name || 'Diwali'} Magic` }}
                                 </h3>
                                 <p style="font-size: 0.82rem; color: #6B6B6B; margin: 0 0 18px 0;">
                                     {{ settings.welcome_gift.subtitle || 'A festive surprise is waiting for you.' }}
@@ -1771,7 +1786,7 @@
                                 <div v-if="!adminPreviewRevealed" style="display: flex; flex-direction: column; align-items: center; gap: 14px;">
                                     <!-- Miniature SVG Rangoli preview -->
                                     <div style="width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, rgba(200, 161, 90, 0.25) 0%, transparent 70%); display: flex; align-items: center; justify-content: center; border: 1px dashed #C8A15A;">
-                                        <span style="font-size: 2.2rem; filter: drop-shadow(0 2px 8px rgba(200, 161, 90, 0.6));">🪔</span>
+                                        <FestiveIcon :name="festivalForm.festival_icon || 'diya'" size="constant" />
                                     </div>
                                     <button 
                                         type="button" 
@@ -1795,7 +1810,12 @@
 
                                 <!-- Revealed State -->
                                 <div v-else style="background: #ffffff; border: 1.5px dashed #C8A15A; border-radius: 14px; padding: 18px; animation: modalRise 400ms ease;">
-                                    <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px;">DIWALI FESTIVE GIFT</div>
+                                    <div style="width: 32px; height: 32px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center;">
+                                        <FestiveIcon :name="festivalForm.festival_icon || 'diya'" size="revealed" />
+                                    </div>
+                                    <div style="font-size: 0.65rem; font-weight: bold; color: #C8A15A; letter-spacing: 1px; text-transform: uppercase;">
+                                        {{ festivalForm.voucher_badge_text || `${(festivalForm.festival_name || 'DIWALI').toUpperCase()} SPECIAL` }}
+                                    </div>
                                     <h4 style="font-family: 'Playfair Display', serif; font-size: 1.15rem; margin: 6px 0; color: #6E1F3A;">
                                         🎉 {{ settings.welcome_gift.discount_text || 'Enjoy 10% OFF' }}
                                     </h4>
@@ -3273,13 +3293,69 @@
 
                     <!-- Block 1: Festival Preset & General Details -->
                     <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md);">
-                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700;">
-                            ✨ Festival Campaign Preset
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                            <span>✨ Active Festival Campaign & Presets</span>
+                            <span style="font-size: 0.75rem; color: #6E1F3A; font-weight: 600; background: #FDF2F8; padding: 2px 8px; border-radius: 6px;">Campaign Core</span>
                         </div>
+
+                        <!-- One-Click Festival Presets -->
+                        <div>
+                            <span style="font-size: 0.78rem; color: #475569; font-weight: 600; display: block; margin-bottom: 6px;">
+                                ⚡ One-Click Festival Presets (Click to auto-populate festival name, icons & matching texts):
+                            </span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary btn--sm" 
+                                    :style="festivalForm.festival_key === 'diwali' ? 'background: #6E1F3A; color: #FFF; border-color: #D4AF37;' : ''"
+                                    style="font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; font-weight: 600;"
+                                    @click="applyFestivalCampaignPreset('diwali')"
+                                >
+                                    🪔 Diwali (Festival of Lights)
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary btn--sm" 
+                                    :style="festivalForm.festival_key === 'pongal' ? 'background: #6E1F3A; color: #FFF; border-color: #D4AF37;' : ''"
+                                    style="font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; font-weight: 600;"
+                                    @click="applyFestivalCampaignPreset('pongal')"
+                                >
+                                    🌾 Pongal / Makar Sankranti
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary btn--sm" 
+                                    :style="festivalForm.festival_key === 'eid' ? 'background: #6E1F3A; color: #FFF; border-color: #D4AF37;' : ''"
+                                    style="font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; font-weight: 600;"
+                                    @click="applyFestivalCampaignPreset('eid')"
+                                >
+                                    🌙 Eid Mubarak
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary btn--sm" 
+                                    :style="festivalForm.festival_key === 'navratri' ? 'background: #6E1F3A; color: #FFF; border-color: #D4AF37;' : ''"
+                                    style="font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; font-weight: 600;"
+                                    @click="applyFestivalCampaignPreset('navratri')"
+                                >
+                                    ✨ Navratri & Dussehra
+                                </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary btn--sm" 
+                                    :style="festivalForm.festival_key === 'newyear' ? 'background: #6E1F3A; color: #FFF; border-color: #D4AF37;' : ''"
+                                    style="font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; font-weight: 600;"
+                                    @click="applyFestivalCampaignPreset('newyear')"
+                                >
+                                    🎁 Christmas & New Year
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="responsive-grid-1-2" style="gap: var(--spacing-md);">
                             <div class="form-group">
-                                <label class="form-label">Active Festival Celebration</label>
-                                <select v-model="festivalForm.festival_key" class="form-input">
+                                <label class="form-label">Active Festival Celebration Type</label>
+                                <select v-model="festivalForm.festival_key" class="form-input" @change="applyFestivalCampaignPreset(festivalForm.festival_key)">
                                     <option value="diwali">🪔 Diwali (Festival of Lights)</option>
                                     <option value="pongal">🌾 Pongal / Makar Sankranti</option>
                                     <option value="navratri">✨ Navratri & Durga Puja</option>
@@ -3289,8 +3365,243 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Festival Campaign Title</label>
-                                <input type="text" v-model="festivalForm.festival_name" class="form-input" placeholder="e.g. Diwali Grand Celebration" />
+                                <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Festival Name</span>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn--secondary btn--sm" 
+                                        style="font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; color: #6E1F3A; font-weight: 600;"
+                                        @click="autoFillFromFestivalName"
+                                        title="Auto-fill hero badge, floating pill and revealed tags based on this festival name"
+                                    >
+                                        ⚡ Auto-sync matching texts
+                                    </button>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.festival_name" 
+                                    class="form-input" 
+                                    placeholder="e.g. Diwali, Pongal, Eid, Navratri, Onam..." 
+                                    @input="autoFillFromFestivalName"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">Type any festival name. All floating badges, tags, and offers adapt dynamically.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block 1B: Festival Gift Reveal, Floating Badges & Icons Customization -->
+                    <div class="glass-panel" style="padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-md); border: 1.5px solid #E6C887; background: #FFFCF7;">
+                        <div class="card-header-title" style="color: #6E1F3A; font-weight: 700; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.25rem;">🎁</span>
+                                <span>Festival Icon & Dynamic Storefront Texts</span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: #065f46; font-weight: 700; background: #DCFCE7; padding: 3px 10px; border-radius: 9999px; border: 1px solid #86EFAC;">
+                                Direct Storefront Control
+                            </span>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #555; margin: 0;">
+                            Change the festival icon and update all text labels shown on the <strong>Hero Floating Pill</strong>, the <strong>Bottom Floating Shortcut</strong>, and the <strong>Revealed Gift Modal & Voucher Card</strong>.
+                        </p>
+
+                        <!-- Icon Selection Grid -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 700; color: #2D2424; margin-bottom: 8px; display: block;">
+                                Choose Festival Icon / Motif:
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px;">
+                                <div 
+                                    v-for="ico in festivalIconList" 
+                                    :key="ico.key"
+                                    @click="festivalForm.festival_icon = ico.key"
+                                    :style="festivalForm.festival_icon === ico.key ? 'border: 2px solid #6E1F3A; background: #FFF5F7; box-shadow: 0 4px 12px rgba(110, 31, 58, 0.15);' : 'border: 1px solid #E5E0D8; background: #FFFFFF;'"
+                                    style="padding: 10px 8px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; transition: all 0.2s ease;"
+                                >
+                                    <div style="height: 38px; display: flex; align-items: center; justify-content: center;">
+                                        <FestiveIcon :name="ico.key" size="preview" />
+                                    </div>
+                                    <strong style="font-size: 0.78rem; color: #1e293b; line-height: 1.1;">{{ ico.label }}</strong>
+                                    <span style="font-size: 0.68rem; color: #64748b; line-height: 1.1;">{{ ico.desc }}</span>
+                                    <span v-if="festivalForm.festival_icon === ico.key" style="font-size: 0.65rem; color: #047857; font-weight: 700; background: #D1FAE5; padding: 1px 6px; border-radius: 4px;">
+                                        ✓ Selected
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Emoji Input if "custom" is selected -->
+                        <div v-if="festivalForm.festival_icon === 'custom'" class="form-group" style="background: #FFF; padding: 10px; border-radius: 8px; border: 1px dashed #C8A15A;">
+                            <label class="form-label">Custom Emoji or Symbol Character</label>
+                            <input 
+                                type="text" 
+                                v-model="festivalForm.custom_icon_char" 
+                                class="form-input" 
+                                placeholder="Type or paste any emoji (e.g. 🏮, 🪔, 🌸, 🦚, 🥮, 🌟)"
+                                maxlength="6"
+                                @input="festivalForm.festival_icon = festivalForm.custom_icon_char || 'custom'"
+                            />
+                        </div>
+
+                        <!-- ⚡ Live Interactive Preview of All 4 Elements -->
+                        <div style="background: #FCFAF7; border: 1.5px dashed #D4AF37; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                <strong style="font-size: 0.8rem; font-weight: 700; color: #6E1F3A; text-transform: uppercase; letter-spacing: 0.06em;">
+                                    ⚡ Live Component Previews (Updates Instantly as you Type & Pick Icons)
+                                </strong>
+                                <span style="font-size: 0.72rem; color: #8A6D3B; font-weight: 600;">Reflects Customer Storefront Exactly</span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                                <!-- 1. Hero Floating Badge Preview -->
+                                <div style="background: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                        1. Hero Banner Floating Pill (Top Left)
+                                    </span>
+                                    <div style="position: relative; width: 68px; height: 72px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(200, 161, 90, 0.2) 0%, transparent 70%); border-radius: 50%;">
+                                        <FestiveIcon :name="festivalForm.festival_icon || 'diya'" size="hero" />
+                                        <div style="position: absolute; bottom: -8px; background: #FCFAF7; border: 1px solid #C8A15A; color: #6E1F3A; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                            {{ festivalForm.hero_offer_text || `${festivalForm.festival_name || 'Diwali'} Offer ✨` }}
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.68rem; color: #94a3b8; margin-top: 10px;">Rendered on Hero Banner (Image 1 top)</span>
+                                </div>
+
+                                <!-- 2. Bottom Floating Shortcut Bar Preview -->
+                                <div style="background: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                        2. Bottom Floating Shortcut Pill
+                                    </span>
+                                    <div style="display: inline-flex; align-items: center; gap: 8px; background: #FCFAF7; border: 1.5px solid #C8A15A; padding: 6px 14px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); margin-top: 14px;">
+                                        <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                            <FestiveIcon :name="festivalForm.festival_icon || 'diya'" size="mini" />
+                                        </div>
+                                        <strong style="font-size: 0.75rem; color: #6E1F3A; letter-spacing: 0.5px; font-weight: 700;">
+                                            {{ festivalForm.floating_bar_text || `REVEAL YOUR ${(festivalForm.festival_name || 'DIWALI').toUpperCase()} GIFT` }}
+                                        </strong>
+                                        <span style="font-size: 0.8rem; color: #C8A15A;">✨</span>
+                                        <span style="width: 18px; height: 18px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; margin-left: 2px;">✕</span>
+                                    </div>
+                                    <span style="font-size: 0.68rem; color: #94a3b8; margin-top: 10px;">Rendered at bottom left (Image 1 bottom)</span>
+                                </div>
+
+                                <!-- 3. Revealed Modal Tagline Preview -->
+                                <div style="background: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                        3. Revealed Modal Top Tag
+                                    </span>
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px;">
+                                        <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(200, 161, 90, 0.25) 0%, transparent 70%); border-radius: 50%;">
+                                            <FestiveIcon :name="festivalForm.festival_icon || 'diya'" size="revealed" />
+                                        </div>
+                                        <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px; color: #C8A15A; text-transform: uppercase;">
+                                            {{ festivalForm.revealed_festive_tag || `✦ ${(festivalForm.festival_name || 'DIWALI').toUpperCase()} FESTIVE GIFT UNLOCKED ✦` }}
+                                        </span>
+                                        <strong style="font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #6E1F3A;">
+                                            Enjoy 10% OFF
+                                        </strong>
+                                    </div>
+                                    <span style="font-size: 0.68rem; color: #94a3b8; margin-top: 6px;">Rendered inside Reveal Modal (Image 2 top)</span>
+                                </div>
+
+                                <!-- 4. Voucher Card Badge Preview -->
+                                <div style="background: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+                                        4. Voucher Ticket Badge
+                                    </span>
+                                    <div style="background: #FCFAF7; border: 1px solid #E6C887; border-radius: 8px; padding: 8px 14px; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                        <span style="font-size: 0.65rem; color: #64748b; font-weight: 600;">USE PROMO CODE</span>
+                                        <span style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">
+                                            {{ festivalForm.voucher_badge_text || `${(festivalForm.festival_name || 'DIWALI').toUpperCase()} SPECIAL` }}
+                                        </span>
+                                    </div>
+                                    <span style="font-size: 0.68rem; color: #94a3b8; margin-top: 10px;">Rendered on coupon card (Image 2 bottom)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editable Text Inputs Grid -->
+                        <div class="responsive-grid-1-2" style="gap: var(--spacing-md); margin-top: 4px;">
+                            
+                            <!-- 1. Hero Offer Text -->
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600;">
+                                    Hero Floating Badge Text (Image 1 Top)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.hero_offer_text" 
+                                    class="form-input" 
+                                    :placeholder="`${festivalForm.festival_name || 'Diwali'} Offer ✨`"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">Appears on the pill badge below the floating hero icon.</span>
+                            </div>
+
+                            <!-- 2. Bottom Floating Bar (Desktop) -->
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600;">
+                                    Floating Bottom Bar Text - Desktop (Image 1 Bottom)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.floating_bar_text" 
+                                    class="form-input" 
+                                    :placeholder="`REVEAL YOUR ${(festivalForm.festival_name || 'DIWALI').toUpperCase()} GIFT`"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">Main label on bottom-left floating shortcut pill.</span>
+                            </div>
+
+                            <!-- 3. Bottom Floating Bar (Mobile) -->
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600;">
+                                    Floating Bottom Bar Text - Mobile
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.floating_bar_mobile_text" 
+                                    class="form-input" 
+                                    :placeholder="`${festivalForm.festival_name || 'Diwali'} Gift ✨`"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">Compact label shown on mobile screens.</span>
+                            </div>
+
+                            <!-- 4. Revealed Festive Tag -->
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600;">
+                                    Modal Header Tagline (Image 2 Top)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.revealed_festive_tag" 
+                                    class="form-input" 
+                                    :placeholder="`✦ ${(festivalForm.festival_name || 'DIWALI').toUpperCase()} FESTIVE GIFT UNLOCKED ✦`"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">The golden headline above "Enjoy 10% OFF" in modal.</span>
+                            </div>
+
+                            <!-- 5. Voucher Badge Text -->
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 600;">
+                                    Voucher Card Badge (Image 2 Bottom)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    v-model="festivalForm.voucher_badge_text" 
+                                    class="form-input" 
+                                    :placeholder="`${(festivalForm.festival_name || 'DIWALI').toUpperCase()} SPECIAL`"
+                                />
+                                <span class="text-muted" style="font-size: 0.75rem;">Pill badge positioned above the coupon code.</span>
+                            </div>
+
+                            <!-- Quick Action to Re-sync with Welcome Gift Tab -->
+                            <div class="form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                <button 
+                                    type="button" 
+                                    class="btn btn--secondary" 
+                                    style="padding: 10px; font-size: 0.8rem; font-weight: 600; color: #6E1F3A; border-color: #C8A15A;"
+                                    @click="autoFillFromFestivalName"
+                                >
+                                    🔄 Reset All Texts to Match "{{ festivalForm.festival_name || 'Diwali' }}"
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -3958,6 +4269,7 @@ import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import StorefrontAnnouncementBar from "../../components/StorefrontAnnouncementBar.vue";
 import SplashScreen from "../../components/SplashScreen.vue";
+import FestiveIcon from "../../components/FestiveIcon.vue";
 import { useAuthStore } from "../../stores/auth";
 import { useFestivalStore } from "../../stores/festival";
 
@@ -5294,7 +5606,136 @@ const festivalForm = ref({
     product_badge_icon: '✨',
     product_badge_style: 'maroon_gold',
     product_badge_prefix: '',
+    festival_icon: 'diya',
+    hero_offer_text: 'Diwali Offer ✨',
+    floating_bar_text: 'REVEAL YOUR DIWALI GIFT',
+    floating_bar_mobile_text: 'Diwali Gift ✨',
+    revealed_festive_tag: '✦ DIWALI FESTIVE GIFT UNLOCKED ✦',
+    voucher_badge_text: 'DIWALI SPECIAL',
 });
+
+const festivalIconList = [
+    { key: 'diya', label: 'Diya / Deepam', emoji: '🪔', desc: 'Diwali & Traditional' },
+    { key: 'lantern', label: 'Moroccan Lantern', emoji: '🏮', desc: 'Ramadan & Eid' },
+    { key: 'pongal_pot', label: 'Pongal Pot / Kalash', emoji: '🌾', desc: 'Pongal & Sankranti' },
+    { key: 'crescent', label: 'Crescent Moon & Star', emoji: '🌙', desc: 'Eid & Royal Heritage' },
+    { key: 'sparkle', label: 'Golden Sparkles', emoji: '✨', desc: 'Navratri & Auspicious' },
+    { key: 'gift', label: 'Luxury Gift Box', emoji: '🎁', desc: 'Gifting & New Year' },
+    { key: 'lotus', label: 'Sacred Lotus', emoji: '🪷', desc: 'Durga Puja & Lakshmi' },
+    { key: 'firecracker', label: 'Firecracker / Sparkler', emoji: '🎆', desc: 'Grand Celebration' },
+    { key: 'tree', label: 'Festive Tree', emoji: '🎄', desc: 'Christmas & Holiday' },
+    { key: 'crown', label: 'Royal Crown', emoji: '👑', desc: 'Heritage Luxury' },
+    { key: 'custom', label: 'Custom Symbol', emoji: '✏️', desc: 'Any Emoji / Text' }
+];
+
+const applyFestivalCampaignPreset = (presetKey) => {
+    switch (presetKey) {
+        case 'diwali':
+            festivalForm.value.festival_key = 'diwali';
+            festivalForm.value.festival_name = 'Diwali';
+            festivalForm.value.festival_icon = 'diya';
+            festivalForm.value.ornament_type = 'diyas_toran';
+            festivalForm.value.section_header_motif = 'diya';
+            festivalForm.value.product_badge_icon = '🪔';
+            festivalForm.value.splash_greeting = 'Wishing You a Joyous & Prosperous Diwali';
+            festivalForm.value.header_badge_text = 'DIWALI FESTIVE SPECIAL';
+            festivalForm.value.hero_offer_text = 'Diwali Offer ✨';
+            festivalForm.value.floating_bar_text = 'REVEAL YOUR DIWALI GIFT';
+            festivalForm.value.floating_bar_mobile_text = 'Diwali Gift ✨';
+            festivalForm.value.revealed_festive_tag = '✦ DIWALI FESTIVE GIFT UNLOCKED ✦';
+            festivalForm.value.voucher_badge_text = 'DIWALI SPECIAL';
+            if (settings.value?.welcome_gift) {
+                settings.value.welcome_gift.title = 'A Little Diwali Magic';
+            }
+            break;
+        case 'pongal':
+            festivalForm.value.festival_key = 'pongal';
+            festivalForm.value.festival_name = 'Pongal';
+            festivalForm.value.festival_icon = 'pongal_pot';
+            festivalForm.value.ornament_type = 'diyas_toran';
+            festivalForm.value.section_header_motif = 'sparkle';
+            festivalForm.value.product_badge_icon = '🌾';
+            festivalForm.value.splash_greeting = 'Happy Pongal & Makar Sankranti';
+            festivalForm.value.header_badge_text = 'PONGAL HARVEST SPECIAL';
+            festivalForm.value.hero_offer_text = 'Pongal Offer ✨';
+            festivalForm.value.floating_bar_text = 'REVEAL YOUR PONGAL GIFT';
+            festivalForm.value.floating_bar_mobile_text = 'Pongal Gift ✨';
+            festivalForm.value.revealed_festive_tag = '✦ PONGAL FESTIVE GIFT UNLOCKED ✦';
+            festivalForm.value.voucher_badge_text = 'PONGAL SPECIAL';
+            if (settings.value?.welcome_gift) {
+                settings.value.welcome_gift.title = 'A Little Pongal Magic';
+            }
+            break;
+        case 'eid':
+            festivalForm.value.festival_key = 'eid';
+            festivalForm.value.festival_name = 'Eid';
+            festivalForm.value.festival_icon = 'crescent';
+            festivalForm.value.ornament_type = 'lanterns';
+            festivalForm.value.section_header_motif = 'sparkle';
+            festivalForm.value.product_badge_icon = '🌙';
+            festivalForm.value.splash_greeting = 'Eid Mubarak & Blessed Celebrations';
+            festivalForm.value.header_badge_text = 'EID ROYAL CELEBRATION';
+            festivalForm.value.hero_offer_text = 'Eid Mubarak Offer ✨';
+            festivalForm.value.floating_bar_text = 'REVEAL YOUR EID GIFT';
+            festivalForm.value.floating_bar_mobile_text = 'Eid Gift ✨';
+            festivalForm.value.revealed_festive_tag = '✦ EID FESTIVE GIFT UNLOCKED ✦';
+            festivalForm.value.voucher_badge_text = 'EID SPECIAL';
+            if (settings.value?.welcome_gift) {
+                settings.value.welcome_gift.title = 'A Little Eid Magic';
+            }
+            break;
+        case 'navratri':
+            festivalForm.value.festival_key = 'navratri';
+            festivalForm.value.festival_name = 'Navratri';
+            festivalForm.value.festival_icon = 'sparkle';
+            festivalForm.value.ornament_type = 'diyas_toran';
+            festivalForm.value.section_header_motif = 'sparkle';
+            festivalForm.value.product_badge_icon = '✨';
+            festivalForm.value.splash_greeting = 'Happy Navratri & Joyous Festive Celebrations';
+            festivalForm.value.header_badge_text = 'NAVRATRI UTSAV SPECIAL';
+            festivalForm.value.hero_offer_text = 'Navratri Offer ✨';
+            festivalForm.value.floating_bar_text = 'REVEAL YOUR NAVRATRI GIFT';
+            festivalForm.value.floating_bar_mobile_text = 'Navratri Gift ✨';
+            festivalForm.value.revealed_festive_tag = '✦ NAVRATRI FESTIVE GIFT UNLOCKED ✦';
+            festivalForm.value.voucher_badge_text = 'NAVRATRI SPECIAL';
+            if (settings.value?.welcome_gift) {
+                settings.value.welcome_gift.title = 'A Little Navratri Magic';
+            }
+            break;
+        case 'newyear':
+            festivalForm.value.festival_key = 'newyear';
+            festivalForm.value.festival_name = 'New Year';
+            festivalForm.value.festival_icon = 'gift';
+            festivalForm.value.ornament_type = 'stars';
+            festivalForm.value.section_header_motif = 'sparkle';
+            festivalForm.value.product_badge_icon = '🎁';
+            festivalForm.value.splash_greeting = 'Merry Christmas & Happy New Year';
+            festivalForm.value.header_badge_text = 'HOLIDAY & NEW YEAR SPECIAL';
+            festivalForm.value.hero_offer_text = 'Holiday Offer ✨';
+            festivalForm.value.floating_bar_text = 'REVEAL YOUR HOLIDAY GIFT';
+            festivalForm.value.floating_bar_mobile_text = 'Holiday Gift ✨';
+            festivalForm.value.revealed_festive_tag = '✦ HOLIDAY FESTIVE GIFT UNLOCKED ✦';
+            festivalForm.value.voucher_badge_text = 'NEW YEAR SPECIAL';
+            if (settings.value?.welcome_gift) {
+                settings.value.welcome_gift.title = 'A Little Holiday Magic';
+            }
+            break;
+    }
+};
+
+const autoFillFromFestivalName = () => {
+    const raw = (festivalForm.value.festival_name || '').trim();
+    if (!raw) return;
+    const upper = raw.toUpperCase();
+    festivalForm.value.hero_offer_text = `${raw} Offer ✨`;
+    festivalForm.value.floating_bar_text = `REVEAL YOUR ${upper} GIFT`;
+    festivalForm.value.floating_bar_mobile_text = `${raw} Gift ✨`;
+    festivalForm.value.revealed_festive_tag = `✦ ${upper} FESTIVE GIFT UNLOCKED ✦`;
+    festivalForm.value.voucher_badge_text = `${upper} SPECIAL`;
+    if (settings.value?.welcome_gift) {
+        settings.value.welcome_gift.title = `A Little ${raw} Magic`;
+    }
+};
 
 const getSplashGreetingPreviewStyle = computed(() => {
     switch (festivalForm.value.splash_style) {

@@ -220,6 +220,9 @@
                 <option value="last7">Last 7 Days</option>
                 <option value="last30">Last 30 Days</option>
                 <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="this_year">This Year</option>
+                <option value="last_year">Last Year</option>
                 <option value="custom">Custom Date Range</option>
               </select>
             </div>
@@ -329,6 +332,9 @@
                   <option value="last7">Last 7 Days</option>
                   <option value="last30">Last 30 Days</option>
                   <option value="this_month">This Month</option>
+                  <option value="last_month">Last Month</option>
+                  <option value="this_year">This Year</option>
+                  <option value="last_year">Last Year</option>
                   <option value="custom">Custom Date Range</option>
                 </select>
               </div>
@@ -752,6 +758,9 @@
                 <option value="last7">Last 7 Days</option>
                 <option value="last30">Last 30 Days</option>
                 <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="this_year">This Year</option>
+                <option value="last_year">Last Year</option>
                 <option value="custom">Custom Date Range</option>
               </select>
             </div>
@@ -1201,6 +1210,20 @@ const onPipelinePresetChange = () => {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     pipelineDateFrom.value = formatDateToYMD(firstDay);
     pipelineDateTo.value = formatDateToYMD(today);
+  } else if (pipelineDatePreset.value === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    pipelineDateFrom.value = formatDateToYMD(firstDay);
+    pipelineDateTo.value = formatDateToYMD(lastDay);
+  } else if (pipelineDatePreset.value === 'this_year') {
+    const firstDay = new Date(today.getFullYear(), 0, 1);
+    pipelineDateFrom.value = formatDateToYMD(firstDay);
+    pipelineDateTo.value = formatDateToYMD(today);
+  } else if (pipelineDatePreset.value === 'last_year') {
+    const firstDay = new Date(today.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(today.getFullYear() - 1, 11, 31);
+    pipelineDateFrom.value = formatDateToYMD(firstDay);
+    pipelineDateTo.value = formatDateToYMD(lastDay);
   } else if (pipelineDatePreset.value === 'all') {
     pipelineDateFrom.value = '';
     pipelineDateTo.value = '';
@@ -1272,6 +1295,20 @@ const onExceptionPresetChange = () => {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     exceptionDateFrom.value = formatDateToYMD(firstDay);
     exceptionDateTo.value = formatDateToYMD(today);
+  } else if (exceptionDatePreset.value === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    exceptionDateFrom.value = formatDateToYMD(firstDay);
+    exceptionDateTo.value = formatDateToYMD(lastDay);
+  } else if (exceptionDatePreset.value === 'this_year') {
+    const firstDay = new Date(today.getFullYear(), 0, 1);
+    exceptionDateFrom.value = formatDateToYMD(firstDay);
+    exceptionDateTo.value = formatDateToYMD(today);
+  } else if (exceptionDatePreset.value === 'last_year') {
+    const firstDay = new Date(today.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(today.getFullYear() - 1, 11, 31);
+    exceptionDateFrom.value = formatDateToYMD(firstDay);
+    exceptionDateTo.value = formatDateToYMD(lastDay);
   } else if (exceptionDatePreset.value === 'all') {
     exceptionDateFrom.value = '';
     exceptionDateTo.value = '';
@@ -1322,6 +1359,20 @@ const onAnalyticsPresetChange = () => {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     analyticsDateFrom.value = formatDateToYMD(firstDay);
     analyticsDateTo.value = formatDateToYMD(today);
+  } else if (analyticsDatePreset.value === 'last_month') {
+    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+    analyticsDateFrom.value = formatDateToYMD(firstDay);
+    analyticsDateTo.value = formatDateToYMD(lastDay);
+  } else if (analyticsDatePreset.value === 'this_year') {
+    const firstDay = new Date(today.getFullYear(), 0, 1);
+    analyticsDateFrom.value = formatDateToYMD(firstDay);
+    analyticsDateTo.value = formatDateToYMD(today);
+  } else if (analyticsDatePreset.value === 'last_year') {
+    const firstDay = new Date(today.getFullYear() - 1, 0, 1);
+    const lastDay = new Date(today.getFullYear() - 1, 11, 31);
+    analyticsDateFrom.value = formatDateToYMD(firstDay);
+    analyticsDateTo.value = formatDateToYMD(lastDay);
   } else if (analyticsDatePreset.value === 'all') {
     analyticsDateFrom.value = '';
     analyticsDateTo.value = '';

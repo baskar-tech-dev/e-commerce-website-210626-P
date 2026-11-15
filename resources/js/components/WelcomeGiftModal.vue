@@ -11,35 +11,20 @@
         <button 
           class="festive-float-pill"
           @click="openModal"
-          aria-label="Reveal your festive Diwali gift"
-          title="Click to reveal your Diwali offer"
+          :aria-label="`Reveal your festive ${festivalName} gift`"
+          :title="`Click to reveal your ${festivalName} offer`"
         >
           <span class="pill-diya-icon" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="mini-diya-svg">
-              <path d="M6 19C6 19 8 26 16 26C24 26 26 19 26 19C26 19 20 21 16 21C12 21 6 19 6 19Z" fill="url(#miniDiyaGrad)" stroke="#C8A15A" stroke-width="1.2"/>
-              <ellipse cx="16" cy="19" rx="10" ry="2.5" fill="#E6C887" stroke="#9A7B38" stroke-width="0.8"/>
-              <path d="M16 7C16 7 13 12 13 14C13 15.6569 14.3431 17 16 17C17.6569 17 19 15.6569 19 14C19 12 16 7 16 7Z" fill="url(#miniFlameGrad)"/>
-              <defs>
-                <linearGradient id="miniDiyaGrad" x1="6" y1="19" x2="26" y2="26" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#C8A15A"/>
-                  <stop offset="1" stop-color="#7A561E"/>
-                </linearGradient>
-                <linearGradient id="miniFlameGrad" x1="16" y1="7" x2="16" y2="17" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#FFF0A8"/>
-                  <stop offset="0.6" stop-color="#F59E0B"/>
-                  <stop offset="1" stop-color="#DC2626"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <FestiveIcon :name="giftConfig.festival_icon || 'diya'" size="mini" />
           </span>
-          <span class="pill-label desktop-text">REVEAL YOUR DIWALI GIFT</span>
-          <span class="pill-label mobile-text">Diwali Gift ✨</span>
+          <span class="pill-label desktop-text">{{ giftConfig.floating_bar_text || `REVEAL YOUR ${festivalNameUpper} GIFT` }}</span>
+          <span class="pill-label mobile-text">{{ giftConfig.floating_bar_mobile_text || `${festivalName} Gift ✨` }}</span>
           <span class="pill-sparkle" aria-hidden="true">✨</span>
         </button>
         <button 
           class="pill-dismiss-btn" 
           @click.stop="dismissFloatingEntry" 
-          aria-label="Dismiss Diwali offer shortcut"
+          :aria-label="`Dismiss ${festivalName} offer shortcut`"
           title="Dismiss"
         >
           ✕
@@ -223,55 +208,9 @@
                   </svg>
                 </div>
 
-                <!-- Central Diya Lamp: CONSTANT STATIONARY POSITION (Stationary, Flame Always Points Up) -->
+                <!-- Central Festive Motif: CONSTANT STATIONARY POSITION -->
                 <div class="central-constant-diya" aria-hidden="true">
-                  <svg 
-                    viewBox="0 0 48 52" 
-                    fill="none" 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    class="constant-diya-svg"
-                  >
-                    <defs>
-                      <linearGradient id="constDiyaBowl" x1="4" y1="34" x2="44" y2="48" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#FCE7B0"/>
-                        <stop offset="0.4" stop-color="#C8A15A"/>
-                        <stop offset="1" stop-color="#6E1F3A"/>
-                      </linearGradient>
-                      <linearGradient id="constDiyaFlame" x1="24" y1="5" x2="24" y2="30" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#FFFFFF"/>
-                        <stop offset="0.25" stop-color="#FEF08A"/>
-                        <stop offset="0.65" stop-color="#F59E0B"/>
-                        <stop offset="1" stop-color="#DC2626"/>
-                      </linearGradient>
-                      <radialGradient id="constFlameAura" cx="0.5" cy="0.5" r="0.5">
-                        <stop stop-color="#FBBF24" stop-opacity="0.75"/>
-                        <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
-                      </radialGradient>
-                    </defs>
-
-                    <!-- Diya Base / Brass Bowl -->
-                    <path 
-                      d="M5 34 C5 34 10 47 24 47 C38 47 43 34 43 34 C43 34 34 37.5 24 37.5 C14 37.5 5 34 5 34 Z" 
-                      fill="url(#constDiyaBowl)" 
-                      stroke="#C8A15A" 
-                      stroke-width="1.4"
-                    />
-                    <!-- Diya Rim -->
-                    <ellipse cx="24" cy="34" rx="19" ry="4.2" fill="#FDF4DC" stroke="#A88234" stroke-width="1.1"/>
-                    <ellipse cx="24" cy="34" rx="14" ry="2.6" fill="#7A561E" opacity="0.6"/>
-
-                    <!-- Diya Flame Glow Halo -->
-                    <circle cx="24" cy="18" r="15" fill="url(#constFlameAura)" class="diya-aura"/>
-
-                    <!-- Diya Constant Upright Flickering Flame -->
-                    <path 
-                      d="M24 5 C24 5 16 16.5 16 22 C16 26.4 19.6 30 24 30 C28.4 30 32 26.4 32 22 C32 16.5 24 5 24 5 Z" 
-                      fill="url(#constDiyaFlame)" 
-                      class="diwali-flame-flicker"
-                    />
-                    <!-- Inner White Hot Core -->
-                    <ellipse cx="24" cy="23" rx="3.5" ry="5.5" fill="#FFFFFF" opacity="0.9"/>
-                  </svg>
+                  <FestiveIcon :name="giftConfig.festival_icon || 'diya'" size="constant" />
                 </div>
               </div>
 
@@ -292,29 +231,12 @@
             <!-- Stage 3: Revealed Diwali Coupon Card Stage -->
             <Transition name="coupon-reveal-fade">
               <div v-if="stage === 'revealed'" class="diwali-revealed-stage">
-                <!-- Top Diya Motif & Festive Tag -->
+                <!-- Top Festive Motif & Tag -->
                 <div class="revealed-header">
                   <div class="revealed-diya-badge" aria-hidden="true">
-                    <svg viewBox="0 0 32 32" fill="none" class="revealed-diya-svg">
-                      <path d="M6 19C6 19 8 26 16 26C24 26 26 19 26 19C26 19 20 21 16 21C12 21 6 19 6 19Z" fill="url(#revDiyaGrad)" stroke="#C8A15A" stroke-width="1.2"/>
-                      <ellipse cx="16" cy="19" rx="10" ry="2.5" fill="#F7E7B4" stroke="#9A7B38" stroke-width="0.8"/>
-                      <path d="M16 6C16 6 12.5 12 12.5 14.5C12.5 16.433 14.067 18 16 18C17.933 18 19.5 16.433 19.5 14.5C19.5 12 16 6 16 6Z" fill="url(#revFlameGrad)"/>
-                      <defs>
-                        <linearGradient id="revDiyaGrad" x1="6" y1="19" x2="26" y2="26" gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#E6C887"/>
-                          <stop offset="0.5" stop-color="#C8A15A"/>
-                          <stop offset="1" stop-color="#6E1F3A"/>
-                        </linearGradient>
-                        <linearGradient id="revFlameGrad" x1="16" y1="6" x2="16" y2="18" gradientUnits="userSpaceOnUse">
-                          <stop stop-color="#FFFBEB"/>
-                          <stop offset="0.3" stop-color="#FBBF24"/>
-                          <stop offset="0.8" stop-color="#F97316"/>
-                          <stop offset="1" stop-color="#DC2626"/>
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                    <FestiveIcon :name="giftConfig.festival_icon || 'diya'" size="revealed" />
                   </div>
-                  <span class="revealed-festive-tag">✦ DIWALI FESTIVE GIFT UNLOCKED ✦</span>
+                  <span class="revealed-festive-tag">{{ giftConfig.revealed_festive_tag || `✦ ${festivalNameUpper} FESTIVE GIFT UNLOCKED ✦` }}</span>
                   <h3 class="revealed-main-title">
                     {{ cleanDiscountText(giftConfig.discount_text) || (giftConfig.coupon ? formatCouponHeadline(giftConfig.coupon) : 'Enjoy 10% OFF') }}
                   </h3>
@@ -331,7 +253,7 @@
 
                   <div class="voucher-header">
                     <span class="voucher-eyebrow">USE PROMO CODE AT CHECKOUT</span>
-                    <span class="voucher-member-badge">DIWALI SPECIAL</span>
+                    <span class="voucher-member-badge">{{ giftConfig.voucher_badge_text || `${festivalNameUpper} SPECIAL` }}</span>
                   </div>
 
                   <!-- Code Display and Copy Button in One Cohesive Row -->
@@ -578,6 +500,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import FestiveIcon from './FestiveIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -591,6 +514,13 @@ const isCodeCopied = ref(false);
 const giftConfig = ref({
   is_enabled: true,
   diwali_reveal_enabled: true,
+  festival_name: 'Diwali',
+  festival_icon: 'diya',
+  hero_offer_text: '',
+  floating_bar_text: '',
+  floating_bar_mobile_text: '',
+  revealed_festive_tag: '',
+  voucher_badge_text: '',
   coupon_code: 'SAVE5',
   discount_text: 'Enjoy 10% OFF',
   title: 'A Little Diwali Magic',
@@ -599,6 +529,9 @@ const giftConfig = ref({
   is_coupon_valid: true,
   coupon: null
 });
+
+const festivalName = computed(() => giftConfig.value.festival_name || 'Diwali');
+const festivalNameUpper = computed(() => festivalName.value.toUpperCase());
 
 // Floating entry display condition
 const showFloatingEntry = computed(() => {
