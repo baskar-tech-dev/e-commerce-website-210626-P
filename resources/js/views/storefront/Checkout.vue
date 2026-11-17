@@ -261,12 +261,16 @@
             <!-- Financials -->
             <div style="display: flex; flex-direction: column; gap: var(--spacing-xs); font-size: 0.9rem; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--color-border); margin-bottom: var(--spacing-md);">
               <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--color-text-muted);">Subtotal</span>
+                <span style="color: var(--color-text-muted);">Items Total</span>
                 <span>₹{{ subtotal }}</span>
               </div>
               <div v-if="discount > 0" style="display: flex; justify-content: space-between; color: var(--color-success);">
                 <span>Voucher Code</span>
                 <span>− ₹{{ discount }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #64748b; padding-left: 0.5rem;">
+                <span>↳ Includes Estimated 5% GST</span>
+                <span>₹{{ estimatedGstAmount.toFixed(2) }}</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span style="color: var(--color-text-muted);">Delivery Shipping</span>
@@ -501,6 +505,11 @@ const applySavedAddress = (event) => {
 
 const subtotal = computed(() => {
   return cartItems.value.reduce((acc, item) => acc + item.selling_price * item.quantity, 0);
+});
+
+const estimatedGstAmount = computed(() => {
+  const net = Math.max(0, subtotal.value - discount.value);
+  return Math.round((net - (net / 1.05)) * 100) / 100;
 });
 
 const discount = ref(0);

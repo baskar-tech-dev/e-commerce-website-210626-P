@@ -65,6 +65,17 @@ class ProductService
                 }
             }
 
+            // Default tax & GST compliance settings
+            if (!isset($data['gst_rate']) || $data['gst_rate'] === null || $data['gst_rate'] === '') {
+                $data['gst_rate'] = 5.00;
+            }
+            if (empty($data['tax_category'])) {
+                $data['tax_category'] = 'standard';
+            }
+            if (empty($data['hsn_code'])) {
+                $data['hsn_code'] = '6211';
+            }
+
             // Create product
             $product = $this->productRepository->create($data);
 

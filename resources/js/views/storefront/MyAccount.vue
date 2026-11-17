@@ -571,12 +571,24 @@
                       <h5 class="expanded-heading">💰 Payment Breakdown</h5>
                       <div class="breakdown-lines">
                         <div class="breakdown-line">
-                          <span>Items Subtotal:</span>
+                          <span>Taxable Subtotal:</span>
                           <span>₹{{ formatPrice(order.subtotal) }}</span>
                         </div>
                         <div v-if="parseFloat(order.discount_amount) > 0" class="breakdown-line discount">
                           <span>Coupon Discount:</span>
                           <span>-₹{{ formatPrice(order.discount_amount) }}</span>
+                        </div>
+                        <div v-if="parseFloat(order.cgst_amount) > 0" class="breakdown-line" style="color: #64748b; font-size: 0.85rem;">
+                          <span>CGST (2.5%):</span>
+                          <span>₹{{ formatPrice(order.cgst_amount) }}</span>
+                        </div>
+                        <div v-if="parseFloat(order.sgst_amount) > 0" class="breakdown-line" style="color: #64748b; font-size: 0.85rem;">
+                          <span>SGST (2.5%):</span>
+                          <span>₹{{ formatPrice(order.sgst_amount) }}</span>
+                        </div>
+                        <div v-if="parseFloat(order.igst_amount) > 0" class="breakdown-line" style="color: #64748b; font-size: 0.85rem;">
+                          <span>IGST (5.0%):</span>
+                          <span>₹{{ formatPrice(order.igst_amount) }}</span>
                         </div>
                         <div class="breakdown-line">
                           <span>Delivery / Shipping:</span>
@@ -1196,18 +1208,29 @@ const printCustomerInvoice = (order) => {
     return;
   }
 
-  const itemsHtml = (order.items || []).map(item => `
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-        <strong style="color: #1e293b;">${item.product_name}</strong>
-        ${item.sku ? `<br><small style="color: #64748b; font-family: monospace;">SKU: ${item.sku}</small>` : ''}
-        ${item.variant?.size ? `<small style="color: #64748b;"> • Size: ${item.variant.size}</small>` : ''}
-      </td>
-      <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${parseFloat(item.unit_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #6E1F3A;">₹${parseFloat(item.total_price || (item.quantity * item.unit_price)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-    </tr>
-  `).join('');
+  const itemsHtml = (order.items || []).map(item => {
+    const itemTotal = parseFloat(item.total_price || (item.quantity * item.unit_price) || 0);
+    const itemTax = parseFloat(item.tax_amount || 0);
+    const taxableVal = Math.max(0, itemTotal - itemTax);
+    const taxRate = parseFloat(item.tax_rate || 5);
+
+    return `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
+          <strong style="color: #1e293b;">${item.product_name}</strong>
+          ${item.sku ? `<br><small style="color: #64748b; font-family: monospace;">SKU: ${item.sku}</small>` : ''}
+          ${item.variant?.size ? `<small style="color: #64748b;"> • Size: ${item.variant.size}</small>` : ''}
+          <small style="color: #64748b;"> • HSN: 6211</small>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${parseFloat(item.unit_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${taxableVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${taxRate}%</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${itemTax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #6E1F3A;">₹${itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      </tr>
+    `;
+  }).join('');
 
   const content = `
     <!DOCTYPE html>
@@ -1215,7 +1238,7 @@ const printCustomerInvoice = (order) => {
     <head>
       <title>Tax Invoice - ${order.order_number}</title>
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 32px; color: #1e293b; max-width: 820px; margin: 0 auto; line-height: 1.5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 32px; color: #1e293b; max-width: 860px; margin: 0 auto; line-height: 1.5; }
         .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #6E1F3A; padding-bottom: 20px; margin-bottom: 24px; }
         .brand-name { font-size: 22px; font-weight: 800; color: #6E1F3A; letter-spacing: 0.5px; }
         .brand-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
@@ -1223,9 +1246,9 @@ const printCustomerInvoice = (order) => {
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 13.5px; }
         .info-card { background: #faf7f8; border: 1px solid #ede4ea; padding: 14px 16px; border-radius: 8px; }
         .info-card h4 { margin: 0 0 8px 0; font-size: 14px; color: #6E1F3A; border-bottom: 1px solid #ede4ea; padding-bottom: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13.5px; }
-        th { background: #6E1F3A; color: #ffffff; padding: 10px; text-align: left; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .totals-box { margin-left: auto; width: 320px; font-size: 13.5px; background: #faf7f8; border: 1px solid #ede4ea; border-radius: 8px; padding: 14px 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
+        th { background: #6E1F3A; color: #ffffff; padding: 9px 8px; text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .totals-box { margin-left: auto; width: 340px; font-size: 13.5px; background: #faf7f8; border: 1px solid #ede4ea; border-radius: 8px; padding: 14px 16px; }
         .totals-row { display: flex; justify-content: space-between; padding: 4px 0; color: #475569; }
         .grand-total { border-top: 2px solid #6E1F3A; padding-top: 8px; margin-top: 4px; font-size: 16px; font-weight: 800; color: #6E1F3A; }
         .footer-note { text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; }
@@ -1237,9 +1260,10 @@ const printCustomerInvoice = (order) => {
           <div class="brand-name">MAYA SREE FASHION</div>
           <div class="brand-sub">A Mother's Dream That Became A Fashion Legacy</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 6px;">Tirupur, Tamil Nadu, India • Support: +91 99442 85102</div>
+          <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">GSTIN: 33AAIFM9999A1Z5 • State: Tamil Nadu (Code 33)</div>
         </div>
         <div style="text-align: right;">
-          <h2 class="invoice-title">RETAIL INVOICE</h2>
+          <h2 class="invoice-title">TAX INVOICE</h2>
           <div style="font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 4px;">#${order.order_number}</div>
           <div style="font-size: 12.5px; color: #64748b;">Date: ${formatDate(order.created_at)}</div>
         </div>
@@ -1252,7 +1276,8 @@ const printCustomerInvoice = (order) => {
           ${order.shipping_address_line_1}<br />
           ${order.shipping_address_line_2 ? order.shipping_address_line_2 + '<br />' : ''}
           ${order.shipping_city}, ${order.shipping_state} - ${order.shipping_postal_code}<br />
-          📞 ${order.shipping_phone}
+          📞 ${order.shipping_phone}<br />
+          <strong>Place of Supply:</strong> ${order.shipping_state || 'Tamil Nadu'}
         </div>
 
         <div class="info-card">
@@ -1270,8 +1295,11 @@ const printCustomerInvoice = (order) => {
           <tr>
             <th>Item Description</th>
             <th style="text-align: center;">Qty</th>
-            <th style="text-align: right;">Unit Price</th>
-            <th style="text-align: right;">Subtotal</th>
+            <th style="text-align: right;">Price (Incl. Tax)</th>
+            <th style="text-align: right;">Taxable Value</th>
+            <th style="text-align: center;">Rate</th>
+            <th style="text-align: right;">Tax Amt</th>
+            <th style="text-align: right;">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -1281,13 +1309,31 @@ const printCustomerInvoice = (order) => {
 
       <div class="totals-box">
         <div class="totals-row">
-          <span>Items Subtotal:</span>
+          <span>Taxable Merchandise:</span>
           <span>₹${parseFloat(order.subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
         </div>
         ${parseFloat(order.discount_amount) > 0 ? `
           <div class="totals-row" style="color: #059669; font-weight: 600;">
             <span>Coupon Discount:</span>
             <span>-₹${parseFloat(order.discount_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+          </div>
+        ` : ''}
+        ${parseFloat(order.cgst_amount) > 0 ? `
+          <div class="totals-row">
+            <span>CGST (2.5%):</span>
+            <span>₹${parseFloat(order.cgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+          </div>
+        ` : ''}
+        ${parseFloat(order.sgst_amount) > 0 ? `
+          <div class="totals-row">
+            <span>SGST (2.5%):</span>
+            <span>₹${parseFloat(order.sgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+          </div>
+        ` : ''}
+        ${parseFloat(order.igst_amount) > 0 ? `
+          <div class="totals-row">
+            <span>IGST (5.0%):</span>
+            <span>₹${parseFloat(order.igst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
           </div>
         ` : ''}
         <div class="totals-row">

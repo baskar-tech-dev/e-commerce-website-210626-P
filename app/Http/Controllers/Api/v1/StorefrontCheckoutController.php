@@ -164,11 +164,11 @@ class StorefrontCheckoutController extends Controller
 
         DB::beginTransaction();
         try {
-            $subtotal = 0;
+            $grossItemsTotal = 0;
             $totalItems = 0;
             $itemsData = [];
 
-            // 1. Validate stock and calculate subtotal
+            // 1. Validate stock and calculate items gross & tax
             foreach ($validated['items'] as $itemInput) {
                 $variant = ProductVariant::with('product')->findOrFail($itemInput['product_variant_id']);
                 
@@ -183,17 +183,26 @@ class StorefrontCheckoutController extends Controller
                     ], 422);
                 }
 
-                $price = $variant->selling_price ?? $variant->product->selling_price;
-                $mrp = $variant->mrp ?? $variant->product->mrp;
+                $price = (float) ($variant->selling_price ?? $variant->product->selling_price);
+                $mrp = (float) ($variant->mrp ?? $variant->product->mrp);
+                $qty = (int) $itemInput['quantity'];
+                $lineGross = $price * $qty;
 
-                $subtotal += $price * $itemInput['quantity'];
-                $totalItems += $itemInput['quantity'];
+                $grossItemsTotal += $lineGross;
+                $totalItems += $qty;
+
+                $gstRate = (float) ($variant->product->gst_rate ?? 5.00);
+                if ($gstRate <= 0) {
+                    $gstRate = 5.00;
+                }
 
                 $itemsData[] = [
                     'variant' => $variant,
-                    'quantity' => $itemInput['quantity'],
+                    'quantity' => $qty,
                     'price' => $price,
                     'mrp' => $mrp,
+                    'line_gross' => $lineGross,
+                    'gst_rate' => $gstRate,
                 ];
             }
 
@@ -241,17 +250,53 @@ class StorefrontCheckoutController extends Controller
                 }
 
                 if ($couponModel) {
-                    if ($subtotal >= ($couponModel->min_order_value ?? 0)) {
+                    if ($grossItemsTotal >= ($couponModel->min_order_value ?? 0)) {
                         if ($couponModel->type === 'percentage') {
-                            $discount = ($subtotal * $couponModel->value) / 100;
+                            $discount = ($grossItemsTotal * $couponModel->value) / 100;
                             if ($couponModel->max_discount) {
                                 $discount = min($discount, $couponModel->max_discount);
                             }
                         } else {
-                            $discount = min($couponModel->value, $subtotal);
+                            $discount = min($couponModel->value, $grossItemsTotal);
                         }
                     }
                 }
+            }
+
+            // Calculate GST and Taxable Subtotal (Inclusive 5% GST Pattern)
+            $effectiveTaxSum = 0;
+            foreach ($itemsData as $idx => $item) {
+                $itemDiscount = ($grossItemsTotal > 0 && $discount > 0)
+                    ? round(($discount * $item['line_gross']) / $grossItemsTotal, 2)
+                    : 0.00;
+
+                $itemNetGross = max(0.00, $item['line_gross'] - $itemDiscount);
+                $itemTaxable = round($itemNetGross / (1 + ($item['gst_rate'] / 100)), 2);
+                $itemTax = round($itemNetGross - $itemTaxable, 2);
+
+                $itemsData[$idx]['discount'] = $itemDiscount;
+                $itemsData[$idx]['taxable_amount'] = $itemTaxable;
+                $itemsData[$idx]['tax_amount'] = $itemTax;
+
+                $effectiveTaxSum += $itemTax;
+            }
+
+            $netMerchandise = round($grossItemsTotal - $discount, 2);
+            $totalTax = round($effectiveTaxSum, 2);
+            $taxableSubtotal = round($netMerchandise - $totalTax, 2);
+
+            // Determine Intra-state (Tamil Nadu) vs Inter-state (IGST)
+            $shippingState = strtolower(trim($validated['shipping_state']));
+            $isIntraState = in_array($shippingState, ['tamil nadu', 'tamilnadu', 'tn']);
+
+            if ($isIntraState) {
+                $cgstAmount = round($totalTax / 2, 2);
+                $sgstAmount = round($totalTax - $cgstAmount, 2);
+                $igstAmount = 0.00;
+            } else {
+                $cgstAmount = 0.00;
+                $sgstAmount = 0.00;
+                $igstAmount = $totalTax;
             }
 
             // 3. Dynamic Shipping charge calculation (Free for orders >= threshold e.g. 1999, else state-specific rate)
@@ -262,7 +307,7 @@ class StorefrontCheckoutController extends Controller
                 $stateRates = json_decode($stateRates, true) ?: [];
             }
 
-            if (($subtotal - $discount) >= $threshold) {
+            if ($netMerchandise >= $threshold) {
                 $shipping = 0.00;
             } else {
                 $state = trim($validated['shipping_state']);
@@ -275,7 +320,7 @@ class StorefrontCheckoutController extends Controller
                 }
                 $shipping = $matchedRate !== null ? $matchedRate : $defaultShipping;
             }
-            $grandTotal = $subtotal - $discount + $shipping;
+            $grandTotal = round($netMerchandise + $shipping, 2);
 
             // 4. Generate order
             $orderNumber = Order::generateOrderNumber();
@@ -288,9 +333,12 @@ class StorefrontCheckoutController extends Controller
                 'status' => Order::STATUS_ORDER_PLACED,
                 'payment_status' => 'pending',
                 'payment_method' => $validated['payment_method'],
-                'subtotal' => $subtotal,
+                'subtotal' => $taxableSubtotal,
                 'discount_amount' => $discount,
-                'tax_amount' => 0.00,
+                'tax_amount' => $totalTax,
+                'cgst_amount' => $cgstAmount,
+                'sgst_amount' => $sgstAmount,
+                'igst_amount' => $igstAmount,
                 'shipping_amount' => $shipping,
                 'grand_total' => $grandTotal,
                 'total_items' => $totalItems,
@@ -360,7 +408,10 @@ class StorefrontCheckoutController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_mrp' => $item['mrp'],
                     'unit_price' => $item['price'],
-                    'total_price' => $item['price'] * $item['quantity'],
+                    'discount' => $item['discount'] ?? 0.00,
+                    'tax_rate' => $item['gst_rate'] ?? 5.00,
+                    'tax_amount' => $item['tax_amount'] ?? 0.00,
+                    'total_price' => $item['line_gross'],
                 ]);
 
                 if (strtolower($validated['payment_method']) !== 'cod') {

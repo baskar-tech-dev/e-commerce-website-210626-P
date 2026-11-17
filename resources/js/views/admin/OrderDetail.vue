@@ -226,6 +226,9 @@
                 <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.125rem;">
                   ₹{{ parseFloat(item.unit_price).toFixed(2) }} × {{ item.quantity }} units
                 </div>
+                <div v-if="parseFloat(item.tax_amount) > 0" style="font-size: 0.72rem; color: #64748b; margin-top: 0.125rem;">
+                  Incl. {{ parseFloat(item.tax_rate || 5) }}% GST: ₹{{ parseFloat(item.tax_amount).toFixed(2) }}
+                </div>
               </div>
             </div>
           </div>
@@ -233,12 +236,24 @@
           <!-- Summary Totals -->
           <div style="margin-top: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-sm); align-items: flex-end;">
             <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;">
-              <span style="color: var(--color-text-muted);">Subtotal:</span>
+              <span style="color: var(--color-text-muted);">Taxable Subtotal:</span>
               <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.subtotal).toFixed(2) }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;" v-if="parseFloat(order.discount_amount) > 0">
               <span style="color: var(--color-text-muted);">Coupon Discount:</span>
               <span style="color: var(--color-danger); font-weight: 500;">-₹{{ parseFloat(order.discount_amount).toFixed(2) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;" v-if="parseFloat(order.cgst_amount) > 0">
+              <span style="color: var(--color-text-muted);">CGST (2.5%):</span>
+              <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.cgst_amount).toFixed(2) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;" v-if="parseFloat(order.sgst_amount) > 0">
+              <span style="color: var(--color-text-muted);">SGST (2.5%):</span>
+              <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.sgst_amount).toFixed(2) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;" v-if="parseFloat(order.igst_amount) > 0">
+              <span style="color: var(--color-text-muted);">IGST (5.0%):</span>
+              <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.igst_amount).toFixed(2) }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;">
               <span style="color: var(--color-text-muted);">Shipping Amount:</span>
@@ -717,9 +732,10 @@ const printMockInvoice = () => {
     Phone: ${order.value.billing_phone}
     
     Items:
-    ${(order.value.items || []).map(i => `- ${i.product_name} [${i.sku}] (x${i.quantity}) - ₹${parseFloat(i.total_price).toFixed(2)}`).join('\n')}
+    ${(order.value.items || []).map(i => `- ${i.product_name} [${i.sku}] (x${i.quantity}) - ₹${parseFloat(i.total_price).toFixed(2)} (Incl. ${parseFloat(i.tax_rate || 5)}% GST: ₹${parseFloat(i.tax_amount || 0).toFixed(2)})`).join('\n')}
     
-    Subtotal: ₹${parseFloat(order.value.subtotal || 0).toFixed(2)}
+    Taxable Subtotal: ₹${parseFloat(order.value.subtotal || 0).toFixed(2)}
+    ${parseFloat(order.value.discount_amount || 0) > 0 ? `Coupon Discount: -₹${parseFloat(order.value.discount_amount).toFixed(2)}\n    ` : ''}${parseFloat(order.value.cgst_amount || 0) > 0 ? `CGST (2.5%): ₹${parseFloat(order.value.cgst_amount).toFixed(2)}\n    ` : ''}${parseFloat(order.value.sgst_amount || 0) > 0 ? `SGST (2.5%): ₹${parseFloat(order.value.sgst_amount).toFixed(2)}\n    ` : ''}${parseFloat(order.value.igst_amount || 0) > 0 ? `IGST (5.0%): ₹${parseFloat(order.value.igst_amount).toFixed(2)}\n    ` : ''}Shipping: ₹${parseFloat(order.value.shipping_amount || 0).toFixed(2)}
     Grand Total: ₹${parseFloat(order.value.grand_total || 0).toFixed(2)}
   `;
   const win = window.open('', '_blank');
