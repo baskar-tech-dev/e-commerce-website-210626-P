@@ -255,6 +255,10 @@
               <span style="color: var(--color-text-muted);">IGST (5.0%):</span>
               <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.igst_amount).toFixed(2) }}</span>
             </div>
+             <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;" v-if="parseFloat(order.gst_amount) > 0">
+              <span style="color: var(--color-text-muted);">Tax Amount:</span>
+              <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.tax_amount).toFixed(2) }}</span>
+            </div>
             <div style="display: flex; justify-content: space-between; width: 280px; font-size: 0.9rem;">
               <span style="color: var(--color-text-muted);">Shipping Amount:</span>
               <span style="color: #1e293b; font-weight: 500;">₹{{ parseFloat(order.shipping_amount || 0).toFixed(2) }}</span>
