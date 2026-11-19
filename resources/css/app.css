@@ -1118,6 +1118,19 @@ main.admin-page [style*="color:white"],
     color: var(--color-primary) !important;
 }
 
+/* Explicit exemption for dark CTA banners to guarantee crisp readability */
+.storefront-main .cta-banner h1,
+.storefront-main .cta-banner h2,
+.storefront-main .cta-banner h3,
+.storefront-main .cta-banner .cta-banner__title {
+    color: #ffffff !important;
+}
+
+.storefront-main .cta-banner p,
+.storefront-main .cta-banner .cta-banner__subtitle {
+    color: #fce7f3 !important;
+}
+
 .storefront-main {
     color: var(--color-text-primary) !important;
 }

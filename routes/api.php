@@ -77,6 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('customer/wishlist', [WishlistController::class, 'store']);
     Route::delete('customer/wishlist/{product}', [WishlistController::class, 'destroy']);
     Route::post('customer/wishlist/merge', [WishlistController::class, 'merge']);
+
+    // Admin/Staff Store Branch Management
+    Route::post('settings/branches', [\App\Http\Controllers\Api\v1\StorefrontBranchController::class, 'update']);
 });
 
 // Public Storefront routes
@@ -94,6 +97,7 @@ Route::middleware('throttle:public_api')->group(function () {
     Route::get('storefront/occasions', [StorefrontProductController::class, 'getOccasions']);
     Route::get('storefront/story-settings', [StoryImageController::class, 'getStorySettings']);
     Route::get('storefront/festival-mode', [StorefrontFestivalController::class, 'index']);
+    Route::get('storefront/branches', [\App\Http\Controllers\Api\v1\StorefrontBranchController::class, 'index']);
     Route::post('storefront/subscribe', [\App\Http\Controllers\Api\v1\SubscriberController::class, 'subscribe']);
 
     // Public Product Reviews
@@ -314,6 +318,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role', 'throttle:admin_api'
     Route::middleware('permission:manage_settings')->group(function () {
         Route::get('settings', [SettingController::class, 'index']);
         Route::post('settings/batch', [SettingController::class, 'updateBatch']);
+        Route::post('settings/branches', [\App\Http\Controllers\Api\v1\StorefrontBranchController::class, 'update']);
         Route::post('settings/test-email', [SettingController::class, 'testEmail']);
         Route::get('audit-logs', [AuditLogController::class, 'index']);
         

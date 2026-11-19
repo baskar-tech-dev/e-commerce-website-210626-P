@@ -48,21 +48,103 @@
 
           <!-- Step 1: Shipping Details -->
           <div class="glass-panel" style="padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-md);">
-            <div class="card-header-title" style="margin-bottom: var(--spacing-xs); border: none; padding-bottom: 0;">1. Delivery Address</div>
-
-            <!-- Saved address book dropdown -->
-            <div v-if="addressBook.length" class="form-group" style="margin-bottom: var(--spacing-sm); background: rgba(0,0,0,0.1); border-radius: 6px; padding: var(--spacing-sm); border: 1px solid var(--color-border);">
-              <label class="form-label" style="font-size: 0.8rem; margin-bottom: var(--spacing-xs);">Select Saved Address</label>
-              <select class="form-input" @change="applySavedAddress($event)" style="font-size: 0.85rem;">
-                <option value="">-- Use a new custom address --</option>
-                <option v-for="addr in addressBook" :key="addr.id" :value="addr.id">
-                  [{{ addr.label }}] {{ addr.first_name }} {{ addr.last_name }} - {{ addr.address_line_1 }}, {{ addr.city }}
-                </option>
-              </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-bottom: var(--spacing-xs); flex-wrap: wrap; gap: 0.5rem;">
+              <div class="card-header-title" style="margin: 0; border: none; padding: 0;">1. Delivery Address</div>
+              <button 
+                v-if="addressBook.length && !showNewAddressForm" 
+                type="button" 
+                class="btn btn--outline btn--sm" 
+                @click="startNewAddress"
+                style="font-size: 0.8rem; padding: 4px 12px;"
+              >
+                ➕ Add New Address
+              </button>
+              <button 
+                v-else-if="addressBook.length && showNewAddressForm" 
+                type="button" 
+                class="btn btn--secondary btn--sm" 
+                @click="cancelNewAddress"
+                style="font-size: 0.8rem; padding: 4px 12px;"
+              >
+                ✕ Pick Saved Address
+              </button>
             </div>
 
-            <!-- Custom address inputs -->
-            <form id="shipping-form" @submit.prevent style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+            <!-- Saved address cards multi-select grid -->
+            <div v-if="addressBook.length && !showNewAddressForm" class="checkout-addresses-grid">
+              <div 
+                v-for="addr in addressBook" 
+                :key="addr.id" 
+                class="checkout-addr-card"
+                :class="{ 'checkout-addr-card--selected': selectedAddressId === addr.id }"
+                @click="selectSavedAddress(addr)"
+              >
+                <div class="checkout-addr-card__header">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input 
+                      type="radio" 
+                      name="delivery_address" 
+                      :checked="selectedAddressId === addr.id" 
+                      style="accent-color: var(--color-primary); cursor: pointer; width: 16px; height: 16px;" 
+                    />
+                    <span class="checkout-addr-pill">
+                      <span v-if="addr.label?.toLowerCase() === 'home'">🏠</span>
+                      <span v-else-if="addr.label?.toLowerCase() === 'office'">🏢</span>
+                      <span v-else-if="addr.label?.toLowerCase() === 'boutique'">👗</span>
+                      <span v-else>📍</span>
+                      {{ addr.label || 'Home' }}
+                    </span>
+                  </div>
+                  <span v-if="addr.is_default_shipping" class="address-default-badge" style="font-size: 0.68rem;">
+                    ★ Default
+                  </span>
+                </div>
+
+                <div style="font-weight: 700; color: #1e293b; font-size: 0.92rem; margin-bottom: 2px;">
+                  {{ addr.first_name }} {{ addr.last_name }}
+                </div>
+                <div style="font-size: 0.82rem; color: #475569; line-height: 1.45;">
+                  {{ addr.address_line_1 }}<span v-if="addr.address_line_2">, {{ addr.address_line_2 }}</span><br />
+                  <span v-if="addr.landmark" style="color: #64748b; font-size: 0.78rem;">🚩 {{ addr.landmark }}<br /></span>
+                  {{ addr.city }}, {{ addr.state }} - <strong>{{ addr.postal_code }}</strong><br />
+                  📞 {{ addr.phone }}
+                </div>
+              </div>
+
+              <!-- '+ Add New Delivery Address' Card Tile -->
+              <div class="checkout-addr-card checkout-addr-card--add-new" @click="startNewAddress">
+                <div style="font-size: 1.8rem; margin-bottom: 4px;">➕</div>
+                <div style="font-weight: 600; font-size: 0.9rem; color: var(--color-primary);">Add New Address</div>
+                <div style="font-size: 0.78rem; color: #64748b; text-align: center; margin-top: 2px;">
+                  Deliver to another location or family member
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom / New Address Form -->
+            <form v-show="!addressBook.length || showNewAddressForm" id="shipping-form" @submit.prevent style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+              <!-- Address Type selector if authenticated -->
+              <div v-if="authStore.isAuthenticated" class="form-group" style="margin-bottom: 4px;">
+                <label class="form-label" style="font-size: 0.82rem; font-weight: 600; color: #334155;">Address Type / Label</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button 
+                    type="button" 
+                    v-for="lbl in ['Home', 'Office', 'Boutique', 'Other']" 
+                    :key="lbl"
+                    @click="form.address_label = lbl"
+                    class="label-chip-btn"
+                    :class="{ 'label-chip-btn--active': form.address_label === lbl }"
+                    style="padding: 4px 12px; font-size: 0.78rem;"
+                  >
+                    <span v-if="lbl === 'Home'">🏠</span>
+                    <span v-else-if="lbl === 'Office'">🏢</span>
+                    <span v-else-if="lbl === 'Boutique'">👗</span>
+                    <span v-else>📍</span>
+                    {{ lbl }}
+                  </button>
+                </div>
+              </div>
+
               <div class="checkout-form-row-2">
                 <div class="form-group">
                   <label class="form-label">First Name *</label>
@@ -129,13 +211,13 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Address Line 1 *</label>
+                <label class="form-label">Address Line 1 (Flat, House no., Building, Street) *</label>
                 <input 
                   type="text" 
                   v-model="form.shipping_address_line_1" 
                   @blur="validateField('shipping_address_line_1')"
                   @input="validateField('shipping_address_line_1')"
-                  placeholder="Flat No, Wing, Building Name" 
+                  placeholder="Flat No, Wing, Building Name, Street" 
                   class="form-input" 
                   :class="{ 'form-input--error': errors.shipping_address_line_1 }"
                 />
@@ -145,7 +227,7 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Address Line 2</label>
+                <label class="form-label">Address Line 2 (Area, Colony, Landmark)</label>
                 <input 
                   type="text" 
                   v-model="form.shipping_address_line_2" 
@@ -193,7 +275,8 @@
                     v-model="form.shipping_postal_code" 
                     @blur="validateField('shipping_postal_code')"
                     @input="validateField('shipping_postal_code')"
-                    placeholder="400001" 
+                    placeholder="641604" 
+                    maxlength="6"
                     class="form-input" 
                     :class="{ 'form-input--error': errors.shipping_postal_code }"
                   />
@@ -201,6 +284,19 @@
                     {{ errors.shipping_postal_code }}
                   </span>
                 </div>
+              </div>
+
+              <!-- Save to Address Book Checkbox if logged in -->
+              <div v-if="authStore.isAuthenticated" class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                <input 
+                  type="checkbox" 
+                  id="save_addr_checkout" 
+                  v-model="form.save_to_address_book" 
+                  style="width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer;"
+                />
+                <label for="save_addr_checkout" style="font-size: 0.82rem; color: #334155; font-weight: 600; cursor: pointer;">
+                  Save this address to my account for future orders
+                </label>
               </div>
             </form>
           </div>
@@ -343,9 +439,15 @@ const form = ref({
   shipping_city: '',
   shipping_state: 'Tamil Nadu',
   shipping_postal_code: '',
+  shipping_map_url: '',
+  save_to_address_book: true,
+  address_label: 'Home',
   payment_method: 'online',
   coupon_code: '',
 });
+
+const selectedAddressId = ref(null);
+const showNewAddressForm = ref(false);
 
 const errors = ref({
   shipping_first_name: '',
@@ -454,9 +556,16 @@ const fetchAddresses = async () => {
       form.value.shipping_email = response.data.data.email || '';
       
       // Auto-apply default shipping address if exists
-      const def = addressBook.value.find(a => a.is_default_shipping);
-      if (def) {
-        applyAddress(def);
+      if (addressBook.value.length > 0) {
+        const def = addressBook.value.find(a => a.is_default_shipping) || addressBook.value[0];
+        if (def) {
+          selectedAddressId.value = def.id;
+          showNewAddressForm.value = false;
+          applyAddress(def);
+        }
+      } else {
+        selectedAddressId.value = 'new';
+        showNewAddressForm.value = true;
       }
     }
   } catch (err) {
@@ -479,27 +588,40 @@ const applyAddress = (addr) => {
   form.value.shipping_city = addr.city || '';
   form.value.shipping_state = normalizeState(addr.state || 'Tamil Nadu');
   form.value.shipping_postal_code = addr.postal_code || '';
+  form.value.shipping_map_url = addr.map_url || '';
+  form.value.address_label = addr.label || 'Home';
   
   // Clear all errors
   Object.keys(errors.value).forEach(k => errors.value[k] = '');
 };
 
-const applySavedAddress = (event) => {
-  const id = event.target.value;
-  if (!id) {
-    // Reset custom
-    form.value.shipping_address_line_1 = '';
-    form.value.shipping_address_line_2 = '';
-    form.value.shipping_city = '';
-    form.value.shipping_state = 'Tamil Nadu';
-    form.value.shipping_postal_code = '';
-    // Clear all errors
-    Object.keys(errors.value).forEach(k => errors.value[k] = '');
-    return;
-  }
-  const match = addressBook.value.find(a => a.id === parseInt(id));
-  if (match) {
-    applyAddress(match);
+const selectSavedAddress = (addr) => {
+  selectedAddressId.value = addr.id;
+  showNewAddressForm.value = false;
+  applyAddress(addr);
+};
+
+const startNewAddress = () => {
+  selectedAddressId.value = 'new';
+  showNewAddressForm.value = true;
+  form.value.shipping_address_line_1 = '';
+  form.value.shipping_address_line_2 = '';
+  form.value.shipping_city = '';
+  form.value.shipping_state = 'Tamil Nadu';
+  form.value.shipping_postal_code = '';
+  form.value.shipping_map_url = '';
+  form.value.address_label = 'Home';
+  form.value.save_to_address_book = true;
+  Object.keys(errors.value).forEach(k => errors.value[k] = '');
+};
+
+const cancelNewAddress = () => {
+  if (addressBook.value.length > 0) {
+    showNewAddressForm.value = false;
+    const def = addressBook.value.find(a => a.id === selectedAddressId.value) || addressBook.value[0];
+    if (def) {
+      selectSavedAddress(def);
+    }
   }
 };
 
@@ -792,5 +914,134 @@ onMounted(() => {
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.02em;
+}
+
+/* ========================================================
+   CHECKOUT MULTI-ADDRESS CARDS & MAP EMBED STYLES
+   ======================================================== */
+.checkout-addresses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.checkout-addr-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.checkout-addr-card:hover {
+  border-color: rgba(74, 14, 46, 0.4);
+  box-shadow: 0 4px 12px rgba(74, 14, 46, 0.06);
+}
+
+.checkout-addr-card--selected {
+  border-color: var(--color-primary);
+  background: #fffdfc;
+  box-shadow: 0 4px 14px rgba(74, 14, 46, 0.1);
+}
+
+.checkout-addr-card--add-new {
+  border: 1.5px dashed #cbd5e1;
+  background: #fafaf9;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  text-align: center;
+  padding: 20px;
+}
+
+.checkout-addr-card--add-new:hover {
+  border-color: var(--color-primary);
+  background: #fff8f5;
+}
+
+.checkout-addr-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.checkout-addr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.address-default-badge {
+  background: rgba(212, 175, 55, 0.15);
+  color: #854d0e;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.checkout-addr-card__map {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px;
+  margin-top: 6px;
+}
+
+.embedded-map-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.embedded-map-wrapper--checkout {
+  height: 130px;
+  border: 1px solid rgba(74, 14, 46, 0.12);
+}
+
+.embedded-map-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.label-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.label-chip-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.label-chip-btn--active {
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
 }
 </style>

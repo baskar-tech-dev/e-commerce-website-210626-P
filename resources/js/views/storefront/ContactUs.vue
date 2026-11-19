@@ -94,184 +94,382 @@
         </div>
       </section>
 
-      <!-- Main Layout Split: Contact Form (Left) & Address/Hours (Right) -->
-      <div class="main-split-grid">
-        <!-- Section 3: Contact Form -->
-        <section class="contact-section form-section reveal">
-          <div class="form-card">
+      <!-- Section 3: Contact Form -->
+      <section class="contact-section form-section reveal">
+        <div class="form-card form-card--centered">
+          <div class="form-header text-center">
+            <span class="section-tag section-tag--center">Get In Touch</span>
             <h2 class="form-card__title">Send Us A Message</h2>
-            <p class="form-card__subtitle">Have a question or request? Fill out the form below and we will contact you shortly.</p>
-            
-            <form @submit.prevent="handleFormSubmit" class="contact-form">
-              <div class="form-row">
-                <!-- First Name -->
-                <div class="form-group" :class="{ 'has-error': errors.firstName, 'is-valid': touched.firstName && !errors.firstName }">
-                  <label for="firstName" class="form-label">First Name *</label>
-                  <input 
-                    id="firstName" 
-                    v-model="form.firstName" 
-                    type="text" 
-                    class="form-input" 
-                    placeholder="Enter your first name" 
-                    @blur="validateField('firstName')"
-                  />
-                  <span v-if="errors.firstName" class="error-text">{{ errors.firstName }}</span>
-                </div>
-
-                <!-- Last Name -->
-                <div class="form-group" :class="{ 'has-error': errors.lastName, 'is-valid': touched.lastName && !errors.lastName }">
-                  <label for="lastName" class="form-label">Last Name *</label>
-                  <input 
-                    id="lastName" 
-                    v-model="form.lastName" 
-                    type="text" 
-                    class="form-input" 
-                    placeholder="Enter your last name" 
-                    @blur="validateField('lastName')"
-                  />
-                  <span v-if="errors.lastName" class="error-text">{{ errors.lastName }}</span>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <!-- Email Address -->
-                <div class="form-group" :class="{ 'has-error': errors.email, 'is-valid': touched.email && !errors.email }">
-                  <label for="email" class="form-label">Email Address *</label>
-                  <input 
-                    id="email" 
-                    v-model="form.email" 
-                    type="email" 
-                    class="form-input" 
-                    placeholder="name@example.com" 
-                    @blur="validateField('email')"
-                  />
-                  <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
-                </div>
-
-                <!-- Phone Number -->
-                <div class="form-group" :class="{ 'has-error': errors.phone, 'is-valid': touched.phone && !errors.phone }">
-                  <label for="phone" class="form-label">Phone Number *</label>
-                  <input 
-                    id="phone" 
-                    v-model="form.phone" 
-                    type="tel" 
-                    class="form-input" 
-                    placeholder="10-digit mobile number" 
-                    @blur="validateField('phone')"
-                  />
-                  <span v-if="errors.phone" class="error-text">{{ errors.phone }}</span>
-                </div>
-              </div>
-
-              <!-- Subject -->
-              <div class="form-group" :class="{ 'has-error': errors.subject, 'is-valid': touched.subject && !errors.subject }">
-                <label for="subject" class="form-label">Subject *</label>
-                <select 
-                  id="subject" 
-                  v-model="form.subject" 
-                  class="form-input form-select"
-                  @blur="validateField('subject')"
-                >
-                  <option value="" disabled>Select a subject</option>
-                  <option value="Sizing & Fit">Sizing & Custom Blouse Fit</option>
-                  <option value="Order Status">Order Status & Tracking</option>
-                  <option value="Exchanges & Returns">Exchanges & Returns</option>
-                  <option value="Wholesale Inquiry">Bulk / Wholesale Inquiry</option>
-                  <option value="Other">Other Inquiry</option>
-                </select>
-                <span v-if="errors.subject" class="error-text">{{ errors.subject }}</span>
-              </div>
-
-              <!-- Message -->
-              <div class="form-group" :class="{ 'has-error': errors.message, 'is-valid': touched.message && !errors.message }">
-                <label for="message" class="form-label">Your Message *</label>
-                <textarea 
-                  id="message" 
-                  v-model="form.message" 
-                  rows="5" 
-                  class="form-input form-textarea" 
-                  placeholder="How can we help you?"
-                  @blur="validateField('message')"
-                ></textarea>
-                <span v-if="errors.message" class="error-text">{{ errors.message }}</span>
-              </div>
-
-              <!-- Submit button -->
-              <button type="submit" class="contact-btn contact-btn--primary form-submit-btn">
-                Send Message
-              </button>
-            </form>
+            <p class="form-card__subtitle">Have a question or custom design request? Fill out the form below and we will contact you shortly.</p>
           </div>
-        </section>
+          
+          <form @submit.prevent="handleFormSubmit" class="contact-form">
+            <div class="form-row">
+              <!-- First Name -->
+              <div class="form-group" :class="{ 'has-error': errors.firstName, 'is-valid': touched.firstName && !errors.firstName }">
+                <label for="firstName" class="form-label">First Name *</label>
+                <input 
+                  id="firstName" 
+                  v-model="form.firstName" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Enter your first name" 
+                  @blur="validateField('firstName')"
+                />
+                <span v-if="errors.firstName" class="error-text">{{ errors.firstName }}</span>
+              </div>
 
-        <!-- Right Side: Address & Hours -->
-        <div class="contact-sidebar">
-          <!-- Section 4: Visit Our Office -->
-          <section class="contact-section address-section reveal">
-            <div class="info-card">
-              <h2 class="info-card__title">Visit Our Store</h2>
-              <div class="info-card__content">
-                <div class="info-item">
-                  <span class="info-item__icon">📍</span>
-                  <div class="info-item__text">
-                    <strong>MS Signature Blouses</strong><br>
-                    No. 4, Seenivasa Nagar 2nd Street,<br>
-                    Solipalayam, Tirupur – 641652<br>
-                    Tamil Nadu, India
-                  </div>
+              <!-- Last Name -->
+              <div class="form-group" :class="{ 'has-error': errors.lastName, 'is-valid': touched.lastName && !errors.lastName }">
+                <label for="lastName" class="form-label">Last Name *</label>
+                <input 
+                  id="lastName" 
+                  v-model="form.lastName" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Enter your last name" 
+                  @blur="validateField('lastName')"
+                />
+                <span v-if="errors.lastName" class="error-text">{{ errors.lastName }}</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <!-- Email Address -->
+              <div class="form-group" :class="{ 'has-error': errors.email, 'is-valid': touched.email && !errors.email }">
+                <label for="email" class="form-label">Email Address *</label>
+                <input 
+                  id="email" 
+                  v-model="form.email" 
+                  type="email" 
+                  class="form-input" 
+                  placeholder="name@example.com" 
+                  @blur="validateField('email')"
+                />
+                <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
+              </div>
+
+              <!-- Phone Number -->
+              <div class="form-group" :class="{ 'has-error': errors.phone, 'is-valid': touched.phone && !errors.phone }">
+                <label for="phone" class="form-label">Phone Number *</label>
+                <input 
+                  id="phone" 
+                  v-model="form.phone" 
+                  type="tel" 
+                  class="form-input" 
+                  placeholder="10-digit mobile number" 
+                  @blur="validateField('phone')"
+                />
+                <span v-if="errors.phone" class="error-text">{{ errors.phone }}</span>
+              </div>
+            </div>
+
+            <!-- Subject -->
+            <div class="form-group" :class="{ 'has-error': errors.subject, 'is-valid': touched.subject && !errors.subject }">
+              <label for="subject" class="form-label">Subject *</label>
+              <select 
+                id="subject" 
+                v-model="form.subject" 
+                class="form-input form-select"
+                @blur="validateField('subject')"
+              >
+                <option value="" disabled>Select a subject</option>
+                <option value="Sizing & Fit">Sizing & Custom Blouse Fit</option>
+                <option value="Order Status">Order Status & Tracking</option>
+                <option value="Exchanges & Returns">Exchanges & Returns</option>
+                <option value="Wholesale Inquiry">Bulk / Wholesale Inquiry</option>
+                <option value="Other">Other Inquiry</option>
+              </select>
+              <span v-if="errors.subject" class="error-text">{{ errors.subject }}</span>
+            </div>
+
+            <!-- Message -->
+            <div class="form-group" :class="{ 'has-error': errors.message, 'is-valid': touched.message && !errors.message }">
+              <label for="message" class="form-label">Your Message *</label>
+              <textarea 
+                id="message" 
+                v-model="form.message" 
+                rows="5" 
+                class="form-input form-textarea" 
+                placeholder="How can we help you?"
+                @blur="validateField('message')"
+              ></textarea>
+              <span v-if="errors.message" class="error-text">{{ errors.message }}</span>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="contact-btn contact-btn--primary form-submit-btn">
+              Send Message
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Section 4: Full-Width Multi-Branch Store Network (Every Branch In A Separate Box) -->
+      <section class="contact-section branches-network-section reveal">
+        <div class="branches-header-row">
+          <div>
+            <span class="section-tag">Our Locations</span>
+            <h2 class="section-title">Our Store & Branch Locations</h2>
+            <p class="section-subtitle">
+              Visit our flagship boutique, design weaving studio, and wholesale experience centers across Tamil Nadu.
+            </p>
+          </div>
+          <button 
+            v-if="canManageBranches" 
+            @click="openBranchEditModal" 
+            type="button" 
+            class="btn-branch-action"
+          >
+            ✏️ Update Branch Addresses
+          </button>
+        </div>
+
+        <div class="branch-boxes-container">
+          <div 
+            v-for="branch in branches" 
+            :key="branch.id" 
+            class="branch-box-card"
+          >
+            <!-- Left: Branch Information -->
+            <div class="branch-box-card__info">
+              <div>
+                <div class="branch-box-card__meta">
+                  <span class="branch-tag-pill">{{ branch.branch_tag || 'Store' }}</span>
+                  <span v-if="branch.is_primary" class="branch-head-badge">★ Head Office</span>
                 </div>
 
-                <div class="info-item">
-                  <span class="info-item__icon">📞</span>
-                  <div class="info-item__text">
-                    <strong>Phone</strong><br>
-                    +91 99442 85102
-                  </div>
-                </div>
+                <h3 class="branch-box-card__name">{{ branch.name }}</h3>
 
-                <div class="info-item">
-                  <span class="info-item__icon">✉️</span>
-                  <div class="info-item__text">
-                    <strong>Email</strong><br>
-                    sales@mayasreefashion.com
+                <div class="branch-box-card__list">
+                  <div class="branch-info-row">
+                    <span class="branch-info-icon">📍</span>
+                    <div class="branch-info-content">
+                      <strong class="branch-info-label">Address:</strong>
+                      <p class="branch-info-text">{{ branch.address }}</p>
+                      <p v-if="branch.city || branch.state" class="branch-info-text">
+                        {{ branch.city }}<span v-if="branch.city && branch.state">, </span>{{ branch.state }} <span v-if="branch.postal_code">- {{ branch.postal_code }}</span>
+                      </p>
+                      <p class="branch-info-text">India</p>
+                    </div>
                   </div>
-                </div>
 
-                <div class="info-item">
-                  <span class="info-item__icon">🕒</span>
-                  <div class="info-item__text">
-                    <strong>Working Hours</strong><br>
-                    Monday – Saturday: 9:30 AM – 6:30 PM<br>
-                    Sunday: Closed
+                  <div v-if="branch.phone" class="branch-info-row">
+                    <span class="branch-info-icon">📞</span>
+                    <div class="branch-info-content">
+                      <strong class="branch-info-label">Phone Helpline:</strong>
+                      <p class="branch-info-text">
+                        <a :href="'tel:' + branch.phone.replace(/[^0-9+]/g, '')" class="branch-info-link">
+                          {{ branch.phone }}
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div v-if="branch.email" class="branch-info-row">
+                    <span class="branch-info-icon">✉️</span>
+                    <div class="branch-info-content">
+                      <strong class="branch-info-label">Email:</strong>
+                      <p class="branch-info-text">
+                        <a :href="'mailto:' + branch.email" class="branch-info-link">
+                          {{ branch.email }}
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div v-if="branch.working_hours" class="branch-info-row">
+                    <span class="branch-info-icon">🕒</span>
+                    <div class="branch-info-content">
+                      <strong class="branch-info-label">Working Hours:</strong>
+                      <p class="branch-info-text">{{ branch.working_hours }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <a href="https://maps.google.com/?q=Solipalayam+Tiruppur+Tamil+Nadu" target="_blank" class="contact-btn contact-btn--primary btn-full info-card__btn">
-                Open in Google Maps
-              </a>
-            </div>
-          </section>
 
-          <!-- Section 6: Google Map (Moved to sidebar) -->
-          <section class="contact-section map-section reveal">
-            <div class="map-container">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3914.8872957134375!2d77.34005837583648!3d11.121966052731113!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba907abdf67dfc7%3A0xe54e604f323a1a1f!2sSolipalayam%2C%20Tiruppur%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
-                width="100%" 
-                height="300" 
-                style="border:0;" 
-                allowfullscreen="" 
-                loading="lazy" 
-                referrerpolicy="no-referrer-when-downgrade"
-                class="map-iframe"
-              ></iframe>
-              <div class="map-overlay">
-                <a href="https://maps.google.com/?q=Solipalayam+Tiruppur+Tamil+Nadu" target="_blank" class="contact-btn contact-btn--secondary shadow-md">
-                  Get Directions
+              <div class="branch-box-card__actions">
+                <a 
+                  :href="getOpenMapUrl(branch)" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="contact-btn contact-btn--primary"
+                >
+                  🗺️ Open in Google Maps ↗
+                </a>
+                <a 
+                  :href="getDirectionsUrl(branch)" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="contact-btn contact-btn--secondary"
+                >
+                  🚗 Get Directions ↗
+                </a>
+                <a 
+                  v-if="branch.phone" 
+                  :href="'tel:' + branch.phone.replace(/[^0-9+]/g, '')" 
+                  class="contact-btn contact-btn--outline"
+                >
+                  📞 Call Branch
                 </a>
               </div>
             </div>
-          </section>
+
+            <!-- Right: Interactive Google Map Embed in its own Box -->
+            <div class="branch-box-card__map">
+              <div class="branch-map-frame">
+                <iframe 
+                  v-if="branch.map_embed_url" 
+                  :src="branch.map_embed_url" 
+                  width="100%" 
+                  height="100%" 
+                  style="border:0;" 
+                  allowfullscreen="" 
+                  loading="lazy" 
+                  referrerpolicy="no-referrer-when-downgrade" 
+                  :title="branch.name + ' Map'"
+                  class="branch-map-iframe"
+                ></iframe>
+                <div v-else class="branch-map-placeholder">
+                  <span style="font-size: 2rem; margin-bottom: 8px;">📍</span>
+                  <p style="margin: 0 0 12px 0; font-weight: 600; color: #1e293b;">{{ branch.name }}</p>
+                  <a 
+                    :href="getOpenMapUrl(branch)" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="contact-btn contact-btn--secondary"
+                  >
+                    View on Google Maps ↗
+                  </a>
+                </div>
+
+                <div class="branch-map-directions-tag">
+                  <a 
+                    :href="getDirectionsUrl(branch)" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="directions-pill-btn"
+                  >
+                    Get Directions ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin Address Update Modal for Maya Sree Fashion Branches -->
+      <div v-if="showBranchEditModal" class="branch-modal-backdrop" @click.self="showBranchEditModal = false">
+        <div class="branch-modal-dialog">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+            <div>
+              <h3 style="margin: 0; font-family: 'Playfair Display', serif; color: var(--color-primary); font-size: 1.25rem;">
+                🏢 Update Maya Sree Fashion Branch Addresses
+              </h3>
+              <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">
+                Add or edit company branch locations, contact phone numbers, and embedded map links.
+              </p>
+            </div>
+            <button type="button" @click="showBranchEditModal = false" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;">
+              ✕
+            </button>
+          </div>
+
+          <div style="max-height: 65vh; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 1rem;">
+            <div 
+              v-for="(b, idx) in editableBranches" 
+              :key="idx" 
+              class="branch-edit-card"
+            >
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">
+                  Branch #{{ idx + 1 }}
+                </span>
+                <button 
+                  v-if="editableBranches.length > 1" 
+                  type="button" 
+                  @click="askRemoveBranch(idx)" 
+                  class="btn btn--danger btn--sm"
+                  style="font-size: 0.72rem; padding: 2px 8px;"
+                >
+                  🗑️ Remove
+                </button>
+              </div>
+
+              <div class="contact-form-grid" style="grid-template-columns: 1.5fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">Branch / Store Name *</label>
+                  <input type="text" v-model="b.name" class="form-input" required />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">Tag / Category (e.g. Flagship Boutique, Factory)</label>
+                  <input type="text" v-model="b.branch_tag" class="form-input" placeholder="Flagship Boutique" />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label" style="font-size: 0.8rem;">Full Physical Address *</label>
+                <textarea v-model="b.address" class="form-input" rows="2" required></textarea>
+              </div>
+
+              <div class="contact-form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">City *</label>
+                  <input type="text" v-model="b.city" class="form-input" required />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">State *</label>
+                  <input type="text" v-model="b.state" class="form-input" required />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">Postal Pincode</label>
+                  <input type="text" v-model="b.postal_code" class="form-input" />
+                </div>
+              </div>
+
+              <div class="contact-form-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">Phone Helpline</label>
+                  <input type="text" v-model="b.phone" class="form-input" placeholder="+91 99442 85102" />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label class="form-label" style="font-size: 0.8rem;">Support Email</label>
+                  <input type="email" v-model="b.email" class="form-input" placeholder="sales@mayasreefashion.com" />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label" style="font-size: 0.8rem;">Working Hours</label>
+                <input type="text" v-model="b.working_hours" class="form-input" placeholder="Mon – Sat: 9:30 AM – 8:00 PM" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label" style="font-size: 0.8rem;">Google Maps Embed Iframe URL (or Search URL) *</label>
+                <input type="url" v-model="b.map_embed_url" class="form-input" placeholder="https://maps.google.com/maps?q=...&output=embed" />
+              </div>
+
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.8rem;">Google Maps Directions Link</label>
+                <input type="url" v-model="b.map_url" class="form-input" placeholder="https://maps.google.com/?q=..." />
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 0.75rem; margin-top: 1rem; flex-wrap: wrap; gap: 8px;">
+            <button type="button" @click="addNewBranchItem" class="btn btn--secondary btn--sm">
+              ➕ Add Another Branch
+            </button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" @click="showBranchEditModal = false" class="btn btn--outline btn--sm">
+                Cancel
+              </button>
+              <button type="button" @click="saveBranchSettings" class="btn btn--primary btn--sm" :disabled="savingBranches">
+                <span v-if="savingBranches">Saving...</span>
+                <span v-else>💾 Save Changes</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -299,7 +497,7 @@
       </section>
 
       <!-- Section 8: Final CTA -->
-      <section class="contact-section final-cta reveal">
+      <section class="contact-section final-cta">
         <div class="cta-banner">
           <h2 class="cta-banner__title">Need Immediate Assistance?</h2>
           <p class="cta-banner__subtitle">Our support team is always happy to help. Connect with us via text or voice call.</p>
@@ -310,8 +508,8 @@
               </svg>
               WhatsApp Us
             </a>
-            <a href="tel:+919944285102" class="contact-btn contact-btn--outline">
-              Call Customer Support
+            <a href="tel:+919944285102" class="contact-btn contact-btn--outline-white">
+              <span class="btn-icon">📞</span> Call Customer Support
             </a>
           </div>
         </div>
@@ -347,38 +545,331 @@
         <span class="sticky-text">WhatsApp</span>
       </a>
     </div>
+    <!-- Brand Confirmation Modal (replaces browser confirm) -->
+    <ConfirmModal 
+      :is-open="confirmDialog.isOpen"
+      :type="confirmDialog.type"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :sub-message="confirmDialog.subMessage"
+      :confirm-text="confirmDialog.confirmText"
+      :cancel-text="confirmDialog.cancelText"
+      @confirm="handleConfirmRemove"
+      @cancel="confirmDialog.isOpen = false"
+      @update:is-open="confirmDialog.isOpen = $event"
+    />
+
+    <!-- Brand Alert Dialog (replaces browser window.alert) -->
+    <AlertDialog 
+      :is-open="alertDialog.isOpen"
+      :type="alertDialog.type"
+      :title="alertDialog.title"
+      :message="alertDialog.message"
+      :button-text="alertDialog.buttonText"
+      @close="alertDialog.isOpen = false"
+      @update:is-open="alertDialog.isOpen = $event"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import axios from 'axios';
+import { useAuthStore } from '../../stores/auth';
+import ConfirmModal from '../../components/ConfirmModal.vue';
+import AlertDialog from '../../components/AlertDialog.vue';
 
-// SEO Setup
+const authStore = useAuthStore();
+
+const canManageBranches = computed(() => {
+  if (!authStore.isAuthenticated || !authStore.user) return false;
+  return Boolean(
+    authStore.isSuperAdmin || 
+    authStore.user?.role_id === 1 || 
+    authStore.user?.is_super_admin || 
+    (typeof authStore.can === 'function' && (authStore.can('settings') || authStore.can('manage_settings')))
+  );
+});
+
+// Default official brand branches
+const defaultBranches = [
+  {
+    id: 'tiruppur-boutique',
+    name: 'Maya Sree Fashion - Flagship Boutique & Studio',
+    branch_tag: 'Flagship Boutique',
+    address: 'No. 4, Seenivasa Nagar 2nd Street, Solipalayam, Tiruppur – 641652',
+    city: 'Tiruppur',
+    state: 'Tamil Nadu',
+    postal_code: '641652',
+    country: 'India',
+    phone: '+91 99442 85102',
+    email: 'sales@mayasreefashion.com',
+    working_hours: 'Mon – Sat: 9:30 AM – 8:00 PM | Sun: 10:00 AM – 2:00 PM',
+    map_embed_url: 'https://maps.google.com/maps?q=Solipalayam+Tiruppur+Tamil+Nadu&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    map_url: 'https://maps.google.com/?q=Solipalayam+Tiruppur+Tamil+Nadu',
+    is_primary: true,
+  },
+  {
+    id: 'tiruppur-factory',
+    name: 'Maya Sree Fashion - Design & Weaving Unit',
+    branch_tag: 'Manufacturing Unit',
+    address: 'SF No. 128/2, Solipalayam Industrial Area, Tiruppur – 641652',
+    city: 'Tiruppur',
+    state: 'Tamil Nadu',
+    postal_code: '641652',
+    country: 'India',
+    phone: '+91 99442 85103',
+    email: 'production@mayasreefashion.com',
+    working_hours: 'Mon – Sat: 8:30 AM – 7:00 PM | Sun: Closed',
+    map_embed_url: 'https://maps.google.com/maps?q=Solipalayam+Industrial+Area+Tiruppur&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    map_url: 'https://maps.google.com/?q=Solipalayam+Industrial+Area+Tiruppur',
+    is_primary: false,
+  },
+  {
+    id: 'coimbatore-wholesale',
+    name: 'Maya Sree Fashion - Wholesale Experience Center',
+    branch_tag: 'Wholesale & B2B Hub',
+    address: 'Avinashi Road, Near Hope College, Peelamedu, Coimbatore – 641004',
+    city: 'Coimbatore',
+    state: 'Tamil Nadu',
+    postal_code: '641004',
+    country: 'India',
+    phone: '+91 99442 85104',
+    email: 'wholesale@mayasreefashion.com',
+    working_hours: 'Mon – Sat: 10:00 AM – 8:00 PM | Sun: 11:00 AM – 6:00 PM',
+    map_embed_url: 'https://maps.google.com/maps?q=Avinashi+Road+Peelamedu+Coimbatore&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    map_url: 'https://maps.google.com/?q=Avinashi+Road+Peelamedu+Coimbatore',
+    is_primary: false,
+  },
+];
+
+const branches = ref([...defaultBranches]);
+const selectedBranchId = ref('tiruppur-boutique');
+
+const selectedBranch = computed(() => {
+  return branches.value.find(b => b.id === selectedBranchId.value) || branches.value[0] || {};
+});
+
+// Helper to extract coordinates and CID from Google Maps embed URL
+const parseGoogleMapsEmbed = (embedUrl) => {
+  if (!embedUrl || typeof embedUrl !== 'string') return {};
+  const res = {};
+  const mCoords = embedUrl.match(/!2d(-?[0-9.]+)!3d(-?[0-9.]+)/);
+  if (mCoords) {
+    res.lng = mCoords[1];
+    res.lat = mCoords[2];
+  }
+  const mName = embedUrl.match(/!2s([^!]+)/);
+  if (mName) {
+    res.name = decodeURIComponent(mName[1]);
+  }
+  const mCid = embedUrl.match(/!1s0x[a-f0-9]+(?:%3A|:)(0x[a-f0-9]+)/i);
+  if (mCid) {
+    try {
+      res.cid = BigInt(mCid[1]).toString();
+    } catch (e) {
+      // BigInt fallback
+    }
+  }
+  return res;
+};
+
+// Resilient Google Maps Search & Directions link resolvers
+const getOpenMapUrl = (branch) => {
+  if (!branch) return 'https://maps.google.com';
+  
+  // If user provided a direct share link (e.g. maps.app.goo.gl or google.com/maps/place)
+  if (branch.map_url && !branch.map_url.includes('/embed') && branch.map_url.startsWith('http')) {
+    return branch.map_url;
+  }
+  
+  // Parse embed iframe URL for exact Google Place CID or coordinates
+  if (branch.map_embed_url) {
+    const parsed = parseGoogleMapsEmbed(branch.map_embed_url);
+    if (parsed.cid) {
+      return `https://maps.google.com/?cid=${parsed.cid}`;
+    }
+    if (parsed.lat && parsed.lng) {
+      return `https://www.google.com/maps/search/?api=1&query=${parsed.lat},${parsed.lng}`;
+    }
+  }
+
+  const destination = [branch.name, branch.address, branch.city, branch.state, branch.postal_code]
+    .filter(Boolean)
+    .join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination)}`;
+};
+
+const getDirectionsUrl = (branch) => {
+  if (!branch) return 'https://maps.google.com';
+  
+  // If user provided a direct directions link
+  if (branch.directions_url && !branch.directions_url.includes('/embed') && branch.directions_url.startsWith('http')) {
+    return branch.directions_url;
+  }
+  
+  // Parse embed iframe URL for exact coordinates to navigate directly to the pin
+  if (branch.map_embed_url) {
+    const parsed = parseGoogleMapsEmbed(branch.map_embed_url);
+    if (parsed.lat && parsed.lng) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${parsed.lat},${parsed.lng}`;
+    }
+    if (parsed.cid) {
+      return `https://maps.google.com/?cid=${parsed.cid}`;
+    }
+  }
+
+  const destination = [branch.name, branch.address, branch.city, branch.state, branch.postal_code]
+    .filter(Boolean)
+    .join(', ');
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+};
+
+const fetchBranches = async () => {
+  try {
+    const res = await axios.get('/api/storefront/branches');
+    if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      branches.value = res.data.data;
+      if (!branches.value.some(b => b.id === selectedBranchId.value)) {
+        selectedBranchId.value = branches.value[0].id;
+      }
+    }
+  } catch (e) {
+    // Keep fallback defaults
+  }
+};
+
+const showBranchEditModal = ref(false);
+const editableBranches = ref([]);
+const savingBranches = ref(false);
+
+const openBranchEditModal = () => {
+  editableBranches.value = JSON.parse(JSON.stringify(branches.value));
+  showBranchEditModal.value = true;
+};
+
+const addNewBranchItem = () => {
+  editableBranches.value.push({
+    id: 'branch-' + Date.now(),
+    name: 'Maya Sree Fashion - New Branch',
+    branch_tag: 'Store Branch',
+    address: '',
+    city: '',
+    state: 'Tamil Nadu',
+    postal_code: '',
+    country: 'India',
+    phone: '+91 99442 85102',
+    email: 'sales@mayasreefashion.com',
+    working_hours: 'Mon – Sat: 9:30 AM – 7:30 PM',
+    map_embed_url: '',
+    map_url: '',
+    is_primary: false,
+  });
+};
+
+// Confirmation Modal State
+const confirmDialog = ref({
+  isOpen: false,
+  title: 'Remove Store Branch?',
+  message: 'Are you sure you want to remove this branch?',
+  subMessage: 'This branch will be deleted from the store network once you save your changes.',
+  confirmText: 'Yes, Remove Branch',
+  cancelText: 'Cancel',
+  type: 'danger',
+  targetIndex: null
+});
+
+// Brand Alert Dialog State
+const alertDialog = ref({
+  isOpen: false,
+  type: 'success', // 'success' | 'error' | 'warning' | 'info'
+  title: '',
+  message: '',
+  buttonText: 'Got It'
+});
+
+const showAlert = (type, title, message) => {
+  alertDialog.value = {
+    isOpen: true,
+    type,
+    title,
+    message,
+    buttonText: 'Got It'
+  };
+};
+
+const askRemoveBranch = (idx) => {
+  const branch = editableBranches.value[idx];
+  const branchName = branch?.name || `Branch #${idx + 1}`;
+  confirmDialog.value = {
+    isOpen: true,
+    title: 'Remove Store Branch?',
+    message: `Are you sure you want to remove "${branchName}"?`,
+    subMessage: 'This branch will be permanently removed from your storefront once you click "Save Changes".',
+    confirmText: 'Yes, Remove Branch',
+    cancelText: 'Cancel',
+    type: 'danger',
+    targetIndex: idx
+  };
+};
+
+const handleConfirmRemove = () => {
+  if (confirmDialog.value.targetIndex !== null && confirmDialog.value.targetIndex >= 0) {
+    editableBranches.value.splice(confirmDialog.value.targetIndex, 1);
+  }
+  confirmDialog.value.isOpen = false;
+  confirmDialog.value.targetIndex = null;
+};
+
+const saveBranchSettings = async () => {
+  savingBranches.value = true;
+  try {
+    const res = await axios.post('/api/settings/branches', {
+      branches: editableBranches.value,
+    });
+    if (res.data && res.data.success) {
+      branches.value = res.data.data;
+      showBranchEditModal.value = false;
+      showAlert('success', 'Addresses Updated', 'Maya Sree Fashion branch addresses have been saved successfully.');
+    }
+  } catch (err) {
+    showAlert('error', 'Update Failed', err.response?.data?.message || 'Failed to save branch addresses. Please try again.');
+  } finally {
+    savingBranches.value = false;
+  }
+};
+
+// Scroll reveal handler (safe initialization)
+let revealOnScroll = null;
+
+// SEO Setup & Initialization
 onMounted(() => {
+  fetchBranches();
   document.title = "Contact Us - Maya Sree Fashion";
   const metaDescription = document.querySelector('meta[name="description"]');
   if (metaDescription) {
     metaDescription.setAttribute("content", "Get in touch with Maya Sree Fashion. Send a message, find our address in Tirupur, or connect instantly via WhatsApp.");
   }
 
-  // Scroll reveal logic
+  // Ensure all content sections are immediately active/visible
   const reveals = document.querySelectorAll('.reveal');
+  reveals.forEach(element => {
+    element.classList.add('active');
+  });
+
   revealOnScroll = () => {
     const windowHeight = window.innerHeight;
     reveals.forEach(element => {
       const elementTop = element.getBoundingClientRect().top;
-      const elementVisible = 100;
-      if (elementTop < windowHeight - elementVisible) {
+      if (elementTop < windowHeight) {
         element.classList.add('active');
       }
     });
   };
 
-  window.addEventListener('scroll', revealOnScroll);
-  revealOnScroll();
+  window.addEventListener('scroll', revealOnScroll, { passive: true });
 });
 
-let revealOnScroll;
 onBeforeUnmount(() => {
   if (revealOnScroll) {
     window.removeEventListener('scroll', revealOnScroll);
@@ -504,7 +995,7 @@ const handleFormSubmit = () => {
   }
   
   // Submit successful
-  window.alert(`Thank you ${form.value.firstName}! Your inquiry about "${form.value.subject}" has been received. Our team will contact you shortly.`);
+  showAlert('success', 'Message Received', `Thank you ${form.value.firstName}! Your inquiry about "${form.value.subject}" has been received. Our team will contact you shortly.`);
   
   // Reset form and states
   form.value = {
@@ -1146,35 +1637,54 @@ const handleFormSubmit = () => {
 
 /* Section 8: Final CTA */
 .cta-banner {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #30081d 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #2b051b 100%);
+  border-radius: 20px;
   padding: 4rem 2rem;
   text-align: center;
-  color: #ffffff;
-  box-shadow: var(--shadow-lg);
+  color: #ffffff !important;
+  box-shadow: 0 12px 35px rgba(74, 14, 46, 0.25);
+  border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .cta-banner__title {
   font-family: var(--font-family-heading);
   font-size: 2.25rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 1rem;
-  color: #fffcf7;
+  color: #ffffff !important;
+  letter-spacing: -0.5px;
 }
 
 .cta-banner__subtitle {
   font-size: 1.05rem;
   max-width: 600px;
-  margin: 0 auto 2rem auto;
-  color: #ebd2dd;
+  margin: 0 auto 2.25rem auto;
+  color: #fce7f3 !important;
   line-height: 1.6;
 }
 
 .cta-banner__actions {
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
   gap: 1.25rem;
+}
+
+.contact-btn--outline-white {
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  backdrop-filter: blur(8px);
+  font-weight: 600;
+}
+
+.contact-btn--outline-white:hover {
+  background-color: #ffffff;
+  color: var(--color-primary) !important;
+  border-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Trust Indicators */
@@ -1237,11 +1747,11 @@ const handleFormSubmit = () => {
   color: #ffffff;
 }
 
-/* Scroll Reveal Classes */
+/* Content Display & Subtle Animation */
 .reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease-out;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 
 .reveal.active {
@@ -1310,6 +1820,344 @@ const handleFormSubmit = () => {
 
   .contact-page {
     padding-bottom: 120px; /* offset for sticky bar */
+  }
+}
+
+/* ========================================================
+   CONTACT FORM CENTERED STYLES
+   ======================================================== */
+.form-card--centered {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+}
+
+.form-header .form-card__title {
+  font-size: 2.1rem;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-header .form-card__subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ========================================================
+   MULTI-BRANCH FULL-WIDTH BOX NETWORK STYLES
+   ======================================================== */
+.branches-network-section {
+  width: 100%;
+  margin-bottom: 5rem;
+}
+
+.branches-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.section-subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  margin-top: 6px;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
+.btn-branch-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 24px;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  background: #ffffff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-branch-action:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.branch-boxes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+/* Dedicated full-width box for every branch */
+.branch-box-card {
+  background-color: var(--color-surface, #ffffff);
+  border: 1.5px solid #EAE3DA;
+  border-radius: 20px;
+  padding: 2.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 2.5rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  width: 100%;
+}
+
+.branch-box-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(74, 14, 46, 0.08);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.branch-box-card__info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.branch-box-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.branch-tag-pill {
+  background: rgba(74, 14, 46, 0.08);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.branch-head-badge {
+  font-size: 0.75rem;
+  color: #854d0e;
+  font-weight: 700;
+  background: rgba(212, 175, 55, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.branch-box-card__name {
+  font-family: var(--font-family-heading, 'Playfair Display', serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--color-primary, #4a0e2e);
+  margin: 0 0 1.25rem 0;
+  line-height: 1.35;
+}
+
+.branch-box-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.branch-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.branch-info-icon {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.branch-info-content {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.branch-info-label {
+  display: block;
+  color: var(--color-text-primary, #1e293b);
+  font-size: 0.88rem;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.branch-info-text {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.branch-info-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.branch-info-link:hover {
+  color: var(--color-secondary-hover, #c59b27);
+  text-decoration: underline;
+}
+
+.branch-box-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.branch-box-card__map {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+}
+
+.branch-map-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E8DDD3;
+  box-shadow: var(--shadow-sm);
+}
+
+.branch-map-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  display: block;
+}
+
+.branch-map-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  background: #FAF8F5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.branch-map-directions-tag {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.directions-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: var(--color-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  text-decoration: none;
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 31;
+  transition: all 0.2s ease;
+}
+
+.directions-pill-btn:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 14, 46, 0.35);
+  border-color: var(--color-primary);
+}
+
+/* Admin Edit Modal */
+.branch-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.branch-modal-dialog {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 760px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.branch-edit-card {
+  background: #FAF8F5;
+  border: 1px solid #E8DDD3;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+@media (max-width: 992px) {
+  .branch-box-card {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: 1.5rem;
+  }
+  .branch-box-card__map,
+  .branch-map-frame,
+  .branch-map-iframe,
+  .branch-map-placeholder {
+    min-height: 260px;
+    height: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .branch-box-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+  .branch-box-card__name {
+    font-size: 1.25rem;
+  }
+  .branch-box-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .branch-box-card__actions .contact-btn {
+    width: 100%;
   }
 }
 </style>

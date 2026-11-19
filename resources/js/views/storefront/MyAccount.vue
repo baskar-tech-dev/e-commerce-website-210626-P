@@ -191,69 +191,106 @@
 
           <!-- Tab 2: Addresses CRUD -->
           <div v-if="activeTab === 'addresses'" style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-bottom: var(--spacing-md);">
-              <div class="card-header-title" style="border: none; margin: 0; padding: 0;">Address Book</div>
-              <button class="btn btn--primary btn--sm" @click="showAddForm = !showAddForm">
-                {{ showAddForm ? 'Cancel Form' : '➕ Add Address' }}
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; margin-bottom: var(--spacing-md); flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <div class="card-header-title" style="border: none; margin: 0; padding: 0;">Address Book</div>
+                <p style="margin: 2px 0 0 0; font-size: 0.82rem; color: #64748b;">
+                  Manage multiple delivery addresses and pin your exact location on Google Maps for accurate delivery.
+                </p>
+              </div>
+              <button class="btn btn--primary btn--sm" @click="toggleAddressForm">
+                {{ showAddForm ? '✕ Close Form' : '➕ Add New Address' }}
               </button>
             </div>
 
-            <!-- Add Address Form -->
-            <div v-if="showAddForm" class="glass-panel" style="padding: var(--spacing-md); border: 1px solid var(--color-primary); background: rgba(0,0,0,0.1); margin-bottom: var(--spacing-lg);">
+            <!-- Add / Edit Address Form -->
+            <div v-if="showAddForm" class="glass-panel address-form-panel" style="padding: var(--spacing-lg); border: 1.5px solid var(--color-primary); background: #FAF5F0; border-radius: 16px; margin-bottom: var(--spacing-lg); box-shadow: 0 6px 20px rgba(74, 14, 46, 0.08);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(74, 14, 46, 0.1); padding-bottom: 0.5rem;">
+                <h4 style="margin: 0; font-family: 'Playfair Display', serif; color: var(--color-primary); font-size: 1.15rem;">
+                  {{ addressForm.id ? '✏️ Edit Delivery Address' : '📍 Add New Delivery Address' }}
+                </h4>
+                <span style="font-size: 0.78rem; color: #64748b;">* Required fields</span>
+              </div>
+
               <form @submit.prevent="saveAddress" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
-                <div class="account-form-row-2col">
-                  <div class="form-group">
-                    <label class="form-label">Label (e.g. Home, Office) *</label>
-                    <input type="text" v-model="addressForm.label" class="form-input" placeholder="Home" required />
+                <!-- Address Label Quick Selectors -->
+                <div class="form-group">
+                  <label class="form-label" style="font-weight: 600; color: #334155; margin-bottom: 6px;">Address Type / Label *</label>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                    <button 
+                      type="button" 
+                      v-for="l in ['Home', 'Office', 'Boutique', 'Other']" 
+                      :key="l" 
+                      @click="addressForm.label = l"
+                      class="label-chip-btn"
+                      :class="{ 'label-chip-btn--active': addressForm.label === l }"
+                    >
+                      <span v-if="l === 'Home'">🏠</span>
+                      <span v-else-if="l === 'Office'">🏢</span>
+                      <span v-else-if="l === 'Boutique'">👗</span>
+                      <span v-else>📍</span>
+                      {{ l }}
+                    </button>
                   </div>
-                  <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.8rem;">
-                    <input type="checkbox" id="is_default" v-model="addressForm.is_default_shipping" />
-                    <label for="is_default" style="color: #fff; font-size: 0.85rem; font-weight: bold; cursor: pointer;">Set as Default Shipping Address</label>
-                  </div>
+                  <input 
+                    type="text" 
+                    v-model="addressForm.label" 
+                    class="form-input" 
+                    placeholder="e.g. Home, Office, Studio" 
+                    required 
+                    style="background: #fff;"
+                  />
                 </div>
 
                 <div class="account-form-row-2">
                   <div class="form-group">
                     <label class="form-label">First Name *</label>
-                    <input type="text" v-model="addressForm.first_name" class="form-input" required />
+                    <input type="text" v-model="addressForm.first_name" class="form-input" required style="background: #fff;" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Last Name *</label>
-                    <input type="text" v-model="addressForm.last_name" class="form-input" required />
+                    <input type="text" v-model="addressForm.last_name" class="form-input" required style="background: #fff;" />
+                  </div>
+                </div>
+
+                <div class="account-form-row-2">
+                  <div class="form-group">
+                    <label class="form-label">Phone (10 digits) *</label>
+                    <input 
+                      type="tel" 
+                      v-model="addressForm.phone" 
+                      placeholder="9876543210" 
+                      maxlength="10" 
+                      @input="addressForm.phone = addressForm.phone.replace(/\D/g, '').slice(0, 10)" 
+                      class="form-input" 
+                      required 
+                      style="background: #fff;"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Landmark (e.g. Near Bus Stand, Opp Temple)</label>
+                    <input type="text" v-model="addressForm.landmark" placeholder="Nearby landmark" class="form-input" style="background: #fff;" />
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Phone (10 digits) *</label>
-                  <input 
-                    type="tel" 
-                    v-model="addressForm.phone" 
-                    placeholder="9876543210" 
-                    maxlength="10" 
-                    @input="addressForm.phone = addressForm.phone.replace(/\D/g, '').slice(0, 10)" 
-                    class="form-input" 
-                    required 
-                  />
+                  <label class="form-label">Address Line 1 (Flat, House no., Building, Street) *</label>
+                  <input type="text" v-model="addressForm.address_line_1" class="form-input" required style="background: #fff;" />
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Address Line 1 *</label>
-                  <input type="text" v-model="addressForm.address_line_1" class="form-input" required />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Address Line 2</label>
-                  <input type="text" v-model="addressForm.address_line_2" class="form-input" />
+                  <label class="form-label">Address Line 2 (Area, Colony, Sector)</label>
+                  <input type="text" v-model="addressForm.address_line_2" class="form-input" style="background: #fff;" />
                 </div>
 
                 <div class="account-form-row-3">
                   <div class="form-group">
                     <label class="form-label">City *</label>
-                    <input type="text" v-model="addressForm.city" class="form-input" required />
+                    <input type="text" v-model="addressForm.city" class="form-input" required style="background: #fff;" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">State *</label>
-                    <select v-model="addressForm.state" class="form-input" required>
+                    <select v-model="addressForm.state" class="form-input" required style="background: #fff;">
                       <option value="" disabled>-- Select State / UT --</option>
                       <option v-for="st in indianStates" :key="st" :value="st">
                         {{ st }}
@@ -262,13 +299,26 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">Postal Pincode *</label>
-                    <input type="text" v-model="addressForm.postal_code" class="form-input" required />
+                    <input 
+                      type="text" 
+                      v-model="addressForm.postal_code" 
+                      placeholder="641604" 
+                      maxlength="6"
+                      @input="addressForm.postal_code = addressForm.postal_code.replace(/\D/g, '').slice(0, 6)"
+                      class="form-input" 
+                      required 
+                      style="background: #fff;"
+                    />
                   </div>
                 </div>
 
-                <div style="display: flex; gap: var(--spacing-sm); justify-content: flex-end; margin-top: 0.5rem;">
-                  <button type="submit" class="btn btn--primary btn--sm" :disabled="savingAddress">
-                    Save Address
+                <div style="display: flex; gap: var(--spacing-sm); justify-content: flex-end; margin-top: 0.8rem;">
+                  <button type="button" class="btn btn--secondary btn--sm" @click="toggleAddressForm">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn btn--primary btn--sm" :disabled="savingAddress" style="min-width: 130px;">
+                    <span v-if="savingAddress">Saving...</span>
+                    <span v-else>{{ addressForm.id ? '💾 Update Address' : '💾 Save Address' }}</span>
                   </button>
                 </div>
               </form>
@@ -276,26 +326,84 @@
 
             <!-- List Addresses -->
             <div class="addresses-list-grid">
-              <div v-for="addr in profile.addresses" :key="addr.id" class="glass-panel" style="padding: var(--spacing-md); border: 1px solid var(--color-border); position: relative;">
-                <span class="badge" :class="addr.is_default_shipping ? 'badge--primary' : 'badge--secondary'" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.5rem;">
-                  {{ addr.label }} {{ addr.is_default_shipping ? '(Default)' : '' }}
-                </span>
+              <div 
+                v-for="addr in profile.addresses" 
+                :key="addr.id" 
+                class="address-card-item"
+                :class="{ 'address-card-item--default': addr.is_default_shipping }"
+              >
+                <!-- Card Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                  <span class="address-type-pill">
+                    <span v-if="addr.label?.toLowerCase() === 'home'">🏠</span>
+                    <span v-else-if="addr.label?.toLowerCase() === 'office'">🏢</span>
+                    <span v-else-if="addr.label?.toLowerCase() === 'boutique'">👗</span>
+                    <span v-else>📍</span>
+                    {{ addr.label || 'Address' }}
+                  </span>
+                  <span v-if="addr.is_default_shipping" class="address-default-badge">
+                    ★ Default
+                  </span>
+                </div>
                 
-                <div style="font-weight: bold; color: #fff; margin-bottom: 0.25rem;">{{ addr.first_name }} {{ addr.last_name }}</div>
-                <div style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.4; margin-bottom: var(--spacing-md);">
-                  {{ addr.address_line_1 }}<br />
-                  <span v-if="addr.address_line_2">{{ addr.address_line_2 }}<br /></span>
-                  {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}<br />
-                  📞 {{ addr.phone }}
+                <div style="font-weight: 700; color: #1e293b; font-size: 0.98rem; margin-bottom: 0.35rem;">
+                  {{ addr.first_name }} {{ addr.last_name }}
                 </div>
 
-                <div style="display: flex; gap: var(--spacing-sm); justify-content: flex-end; border-top: 1px solid var(--color-border); padding-top: 0.5rem;">
-                  <button class="btn btn--secondary btn--sm" @click="editAddress(addr)" style="font-size: 0.75rem; padding: 2px 8px;">✏️ Edit</button>
-                  <button class="btn btn--danger btn--sm" @click="deleteAddress(addr.id)" style="font-size: 0.75rem; padding: 2px 8px;">🗑️ Delete</button>
+                <div class="address-details-body">
+                  <div style="margin-bottom: 3px;">{{ addr.address_line_1 }}</div>
+                  <div v-if="addr.address_line_2" style="margin-bottom: 3px;">{{ addr.address_line_2 }}</div>
+                  <div v-if="addr.landmark" style="color: #64748b; font-size: 0.8rem; margin-bottom: 3px;">
+                    🚩 Landmark: {{ addr.landmark }}
+                  </div>
+                  <div style="font-weight: 600; color: #334155; margin-bottom: 4px;">
+                    {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px; color: #475569; font-size: 0.84rem;">
+                    <span>📞</span> <span>{{ addr.phone }}</span>
+                  </div>
+                </div>
+
+                <!-- Actions Footer -->
+                <div class="address-card-actions">
+                  <button 
+                    v-if="!addr.is_default_shipping" 
+                    class="btn btn--outline btn--sm address-action-btn" 
+                    @click="setDefaultAddress(addr)" 
+                    :disabled="savingAddress"
+                    title="Set as Default Shipping Address"
+                  >
+                    ⭐ Set Default
+                  </button>
+                  <button 
+                    class="btn btn--secondary btn--sm address-action-btn" 
+                    @click="editAddress(addr)" 
+                    style="padding: 4px 10px;"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    class="btn btn--danger btn--sm address-action-btn" 
+                    @click="deleteAddress(addr.id)" 
+                    style="padding: 4px 10px;"
+                  >
+                    🗑️ Delete
+                  </button>
                 </div>
               </div>
-              <div v-if="profile.addresses?.length === 0 && !showAddForm" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--color-text-muted);">
-                Your shipping address book is empty. Add an address to speed up checkout.
+
+              <!-- Empty State -->
+              <div v-if="profile.addresses?.length === 0 && !showAddForm" class="address-empty-state">
+                <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📦</div>
+                <h4 style="font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--color-primary); margin-bottom: 0.5rem;">
+                  Your Address Book is Empty
+                </h4>
+                <p style="font-size: 0.9rem; color: #64748b; max-width: 420px; margin: 0 auto 1.25rem auto;">
+                  Add your home, office, or boutique addresses with Google Map pins for instant checkout.
+                </p>
+                <button class="btn btn--primary" @click="toggleAddressForm">
+                  ➕ Add Your First Address
+                </button>
               </div>
             </div>
           </div>
@@ -856,17 +964,25 @@ const saveProfileDetails = async () => {
 
 const addressForm = ref({
   id: null,
-  label: '',
+  label: 'Home',
   first_name: '',
   last_name: '',
   phone: '',
   address_line_1: '',
   address_line_2: '',
+  landmark: '',
   city: '',
-  state: '',
+  state: 'Tamil Nadu',
   postal_code: '',
   is_default_shipping: false,
 });
+
+const toggleAddressForm = () => {
+  showAddForm.value = !showAddForm.value;
+  if (showAddForm.value && !addressForm.value.id) {
+    resetAddressForm();
+  }
+};
 
 const fetchProfileDetails = async () => {
   if (!authStore.isAuthenticated) {
@@ -923,16 +1039,17 @@ const saveAddress = async () => {
 const resetAddressForm = () => {
   addressForm.value = {
     id: null,
-    label: '',
-    first_name: '',
-    last_name: '',
-    phone: '',
+    label: 'Home',
+    first_name: profile.value.first_name || '',
+    last_name: profile.value.last_name || '',
+    phone: profile.value.phone || '',
     address_line_1: '',
     address_line_2: '',
+    landmark: '',
     city: '',
     state: 'Tamil Nadu',
     postal_code: '',
-    is_default_shipping: false,
+    is_default_shipping: (profile.value.addresses?.length === 0),
   };
 };
 
@@ -940,17 +1057,47 @@ const editAddress = (addr) => {
   showAddForm.value = true;
   addressForm.value = {
     id: addr.id,
-    label: addr.label,
+    label: addr.label || 'Home',
     first_name: addr.first_name,
     last_name: addr.last_name,
     phone: addr.phone,
     address_line_1: addr.address_line_1,
     address_line_2: addr.address_line_2 || '',
+    landmark: addr.landmark || '',
     city: addr.city,
     state: normalizeState(addr.state || 'Tamil Nadu'),
     postal_code: addr.postal_code,
     is_default_shipping: !!addr.is_default_shipping,
   };
+};
+
+const setDefaultAddress = async (addr) => {
+  savingAddress.value = true;
+  try {
+    const payload = {
+      id: addr.id,
+      label: addr.label || 'Home',
+      first_name: addr.first_name,
+      last_name: addr.last_name,
+      phone: addr.phone,
+      address_line_1: addr.address_line_1,
+      address_line_2: addr.address_line_2 || '',
+      landmark: addr.landmark || '',
+      city: addr.city,
+      state: normalizeState(addr.state || 'Tamil Nadu'),
+      postal_code: addr.postal_code,
+      is_default_shipping: true,
+    };
+    const response = await axios.post('/api/customer/addresses', payload);
+    if (response.data && response.data.success) {
+      await fetchProfileDetails();
+    }
+  } catch (err) {
+    console.error('Failed to set default address:', err);
+    alert(err.response?.data?.message || 'Failed to set default address');
+  } finally {
+    savingAddress.value = false;
+  }
 };
 
 const deleteAddress = async (id) => {
@@ -2128,5 +2275,163 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+}
+
+/* ========================================================
+   ADDRESS BOOK & EMBEDDED MAP COMPONENT STYLES
+   ======================================================== */
+.label-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.label-chip-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #fff8f5;
+}
+
+.label-chip-btn--active {
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 2px 8px rgba(74, 14, 46, 0.25);
+}
+
+.embedded-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+  background: #f1f5f9;
+}
+
+.embedded-map-wrapper--card {
+  height: 150px;
+  margin-top: 4px;
+  border: 1px solid rgba(74, 14, 46, 0.12);
+}
+
+.embedded-map-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.address-card-item {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(74, 14, 46, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.address-card-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(74, 14, 46, 0.3);
+  box-shadow: 0 8px 24px rgba(74, 14, 46, 0.08);
+}
+
+.address-card-item--default {
+  border-color: var(--color-primary);
+  background: #fffdfc;
+  box-shadow: 0 4px 18px rgba(74, 14, 46, 0.09);
+}
+
+.address-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.address-default-badge {
+  background: rgba(212, 175, 55, 0.15);
+  color: #854d0e;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.address-details-body {
+  font-size: 0.86rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.card-map-section {
+  background: #fafaf9;
+  border: 1px solid #f0eeeb;
+  border-radius: 12px;
+  padding: 8px;
+  margin-bottom: 0.85rem;
+}
+
+.map-link-btn {
+  font-size: 0.74rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.map-link-btn:hover {
+  opacity: 0.75;
+}
+
+.address-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+
+.address-action-btn {
+  font-size: 0.75rem;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  background: #FAF5F0;
+  border: 1.5px dashed rgba(74, 14, 46, 0.25);
+  border-radius: 16px;
 }
 </style>

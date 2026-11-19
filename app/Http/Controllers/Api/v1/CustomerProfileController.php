@@ -171,9 +171,13 @@ class CustomerProfileController extends Controller
             'phone' => 'required|string|max:20',
             'address_line_1' => 'required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
+            'landmark' => 'nullable|string|max:200',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
+            'map_url' => 'nullable|string|max:1000',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'is_default_shipping' => 'nullable|boolean',
         ]);
 
@@ -192,9 +196,13 @@ class CustomerProfileController extends Controller
             'phone' => $validated['phone'],
             'address_line_1' => $validated['address_line_1'],
             'address_line_2' => $validated['address_line_2'] ?? null,
+            'landmark' => $validated['landmark'] ?? null,
             'city' => $validated['city'],
             'state' => $validated['state'],
             'postal_code' => $validated['postal_code'],
+            'map_url' => $validated['map_url'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
             'is_default_shipping' => $isDefault,
         ];
 

@@ -168,6 +168,7 @@ class Order extends Model
         'shipping_state',
         'shipping_postal_code',
         'shipping_country',
+        'shipping_map_url',
         
         // Billing Address
         'billing_first_name',

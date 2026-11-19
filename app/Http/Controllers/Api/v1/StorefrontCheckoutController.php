@@ -44,6 +44,9 @@ class StorefrontCheckoutController extends Controller
             'shipping_city' => 'required|string|max:100',
             'shipping_state' => 'required|string|max:100',
             'shipping_postal_code' => 'required|string|max:20',
+            'shipping_map_url' => 'nullable|string|max:1000',
+            'save_to_address_book' => 'nullable|boolean',
+            'address_label' => 'nullable|string|max:50',
             
             'payment_method' => 'required|string|max:30',
             'coupon_code' => 'nullable|string|max:50',
@@ -67,6 +70,9 @@ class StorefrontCheckoutController extends Controller
         $validated['shipping_city'] = strip_tags($validated['shipping_city']);
         $validated['shipping_state'] = strip_tags($validated['shipping_state']);
         $validated['shipping_postal_code'] = strip_tags($validated['shipping_postal_code']);
+        if (isset($validated['shipping_map_url'])) {
+            $validated['shipping_map_url'] = strip_tags($validated['shipping_map_url']);
+        }
 
         $user = $request->user('sanctum') ?? auth('sanctum')->user() ?? auth()->user();
         if (!$user) {
@@ -126,26 +132,31 @@ class StorefrontCheckoutController extends Controller
         }
         $userId = $user->id;
 
-        // Auto-save guest address into user address book
+        // Save address into user address book if opted in or first address
         try {
-            \App\Models\Address::firstOrCreate([
-                'user_id' => $user->id,
-                'address_line_1' => $validated['shipping_address_line_1'],
-                'postal_code' => $validated['shipping_postal_code'],
-            ], [
-                'label' => 'Home',
-                'first_name' => $validated['shipping_first_name'],
-                'last_name' => $validated['shipping_last_name'],
-                'phone' => $validated['shipping_phone'],
-                'address_line_2' => $validated['shipping_address_line_2'] ?? null,
-                'city' => $validated['shipping_city'],
-                'state' => $validated['shipping_state'],
-                'country' => 'IN',
-                'is_default_shipping' => true,
-                'is_default_billing' => true,
-            ]);
+            $hasAddress = \App\Models\Address::where('user_id', $user->id)->exists();
+            $shouldSave = $request->boolean('save_to_address_book', true);
+            if ($shouldSave || !$hasAddress) {
+                \App\Models\Address::firstOrCreate([
+                    'user_id' => $user->id,
+                    'address_line_1' => $validated['shipping_address_line_1'],
+                    'postal_code' => $validated['shipping_postal_code'],
+                ], [
+                    'label' => !empty($validated['address_label']) ? $validated['address_label'] : 'Home',
+                    'first_name' => $validated['shipping_first_name'],
+                    'last_name' => $validated['shipping_last_name'],
+                    'phone' => $validated['shipping_phone'],
+                    'address_line_2' => $validated['shipping_address_line_2'] ?? null,
+                    'city' => $validated['shipping_city'],
+                    'state' => $validated['shipping_state'],
+                    'country' => 'IN',
+                    'map_url' => $validated['shipping_map_url'] ?? null,
+                    'is_default_shipping' => !$hasAddress,
+                    'is_default_billing' => !$hasAddress,
+                ]);
+            }
         } catch (\Exception $e) {
-            Log::warning("Failed to auto-save guest address: " . $e->getMessage());
+            Log::warning("Failed to auto-save customer address: " . $e->getMessage());
         }
 
         // Idempotency check: prevent duplicate submissions within 15 seconds
@@ -354,6 +365,7 @@ class StorefrontCheckoutController extends Controller
                 'shipping_state' => $validated['shipping_state'],
                 'shipping_postal_code' => $validated['shipping_postal_code'],
                 'shipping_country' => 'IN',
+                'shipping_map_url' => $validated['shipping_map_url'] ?? null,
                 
                 // Billing address (same as shipping for simplicity)
                 'billing_first_name' => $validated['shipping_first_name'],

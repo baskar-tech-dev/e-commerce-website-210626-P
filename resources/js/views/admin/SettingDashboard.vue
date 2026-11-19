@@ -42,6 +42,7 @@
                 "
             >
                 <span v-if="tab === 'general'">🏪 General Store</span>
+                <span v-else-if="tab === 'branches'">🏢 Store Branches & Addresses</span>
                 <span v-else-if="tab === 'shipping'">🚚 Shipping & Delivery</span>
                 <span v-else-if="tab === 'payment'">💳 Payment Gateways</span>
                 <span v-else-if="tab === 'email'">✉️ Notifications (SMTP)</span>
@@ -160,6 +161,129 @@
                             class="form-input"
                             style="height: 80px; resize: vertical"
                         ></textarea>
+                    </div>
+                </div>
+
+                <!-- Tab: Store Branches & Addresses -->
+                <div
+                    v-if="activeTab === 'branches'"
+                    style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-md);
+                    "
+                >
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <div class="card-header-title" style="margin-bottom: 2px;">
+                                🏢 Maya Sree Fashion - Store Branches & Locations
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 0;">
+                                Multi-branch physical locations displayed on the Contact Us storefront page with live Google Map embed integration.
+                            </p>
+                        </div>
+                        <button 
+                            type="button" 
+                            class="btn btn--secondary btn--sm" 
+                            @click="addAdminBranch"
+                            style="font-size: 0.82rem;"
+                        >
+                            ➕ Add New Branch
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+                        <div 
+                            v-for="(b, idx) in adminBranchesList" 
+                            :key="b.id || idx" 
+                            style="background: #FAF8F5; border: 1.5px solid #E8DDD3; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;"
+                        >
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 700; color: #5B163A; font-size: 0.95rem;">
+                                        Branch #{{ idx + 1 }}: {{ b.name || 'Untitled Branch' }}
+                                    </span>
+                                    <span v-if="b.is_primary" style="font-size: 0.7rem; font-weight: 700; background: rgba(212, 175, 55, 0.2); color: #854d0e; padding: 2px 8px; border-radius: 10px;">
+                                        ★ Primary
+                                    </span>
+                                </div>
+                                <button 
+                                    v-if="adminBranchesList.length > 1" 
+                                    type="button" 
+                                    class="btn btn--danger btn--sm" 
+                                    @click="askRemoveAdminBranch(idx)" 
+                                    style="font-size: 0.72rem; padding: 2px 8px;"
+                                >
+                                    🗑️ Remove
+                                </button>
+                            </div>
+
+                            <div class="responsive-grid-1-1" style="gap: 12px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Branch Name *</label>
+                                    <input type="text" v-model="b.name" class="form-input" required />
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Branch Category / Tag</label>
+                                    <input type="text" v-model="b.branch_tag" class="form-input" placeholder="Flagship Boutique" />
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin: 0;">
+                                <label class="form-label" style="font-size: 0.8rem;">Full Physical Address *</label>
+                                <textarea v-model="b.address" class="form-input" style="height: 60px; resize: vertical;" required></textarea>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">City *</label>
+                                    <input type="text" v-model="b.city" class="form-input" required />
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">State *</label>
+                                    <input type="text" v-model="b.state" class="form-input" required />
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Postal Pincode</label>
+                                    <input type="text" v-model="b.postal_code" class="form-input" />
+                                </div>
+                            </div>
+
+                            <div class="responsive-grid-1-1" style="gap: 12px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Phone Helpline</label>
+                                    <input type="text" v-model="b.phone" class="form-input" placeholder="+91 99442 85102" />
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Email Address</label>
+                                    <input type="email" v-model="b.email" class="form-input" placeholder="sales@mayasreefashion.com" />
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin: 0;">
+                                <label class="form-label" style="font-size: 0.8rem;">Working Hours</label>
+                                <input type="text" v-model="b.working_hours" class="form-input" placeholder="Mon – Sat: 9:30 AM – 8:00 PM" />
+                            </div>
+
+                            <div class="responsive-grid-1-1" style="gap: 12px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Google Maps Embed URL *</label>
+                                    <input type="url" v-model="b.map_embed_url" class="form-input" placeholder="https://maps.google.com/maps?q=...&output=embed" />
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem;">Google Maps Directions Link</label>
+                                    <input type="url" v-model="b.map_url" class="form-input" placeholder="https://maps.google.com/?q=..." />
+                                </div>
+                            </div>
+
+                            <!-- Live Map Preview in Admin -->
+                            <div v-if="b.map_embed_url" style="margin-top: 4px;">
+                                <span style="font-size: 0.74rem; font-weight: 600; color: #166534;">Map Preview:</span>
+                                <div style="height: 140px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; margin-top: 4px;">
+                                    <iframe :src="b.map_embed_url" style="width: 100%; height: 100%; border: 0;" loading="lazy"></iframe>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -4261,6 +4385,20 @@
 
         <!-- Cinematic Splash Screen Live Test Preview for Admin -->
         <SplashScreen :show="adminSplashTestVisible" @close="adminSplashTestVisible = false" />
+
+        <!-- Luxury Brand Confirmation Modal for Store Branch Removal -->
+        <ConfirmModal 
+            :is-open="branchConfirmDialog.isOpen"
+            type="danger"
+            :title="branchConfirmDialog.title"
+            :message="branchConfirmDialog.message"
+            :sub-message="branchConfirmDialog.subMessage"
+            confirm-text="Yes, Remove Branch"
+            cancel-text="Cancel"
+            @confirm="handleConfirmRemoveAdminBranch"
+            @cancel="branchConfirmDialog.isOpen = false"
+            @update:is-open="branchConfirmDialog.isOpen = $event"
+        />
     </div>
 </template>
 
@@ -4270,6 +4408,7 @@ import axios from "axios";
 import StorefrontAnnouncementBar from "../../components/StorefrontAnnouncementBar.vue";
 import SplashScreen from "../../components/SplashScreen.vue";
 import FestiveIcon from "../../components/FestiveIcon.vue";
+import ConfirmModal from "../../components/ConfirmModal.vue";
 import { useAuthStore } from "../../stores/auth";
 import { useFestivalStore } from "../../stores/festival";
 
@@ -4286,6 +4425,7 @@ const isSuperAdmin = computed(() => {
 const availableTabs = computed(() => {
     const tabs = [
         "general",
+        "branches",
         "shipping",
         "payment",
         "email",
@@ -5157,10 +5297,125 @@ const filterBool = (val) => {
     return val === "1" || val === 1 || val === "true";
 };
 
+// Store Branches State (Maya Sree Fashion Network)
+const adminBranchesList = ref([
+    {
+        id: 'tiruppur-boutique',
+        name: 'Maya Sree Fashion - Flagship Boutique & Studio',
+        branch_tag: 'Flagship Boutique',
+        address: 'No. 4, Seenivasa Nagar 2nd Street, Solipalayam, Tiruppur – 641652',
+        city: 'Tiruppur',
+        state: 'Tamil Nadu',
+        postal_code: '641652',
+        country: 'India',
+        phone: '+91 99442 85102',
+        email: 'sales@mayasreefashion.com',
+        working_hours: 'Mon – Sat: 9:30 AM – 8:00 PM | Sun: 10:00 AM – 2:00 PM',
+        map_embed_url: 'https://maps.google.com/maps?q=Solipalayam+Tiruppur+Tamil+Nadu&t=&z=15&ie=UTF8&iwloc=&output=embed',
+        map_url: 'https://maps.google.com/?q=Solipalayam+Tiruppur+Tamil+Nadu',
+        is_primary: true,
+    },
+    {
+        id: 'tiruppur-factory',
+        name: 'Maya Sree Fashion - Design & Weaving Unit',
+        branch_tag: 'Manufacturing Unit',
+        address: 'SF No. 128/2, Solipalayam Industrial Area, Tiruppur – 641652',
+        city: 'Tiruppur',
+        state: 'Tamil Nadu',
+        postal_code: '641652',
+        country: 'India',
+        phone: '+91 99442 85103',
+        email: 'production@mayasreefashion.com',
+        working_hours: 'Mon – Sat: 8:30 AM – 7:00 PM | Sun: Closed',
+        map_embed_url: 'https://maps.google.com/maps?q=Solipalayam+Industrial+Area+Tiruppur&t=&z=15&ie=UTF8&iwloc=&output=embed',
+        map_url: 'https://maps.google.com/?q=Solipalayam+Industrial+Area+Tiruppur',
+        is_primary: false,
+    },
+    {
+        id: 'coimbatore-wholesale',
+        name: 'Maya Sree Fashion - Wholesale Experience Center',
+        branch_tag: 'Wholesale & B2B Hub',
+        address: 'Avinashi Road, Near Hope College, Peelamedu, Coimbatore – 641004',
+        city: 'Coimbatore',
+        state: 'Tamil Nadu',
+        postal_code: '641004',
+        country: 'India',
+        phone: '+91 99442 85104',
+        email: 'wholesale@mayasreefashion.com',
+        working_hours: 'Mon – Sat: 10:00 AM – 8:00 PM | Sun: 11:00 AM – 6:00 PM',
+        map_embed_url: 'https://maps.google.com/maps?q=Avinashi+Road+Peelamedu+Coimbatore&t=&z=15&ie=UTF8&iwloc=&output=embed',
+        map_url: 'https://maps.google.com/?q=Avinashi+Road+Peelamedu+Coimbatore',
+        is_primary: false,
+    },
+]);
+
+const fetchAdminBranches = async () => {
+    try {
+        const res = await axios.get('/api/storefront/branches');
+        if (res.data && res.data.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+            adminBranchesList.value = res.data.data;
+        }
+    } catch (e) {
+        // Fallback default
+    }
+};
+
+const addAdminBranch = () => {
+    adminBranchesList.value.push({
+        id: 'branch-' + Date.now(),
+        name: 'Maya Sree Fashion - New Branch',
+        branch_tag: 'Store Branch',
+        address: '',
+        city: '',
+        state: 'Tamil Nadu',
+        postal_code: '',
+        country: 'India',
+        phone: '+91 99442 85102',
+        email: 'sales@mayasreefashion.com',
+        working_hours: 'Mon – Sat: 9:30 AM – 7:30 PM',
+        map_embed_url: '',
+        map_url: '',
+        is_primary: false,
+    });
+};
+
+const branchConfirmDialog = ref({
+    isOpen: false,
+    title: 'Remove Store Branch?',
+    message: '',
+    subMessage: 'This branch will be deleted from Maya Sree Fashion once you save all settings.',
+    targetIndex: null
+});
+
+const askRemoveAdminBranch = (idx) => {
+    const branch = adminBranchesList.value[idx];
+    const branchName = branch?.name || `Branch #${idx + 1}`;
+    branchConfirmDialog.value = {
+        isOpen: true,
+        title: 'Remove Store Branch?',
+        message: `Are you sure you want to remove "${branchName}"?`,
+        subMessage: 'This branch will be permanently removed once you save all settings.',
+        targetIndex: idx
+    };
+};
+
+const handleConfirmRemoveAdminBranch = () => {
+    if (branchConfirmDialog.value.targetIndex !== null && branchConfirmDialog.value.targetIndex >= 0) {
+        adminBranchesList.value.splice(branchConfirmDialog.value.targetIndex, 1);
+    }
+    branchConfirmDialog.value.isOpen = false;
+    branchConfirmDialog.value.targetIndex = null;
+};
+
 const saveSettings = async () => {
     saving.value = true;
     successMsg.value = "";
     try {
+        if (adminBranchesList.value.length > 0) {
+            await axios.post('/api/settings/branches', {
+                branches: adminBranchesList.value,
+            });
+        }
         const payload = {
             settings: {
                 general: { ...settings.value.general },
@@ -5928,6 +6183,7 @@ const saveFestivalSettings = async () => {
 
 onMounted(() => {
     fetchSettings();
+    fetchAdminBranches();
     fetchAnnouncementsList();
     fetchSectionBadgesList();
     fetchOccasionsList();

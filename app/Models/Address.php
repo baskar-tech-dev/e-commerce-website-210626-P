@@ -24,6 +24,9 @@ class Address extends Model
         'postal_code',
         'country',
         'landmark',
+        'map_url',
+        'latitude',
+        'longitude',
         'is_default_shipping',
         'is_default_billing',
     ];
@@ -31,6 +34,8 @@ class Address extends Model
     protected $casts = [
         'is_default_shipping' => 'boolean',
         'is_default_billing' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     /**
